@@ -220,7 +220,8 @@ app.use((req, res) => {
 ### Работа с базой данных
 
 ```javascript
-import { Database } from './lib/database/logger.js';
+import {Database} from './lib/schemas/logger.js';
+
 const db = new Database();
 
 // Использование методов БД
