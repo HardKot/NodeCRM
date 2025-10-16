@@ -5,20 +5,6 @@
   "description": "A simple CRM system built with Node.js.",
   "main": "app.js",
   "scripts": {
-    "start": "node app.js",
-    "dev": "node --watch app.js",
-    "setup": "node -e \"console.log('Создайте базу данных PostgreSQL и скопируйте .env.example в .env')\"",
-    "certificate:generate": "openssl req -x509 -newkey rsa:2048 -nodes -sha256 -subj '/CN=localhost' -keyout localhost-privkey.pem -out localhost-cert.pem",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
-    "test": "node --experimental-vm-modules node_modules/.bin/jest",
-    "test:watch": "node --experimental-vm-modules node_modules/.bin/jest --watch",
-    "test:coverage": "node --experimental-vm-modules node_modules/.bin/jest --coverage",
-    "test:verbose": "node --experimental-vm-modules node_modules/.bin/jest --verbose",
-    "check": "npm run format:check && npm run lint && npm run test",
-    "fix": "npm run format && npm run lint:fix",
     "precommit": "npm run check"
   },
   "imports": {
@@ -29,7 +15,8 @@
     "chalk": "^5.6.2",
     "commander": "^14.0.1",
     "dotenv": "^17.2.3",
-    "pg": "^8.16.3"
+    "pg": "^8.16.3",
+    "typescript": "^5.9.3"
   },
   "devDependencies": {
     "@eslint/js": "^9.37.0",

@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach } from '@jest/globals';
-import { field, FieldTypes } from '../lib/orm/index.js';
+import { field, FieldTypes } from '../src/orm/index.js';
 
 describe('ORM Field Builder', () => {
   test('should create ID field correctly', () => {

@@ -1,5 +1,3 @@
-import { firstNonNull } from '../common/utils.js';
-
 export class ActionHandler {
   constructor(handler, options = {}) {
     this.action = typeof handler === 'function' ? handler : handler.action;

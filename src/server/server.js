@@ -1,4 +1,4 @@
-import { Flow } from '../common/flow.js';
+import { Flow } from '../../libs/flow.js';
 import http2 from 'node:http2';
 import { NotFoundError } from './NotFoundError.js';
 import { Objects } from '../common/utils.js';

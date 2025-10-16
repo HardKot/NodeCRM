@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach, afterEach } from '@jest/globals';
-import { Logger, LogLevel, LogFilters } from '../lib/logger/index.js';
+import { Logger, LogLevel, LogFilters } from '../src/logger/index.js';
 
 describe('Logger', () => {
   let testLogger;
@@ -89,7 +89,7 @@ describe('Logger', () => {
   });
 
   test('should sanitize sensitive data', async () => {
-    const { LogUtils } = await import('../lib/logger/crm-loggers.js');
+    const { LogUtils } = await import('../src/logger/crm-loggers.js');
 
     const sensitiveData = {
       username: 'john',

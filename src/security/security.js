@@ -1,4 +1,4 @@
-import { Flow } from '../common/flow.js';
+import { Flow } from '../../libs/flow.js';
 import { CorsFilter, FilterHandler, JWTFilter, RateLimit } from './FilterHandler.js';
 import * as jwt from './jwt.js';
 

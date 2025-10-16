@@ -1,7 +1,3 @@
-import { Module } from '../common/module.js';
-import { Flow } from '../common/flow.js';
-import { Objects } from '../common/utils.js';
-
 export class Config {
   constructor(app) {
     this.app = app;
@@ -10,7 +6,7 @@ export class Config {
 
   async load() {
     const userConfig = await Flow.of(['../app.config.js'])
-      .map(file => new Module(file))
+      .map(file => new CrmStatic(file))
       .filter(file => file.isExists())
       .first()
       .map(async file => await file.import())

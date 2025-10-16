@@ -2,7 +2,7 @@ import { describe, test, expect, jest } from '@jest/globals';
 
 describe('CRM Utils', () => {
   test('should generate unique correlation IDs', async () => {
-    const { LogUtils } = await import('../lib/logger/crm-loggers.js');
+    const { LogUtils } = await import('../src/logger/crm-loggers.js');
 
     const id1 = LogUtils.generateCorrelationId();
     const id2 = LogUtils.generateCorrelationId();
@@ -14,7 +14,7 @@ describe('CRM Utils', () => {
   });
 
   test('should format errors correctly', async () => {
-    const { LogUtils } = await import('../lib/logger/crm-loggers.js');
+    const { LogUtils } = await import('../src/logger/crm-loggers.js');
 
     const error = new Error('Test error');
     error.code = 'TEST_CODE';
@@ -28,7 +28,7 @@ describe('CRM Utils', () => {
   });
 
   test('should measure execution time', async () => {
-    const { LogUtils } = await import('../lib/logger/crm-loggers.js');
+    const { LogUtils } = await import('../src/logger/crm-loggers.js');
 
     const mockLogger = {
       debug: jest.fn(),
@@ -52,7 +52,7 @@ describe('CRM Utils', () => {
   });
 
   test('should handle errors in measureTime', async () => {
-    const { LogUtils } = await import('../lib/logger/crm-loggers.js');
+    const { LogUtils } = await import('../src/logger/crm-loggers.js');
 
     const mockLogger = {
       debug: jest.fn(),

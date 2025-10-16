@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { logger } from '../lib/common/logger.js';
+import { logger } from '../src/common/logger.js';
 import { availableParallelism } from 'node:os';
 import cluster from 'node:cluster';
 

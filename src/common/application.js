@@ -3,7 +3,7 @@ import { EventEmitter } from 'node:events';
 import { Api } from '../api/api.js';
 import fs from 'fs';
 import fsp from 'node:fs/promises';
-import { Module } from './module.js';
+import { CrmStatic } from './crmStatic.js';
 import path from 'node:path';
 import { DependenciesInjection } from '../di/dependenciesInjection.js';
 import { Security } from '../security/security.js';
@@ -52,7 +52,7 @@ export class Application extends EventEmitter {
 
     const stats = await fsp.stat(targetPath);
 
-    if (stats.isFile()) return [new Module(targetPath)];
+    if (stats.isFile()) return [new CrmStatic(targetPath)];
 
     if (stats.isDirectory()) {
       const files = fs.readdirSync(targetPath, { withFileTypes: true });
@@ -62,7 +62,7 @@ export class Application extends EventEmitter {
         if (file.isFile()) {
           const fullPath = path.join(targetPath, file.name);
 
-          modules.push(new Module(fullPath));
+          modules.push(new CrmStatic(fullPath));
         }
 
         if (file.isDirectory()) {
