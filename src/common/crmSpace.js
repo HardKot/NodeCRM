@@ -8,7 +8,7 @@ export class CrmSpace {
     this.app = app;
 
     this.path = path.join(this.app.path, this.name);
-    this.files = [];
+    this.module = [];
   }
 
   async load() {
@@ -18,7 +18,6 @@ export class CrmSpace {
     if (!stats.isDirectory()) throw new Error(`Space path ${this.path} is not a directory`);
 
     const files = await this.#recursiveReadDir(this.path);
-
     this.files = files.map(filePath => path.relative(this.path, filePath));
 
     return this.files;

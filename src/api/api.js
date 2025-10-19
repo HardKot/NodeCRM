@@ -32,9 +32,9 @@ export class Api {
   }
 
   async load() {
-    const apiModulesList = await Flow.of(this.app.modules)
+    const apiModulesList = await Flow.of(super.load())
       .filter(it => it.isScript() && it.path.startsWith('/app/api/'))
-      .map(async it => ({ mapping: it.path.replace('/app/api', ''), module: await it.import() }))
+      .map(async it => ({ mapping: it.path.replace('/app/api', ''), module: await it.load() }))
       .map(it =>
         Object.entries(it.module).map(([method, action]) => ({
           mapping: it.mapping,
