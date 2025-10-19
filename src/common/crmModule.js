@@ -9,6 +9,7 @@ export class CrmModuleError extends Error {}
 
 export class CrmModule {
   #script = null;
+  static #moduleCache = new Map();
 
   constructor(module, options = {}) {
     const ext = path.extname(module).toLowerCase();
@@ -21,6 +22,7 @@ export class CrmModule {
     this.path = path.isAbsolute(module) ? module : path.join(this.dirname, this.relative, module);
 
     this.exports = {};
+    this.forceReload = options.forceReload || false;
 
     this.context = vm.createContext({
       ...CrmModule.DEFAULT_CONTEXT,
@@ -34,12 +36,33 @@ export class CrmModule {
     });
   }
 
+  static clearCache(modulePath) {
+    if (modulePath) {
+      return this.#moduleCache.delete(modulePath);
+    }
+    this.#moduleCache.clear();
+  }
+
+  static getCacheSize() {
+    return this.#moduleCache.size;
+  }
+
+  static hasCached(modulePath) {
+    return this.#moduleCache.has(modulePath);
+  }
+
   isExists() {
     return fs.existsSync(this.path);
   }
 
   async load() {
     if (!this.isExists()) throw new CrmModuleError(`File ${this.path} doesn't exist`);
+
+    // Если установлен forceReload, очищаем кеш для этого модуля
+    if (this.forceReload) {
+      CrmModule.clearCache(this.path);
+    }
+
     if (this.type === CrmModule.TYPE.TS) {
       await this.#loadTS();
     } else if (this.type === CrmModule.TYPE.COMMONJS) {
@@ -52,6 +75,20 @@ export class CrmModule {
     Object.freeze(this);
     Object.freeze(this.exports);
     return this;
+  }
+
+  async reload() {
+    // Очищаем кеш для текущего модуля и всех его зависимостей
+    CrmModule.clearCache(this.path);
+
+    // Пересоздаем контекст для изоляции
+    this.context = vm.createContext({
+      ...CrmModule.DEFAULT_CONTEXT,
+      ...CrmModule.NODE_CONTEXT,
+    });
+
+    // Перезагружаем модуль
+    return this.load();
   }
 
   #loadCommon() {
@@ -74,16 +111,16 @@ export class CrmModule {
         module: ts.ModuleKind.CommonJS,
         target: ts.ScriptTarget.ES2020,
         sourceMap: true,
+        inlineSources: true,
+        inlineSourceMap: true,
         experimentalDecorators: true,
         emitDecoratorMetadata: true,
       },
-      fileName: this.relative,
+      fileName: this.path,
     }).outputText;
-    const useStrict = compiled.startsWith("'use strict'");
     const code = CrmModule.wrapperCommonjs(compiled);
     this.#script = new vm.Script(code, {
       filename: this.path,
-      lineOffset: useStrict ? -1 : 0,
     });
     const exports = this.#script.runInContext(this.context, this.runOptions);
     this.exports = this.#exportCommon(exports);
@@ -102,21 +139,36 @@ export class CrmModule {
   #createRequire() {
     const { context, runOptions, dirname, relative } = this;
     const internalRequire = module.createRequire(path.join(process.cwd(), relative));
+    const currentModuleDir = path.dirname(this.path);
+
     function require(name) {
       const npm = !name.startsWith('.') && !path.isAbsolute(name);
       const node = module.isBuiltin(name);
       if (npm || node) return internalRequire(name);
-      const resolvedPath = path.resolve(dirname, name);
+
+      // Разрешаем путь относительно текущего модуля, а не dirname
+      const resolvedPath = path.resolve(currentModuleDir, name);
+
+      // Проверяем кеш перед загрузкой
+      if (CrmModule.#moduleCache.has(resolvedPath)) {
+        return CrmModule.#moduleCache.get(resolvedPath);
+      }
+
       if (!fs.existsSync(resolvedPath)) throw new CrmModuleError(`Cannot find module '${name}'`);
-      const script = new CrmModule(resolvedPath, { context, runOptions });
-      if (script.type !== CrmModule.TYPE.COMMONJS) {
-        throw new CrmModuleError(
-          `Cannot load module '${name}': only CommonJS modules are supported`
-        );
+      const script = new CrmModule(resolvedPath, {
+        context,
+        runOptions,
+        dirname: path.dirname(resolvedPath),
+        relativePath: path.relative(process.cwd(), path.dirname(resolvedPath)),
+      });
+      if (script.type === CrmModule.TYPE.ESM) {
+        throw new CrmModuleError(`Cannot load module '${name}': ESM modules are not supported`);
       }
 
       try {
         script.#loadCommon();
+        // Кешируем экспорты модуля
+        CrmModule.#moduleCache.set(resolvedPath, script.exports);
         return script.exports;
       } catch (e) {
         throw new CrmModuleError(`Cannot load module '${name}': ${e.message}`);
@@ -175,7 +227,6 @@ export class CrmModule {
   static wrapperCommonjs(code) {
     return `(function (exports, require, module, __filename, __dirname) { ${code} \n});`;
   }
-
   static detectType(ext) {
     if (ext === '.ts') return CrmModule.TYPE.TS;
     if (ext === '.mjs') return CrmModule.TYPE.ESM;

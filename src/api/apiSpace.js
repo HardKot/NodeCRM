@@ -19,7 +19,8 @@ export class ApiSpace {
           })
       )
       .filter(it => it.isExists())
-      .map(it => it.load());
+      .map(it => it.load())
+      .get();
     return files;
   }
 
