@@ -1,15 +1,17 @@
 import path from 'node:path';
 import fs from 'fs';
 import fsp from 'node:fs/promises';
-import { Flow } from '../../libs/flow.js';
+import { Flow } from '../libs';
 
-export class CrmSpace {
-  constructor(space, app) {
+export class Space {
+  constructor(space, options = {}) {
     this.name = space;
-    this.app = app;
 
-    this.path = path.join(this.app.path, this.name);
-    this.files = [];
+    this.dirname = options.name || base.basename(space);
+    this.relative = options.relative || '.';
+    this.path = path.isAbsolute(space) ? space : path.join(this.dirname, this.relative, space);
+
+    this.scriptConstructor = options.scriptConstructor;
   }
 
   async load() {
@@ -19,10 +21,11 @@ export class CrmSpace {
     if (!stats.isDirectory()) throw new Error(`Space path ${this.path} is not a directory`);
 
     const files = await Flow.of(this.#recursiveReadDir(this.path))
+      .filter(it => this.isScriptFile(it))
       .sort((a, b) => a.localeCompare(b.localeCompare))
       .get();
 
-    return this.files;
+    return this;
   }
 
   async #recursiveReadDir(targetPath) {

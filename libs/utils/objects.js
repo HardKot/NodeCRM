@@ -1,4 +1,4 @@
-module.exports = {
+const Objects = {
   isObject(obj) {
     return obj && typeof obj === 'object' && !Array.isArray(obj);
   },
@@ -17,3 +17,7 @@ module.exports = {
     throw new Error(params || 'Object is null or undefined');
   },
 };
+
+Object.freeze(Objects);
+
+export { Objects };
