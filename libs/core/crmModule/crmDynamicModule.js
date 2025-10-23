@@ -1,6 +1,6 @@
-import { CrmModule } from './CrmModule';
+import { CrmModule, CrmModuleError } from './crmModule';
 
-export class CrmDynamicModule extends CrmModule {
+class CrmDynamicModule extends CrmModule {
   constructor(module, options = {}) {
     super(module, options);
   }
@@ -12,3 +12,5 @@ export class CrmDynamicModule extends CrmModule {
     return this;
   }
 }
+
+export { CrmDynamicModule };

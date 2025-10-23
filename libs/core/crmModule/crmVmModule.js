@@ -3,11 +3,11 @@ import * as vm from 'node:vm';
 import * as module from 'node:module';
 import fs from 'fs';
 
-import { CrmModule, CrmModuleError } from './CrmModule';
+import { CrmModule, CrmModuleError } from './crmModule';
 
 const ts = await import('typescript').catch(() => null);
 
-export class CrmVmModule extends CrmModule {
+class CrmVmModule extends CrmModule {
   static caches = new Map();
   #script = null;
 
@@ -169,3 +169,5 @@ export class CrmVmModule extends CrmModule {
     return `(function (exports, require, module, __filename, __dirname) { ${code} \n});`;
   }
 }
+
+export { CrmVmModule };

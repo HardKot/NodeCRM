@@ -1,6 +1,9 @@
+import path from 'node:path';
+import fs from 'fs';
+
 export class CrmModuleError extends Error { }
 
-export class CrmModule {
+class CrmModule {
   constructor(module, options = {}) {
     const ext = path.extname(module).toLowerCase();
     this.type = CrmModule.detectType(ext);
@@ -35,3 +38,5 @@ export class CrmModule {
     return CrmModule.TYPE.COMMONJS;
   }
 }
+
+export { CrmModule };

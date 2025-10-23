@@ -1,9 +1,10 @@
 import path from 'node:path';
-import fs from 'fs';
+import fs from 'node:fs';
 import fsp from 'node:fs/promises';
+
 import { Flow } from '../libs';
 
-export class Space {
+class Space {
   constructor(space, options = {}) {
     this.name = space;
 
@@ -11,7 +12,8 @@ export class Space {
     this.relative = options.relative || '.';
     this.path = path.isAbsolute(space) ? space : path.join(this.dirname, this.relative, space);
 
-    this.scriptConstructor = options.scriptConstructor;
+    this.createScript = options.createScript || (it => null);
+    this.modules = [];
   }
 
   async load() {
@@ -20,9 +22,11 @@ export class Space {
     const stats = await fsp.stat(this.path);
     if (!stats.isDirectory()) throw new Error(`Space path ${this.path} is not a directory`);
 
-    const files = await Flow.of(this.#recursiveReadDir(this.path))
+    this.modules = await Flow.of(this.#recursiveReadDir(this.path))
       .filter(it => this.isScriptFile(it))
       .sort((a, b) => a.localeCompare(b.localeCompare))
+      .map(it => this.createScript(it, this))
+      .filter(it => !!it)
       .get();
 
     return this;
@@ -59,3 +63,5 @@ export class Space {
     return ['.js', '.cjs', '.mjs', '.ts'].includes(ext);
   }
 }
+
+export { Space };
