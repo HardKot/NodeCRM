@@ -1,44 +1,40 @@
-import { DiComponent } from './diComponent';
+import { DiComponent } from './diComponent.js';
 
-class DiContainerError extends Erro { }
+class DiContainerError extends Erro {}
 
 class DiContainer {
   constructor() {
-    this.factories = new Map();
     this.components = new Map();
   }
 
   registration(name, component) {
     if (component instanceof DiComponent) {
-      this.factories.set(name, component);
+      this.components.set(name, component);
     }
 
     return this;
   }
 
   get(name) {
-    if (this.components.has(name)) return this.components.get(name);
+    const component = this.components.get(name);
+    if (!component) return null;
 
-    const component = this.buildComponent(name);
-    if (component.isSingleton) this.components.set(name, component);
-
-    return component;
+    return component.getInstance();
   }
 
   buildComponent(name) {
-    const factory = this.factories.get(name);
-    if (!factory) throw new DiContainerError(`Factory for ${name} not found`);
+    const component = this.components.get(name);
+    if (!component) throw new DiContainerError(`Factory for ${name} not found`);
+
+    let instance = component.getInstance();
 
     const dependencies = factory.dependencies.map(it => this.get(it));
-    const component = factory.create(dependencies);
 
     return component;
   }
 
-  buildTree() {
-    for (const name of this.factories.keys()) {
-      this.get(name);
-    }
+  getFactoriesList() {
+    return [...this.factories.values()];
   }
 }
 
