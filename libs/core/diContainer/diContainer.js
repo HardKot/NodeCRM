@@ -1,6 +1,6 @@
 import { DiComponent } from './diComponent.js';
 
-class DiContainerError extends Erro {}
+class DiContainerError extends Erro { }
 
 class DiContainer {
   constructor() {
@@ -26,15 +26,19 @@ class DiContainer {
     const component = this.components.get(name);
     if (!component) throw new DiContainerError(`Factory for ${name} not found`);
 
-    let instance = component.getInstance();
-
     const dependencies = factory.dependencies.map(it => this.get(it));
+    const instance = component.getInstance(dependencies);
 
-    return component;
+    return instance;
   }
 
-  getFactoriesList() {
-    return [...this.factories.values()];
+  getByTag(tag) {
+    const list = [];
+    this.components.forEach(it => {
+      if (it.tags.includes(tag)) list.push(it);
+    });
+
+    return list;
   }
 }
 

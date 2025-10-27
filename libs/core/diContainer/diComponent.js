@@ -1,6 +1,5 @@
 class DiComponent {
   #instance;
-  #deps;
 
   constructor(factory, options = {}) {
     this.factory = factory.bind(factory);
@@ -9,25 +8,18 @@ class DiComponent {
     this.isSingleon = factory.singleton ?? options.singleton ?? true;
     this.postConstructorMethod =
       factory.postConstructorMethod ?? options.postConstructorMethod ?? 'postConstructor';
+    this.tags = options.tags || [];
   }
 
-  deps(deps) {
-    this.#deps = deps;
-    return this;
-  }
+  getInstance(deps = []) {
+    if (this.#instance) return this.#instance;
 
-  createInstance() {
-    const instance = new this.factory(...this.#deps);
+    const instance = new this.factory(...deps);
     instance[this.postConstructorMethod]?.apply(instance);
 
     if (this.isSingleon) this.#instance = instance;
 
-    return instance;
-  }
-
-  getInstance() {
-    if (this.#instance) return this.#instance;
-    return this.createInstance();
+    return this.#instance;
   }
 }
 
