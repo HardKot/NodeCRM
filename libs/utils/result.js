@@ -1,4 +1,4 @@
-export class Flow {
+export default class Result {
   constructor(result) {
     if (!Array.isArray(result)) result = [result];
 
@@ -10,7 +10,6 @@ export class Flow {
 
   map(callback) {
     this.value = this.value.then(it => {
-      // console.log(it.map(a => a));
       return Promise.all(it.map(callback));
     });
     return this;

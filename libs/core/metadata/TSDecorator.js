@@ -16,3 +16,31 @@ export function Inject(key) {
     target.__crmMeta.diContainer.deps[parametrIndex] = key;
   };
 }
+
+export function Configuration() {
+  return function(target) {
+    if (!target.__crmMeta) target.__crmMeta = {};
+    target.__crmMeta.configuration = {};
+  };
+}
+
+export function Bean(key) {
+  return function(target, propertyKey, descriptor) {
+    if (!target.__crmMeta) target.__crmMeta = {};
+    target.__crmMeta.configuration[key] = descriptor;
+  };
+}
+
+export function Scope(type) {
+  return function(target) {
+    if (!target.__crmMeta) target.__crmMeta = {};
+    if (target.__crmMeta.diContainer) target.__crmMeta.diContainer.scope = type;
+  };
+}
+
+export function PostConstructor() {
+  return function(target, propertyKey, descriptor) {
+    if (!target.__crmMeta) target.__crmMeta = {};
+    if (target.__crmMeta.diContainer) target.__crmMeta.diContainer.postConstructor = propertyKey;
+  };
+}

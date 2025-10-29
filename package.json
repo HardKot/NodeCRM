@@ -8,7 +8,8 @@
     "precommit": "npm run check"
   },
   "imports": {
-    "#lib/logger": "./lib/logger.js"
+    "#lib/logger": "./lib/logger.js",
+    "#lib/utils": "./libs/utils/index.js"
   },
   "dependencies": {
     "@types/chalk": "^2.2.4",
