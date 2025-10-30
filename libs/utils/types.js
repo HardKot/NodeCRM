@@ -5,6 +5,10 @@ export function isObject(v) {
   return typeof v === 'function';
 }
 
+export function isFunction(v) {
+  return typeof v === 'function';
+}
+
 export function isUndefiend(v) {
   return v === undefined;
 }
