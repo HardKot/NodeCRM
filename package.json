@@ -5,10 +5,10 @@
   "description": "A simple CRM system built with Node.js.",
   "main": "app.js",
   "scripts": {
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "precommit": "npm run check"
   },
   "imports": {
-    "#lib/logger": "./lib/logger.js",
     "#lib/utils": "./libs/utils/index.js"
   },
   "dependencies": {

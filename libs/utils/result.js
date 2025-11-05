@@ -90,10 +90,10 @@ export default class Result {
   }
 
   copy() {
-    return new Flow(this.value);
+    return new Result(this.value);
   }
 
   static of(value) {
-    return new Flow(value);
+    return new Result(value);
   }
 }
