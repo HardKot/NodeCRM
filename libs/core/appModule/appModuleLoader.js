@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import fsp from 'node:fs/promises';
-import path from 'node:path';
+import path, { dirname } from 'node:path';
 
 import { Result } from '#lib/utils';
 
@@ -12,7 +12,7 @@ class AppModuleLoader {
     this.app = app;
   }
 
-  async load() {
+  async loadModules() {
     const { app } = this;
 
     if (!fs.existsSync(this.app.path)) throw new AppModuleError(`Path ${app.path} does not exist`);
@@ -20,12 +20,17 @@ class AppModuleLoader {
     const stats = await fsp.stat(app.path);
     if (!stats.isDirectory()) throw new AppModuleError(`Path ${app.path} is not a directory`);
 
-    this.modules = await Result.of(this.#recursiveReadDir(app.path))
-      .filter(it => this.isScriptFile(it))
-      .sort((a, b) => a.localeCompare(b.localeCompare))
-      .map(it => [it, new AppModule(it, { dirname: app.path })])
+    this.modules = Result.of()
+      .map(it => [it])
       .toObject()
       .get();
+
+    for (const file of this.#recursiveReadDir(app.path)) {
+      if (!this.isScriptFile(it)) continue;
+
+      this.modules[file] = new AppModule(file, this, { dirname: app.path });
+      this.modules[file].loadSource();
+    }
 
     Object.freeze(this.modules);
 
