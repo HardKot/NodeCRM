@@ -1,15 +1,15 @@
 import path from 'node:path';
 import fs from 'node:fs';
+import fsp from 'node:fs/promises';
 import vm from 'node:vm';
+import ts from 'typescript';
+
 import { NodeContext } from './runTimeContext';
 
-class AppModuleError extends Error { }
+class AppModuleError extends Error {}
 
 class AppModule {
-  script;
-  context;
-
-  constructor(name, moduleLoader, options = {}) {
+  constructor(name, options = {}) {
     this.name = name;
 
     this.dirname = options.dirname || process.cwd();
@@ -17,23 +17,39 @@ class AppModule {
     this.path = path.join(this.dirname, this.relative, name);
 
     this.context = NodeContext;
-    this.require = moduleLoader.createRequire(dirname, relative);
-    this.import = moduleLoader.createImport(dirname, relative);
-    this.script = null;
+    this.require = options?.createRequire(this.dirname, this.relative);
+    this.import = options?.createImport(this.dirname, this.relative);
     this.source = undefined;
     this.exports = {};
   }
 
-  loadSource() {
+  async loadSource() {
     if (!this.isExists()) return undefined;
-    this.source = fs.readFile(this.path, { encoding: 'utf-8' });
+    this.source = fsp.readFile(this.path, { encoding: 'utf-8' });
+
+    if (this.path.endsWith('.ts')) {
+      const transpileModule = ts.transpileModule(this.source, {
+        compilerOptions: {
+          module: ts.ModuleKind.CommonJS,
+          target: ts.ScriptTarget.ES2020,
+          sourceMap: true,
+          inlineSources: true,
+          inlineSourceMap: true,
+          experimentalDecorators: true,
+          emitDecoratorMetadata: true,
+        },
+        fileName: this.path,
+      });
+
+      this.source = transpileModule.outputText;
+    }
     return this.source;
   }
 
   loadExports() {
-    if (this.source) return {};
+    if (!this.source) return {};
 
-    const strict = src.startsWith(AppModule.STRICT) ? '' : AppModule.STRICT;
+    const strict = this.source.startsWith(AppModule.STRICT) ? '' : AppModule.STRICT;
     const lineOffset = !strict ? -1 : -2;
     const code = this.wrapSource(this.source);
     const script = new vm.Script(AppModule.STRICT + code, {
