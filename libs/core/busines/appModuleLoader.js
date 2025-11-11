@@ -33,7 +33,9 @@ class AppModuleLoader {
     };
 
     const files = await this.#recursiveReadDir(this.app.path);
-    const modules = files.filter(it => this.#isScriptFile(it)).map(it => new AppModule(it, options));
+    const modules = files
+      .filter(it => this.#isScriptFile(it))
+      .map(it => new AppModule(it, options));
 
     this.modules = Object.fromEntries(modules.map(it => [it.name, it]));
 
@@ -47,14 +49,11 @@ class AppModuleLoader {
 
     function require(name) {
       if (!name) throw new Error('Module name is required');
-
-      if (is)
-
     }
 
     return require;
   }
-  #createImport(baseDir, relativePath) { }
+  #createImport(baseDir, relativePath) {}
 
   async #recursiveReadDir(targetPath) {
     const isExists = fs.existsSync(targetPath);

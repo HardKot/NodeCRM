@@ -1,38 +1,41 @@
-import { EventEmitter } from 'node:events';
+import events from 'node:events';
 
-import { DiContainer } from '../diContainer';
-import { AppModuleLoader } from '../appModule';
-import { MetadataRegistry } from '../metadataRegistry';
+import { DiContainer } from '../dependencyContainer';
+import { AppModuleLoader } from '../busines';
+import { MetadataRegistry } from '../metadata';
+import { SchemaRegistry } from '../schema/index.js';
+import fsp from 'node:fs/promises';
+import path from 'node:path';
+import fs from 'node:fs';
 
-class App extends EventEmitter {
+class App extends events.EventEmitter {
   constructor() {
-    this.diContainer = new DiContainer();
-    this.metadataRegistry = new MetadataRegistry();
+    super();
+    this.diContainer = new DiContainer(this);
+    this.metadataRegistry = new MetadataRegistry(this);
     this.appModuleLoader = new AppModuleLoader(this);
+    this.schemas = new SchemaRegistry(this);
   }
 
-  async load() {
-    await this.appModuleLoader.load();
-    const { modules } = this.appModuleLoader;
+  async load() {}
 
-    for (const moduleName in modules) {
-      const module = modules[moduleName];
-      const metatada = module.metadata ?? module.Metadata;
+  async readModule(scope) {
+    try {
+      if (!fs.existsSync(scope)) return [];
 
-      if (!metatada) continue;
+      const modules = await fsp.readdir(scope, {
+        recursive: true,
+        withFileTypes: true,
+      });
 
-      for (const targetName in metadata) {
-        const target = module[targetName];
-        if (!target) continue;
-
-        for (const metadataKey in metatada[targetName]) {
-          this.metadataRegistry.defineMetadata(
-            metadataKey,
-            metatada[targetName][metadataKey],
-            target
-          );
-        }
-      }
+      return modules
+        .filter(it => it.isFile())
+        .map(it => it.name)
+        .filter(it => !it.includes(`test${path.sep}`))
+        .filter(it => it.endsWith('.js') || it.endsWith('.mjs') || it.endsWith('.cjs'));
+    } catch (e) {
+      this.logger.error(e);
+      return [];
     }
   }
 }
