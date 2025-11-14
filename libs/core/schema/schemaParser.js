@@ -1,12 +1,6 @@
-const Type = {
-  references: 0,
-  array: 1,
-  schema: 2,
+'use strict';
 
-  number: 3,
-  string: 4,
-  boolean: 5,
-};
+import { Types } from './Types.js';
 
 class SchemaParserError extends Error {}
 
@@ -27,57 +21,85 @@ class SchemaParser {
   }
 
   parserString(source) {
-    const required = source.endsWith('!');
-    let type = required ? source.slice(0, -1) : source;
-    let meta = null;
+    const required = !source.endsWith('?');
+    let type = !required ? source.slice(0, -1) : source;
+    const options = {};
 
-    if (type.startsWith('@')) {
-      type = 'references';
-      meta['reference'] = type.slice(1);
-    }
-
-    return this.parserObject({ type, required, meta });
-  }
-
-  parserObject(source) {
-    const { type, required = false, meta = null } = source;
-
-    if (!type) {
-      return this.parserSchema(source);
-    }
-
-    if (!Type[type]) {
-      return null;
-    }
-
-    return {
-      Type: Type[type],
-      required,
-      field: meta,
-    };
-  }
-
-  parserPrimitive(source) {
-    const { type } = source;
-
-    if (!!Type[type]) {
-      const meta = source[type];
-
+    if (type.includes('|')) {
       return {
-        type: Type[type],
-        required: source.required || false,
-        meta: meta,
+        Type: Types.ENUM,
+        required,
+        options: {
+          enum: type.split('|').map(v => v.trim()),
+        },
       };
     }
 
-    return null;
+    if (type.startsWith('@')) {
+      return {
+        Type: Types.REFERENCES,
+        required,
+        options: {
+          reference: type.slice(1),
+        },
+      };
+    }
+
+    if (Types[type.toUpperCase()]) {
+      return {
+        Type: Types[type.toUpperCase()],
+        required,
+        options,
+      };
+    }
+
+    return {
+      Type: Types.UNKNOWN,
+      required,
+      options: {
+        unknownType: type,
+      },
+    };
+  }
+
+  parserObject(source) {
+    const [firstKey] = Object.keys(source);
+
+    if (firstKey !== 'type') {
+      return this.parserSchema(source);
+    }
+
+    let { type, required = false, ...options } = source;
+
+    if (Types[type.toUpperCase()]) {
+      return {
+        Type: Types[type.toUpperCase()],
+        required,
+        options,
+      };
+    }
+    options.unknownType = type;
+
+    return {
+      Type: Types.UNKNOWN,
+      required,
+      options,
+    };
   }
 
   parserSchema(source) {
+    const fields = [];
+
+    for (const field in source) {
+      fields.push([field, this.parser(source[field])]);
+    }
+
     return {
-      Type: Type.schema,
-      required: source.required ?? false,
-      field: source,
+      Type: Types.SCHEMA,
+      required: true,
+      options: {
+        schema: Object.fromEntries(fields),
+      },
     };
   }
 
@@ -85,10 +107,13 @@ class SchemaParser {
     const field = source[0];
 
     return {
-      Type: Type.array,
-      field: this.parser(field),
+      Type: Types.ARRAY,
+      required: true,
+      options: {
+        value: this.parser(field),
+      },
     };
   }
 }
 
-export { SchemaParser, Type };
+export { SchemaParser };
