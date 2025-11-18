@@ -1,8 +1,7 @@
 import fs from 'node:fs';
 import fsp from 'node:fs/promises';
 import path from 'node:path';
-
-import { Result } from '#lib/utils';
+import module from 'node:module';
 
 import { AppModule, AppModuleError } from './appModule';
 
@@ -12,7 +11,7 @@ class AppModuleLoader {
     this.app = app;
   }
 
-  async load() {
+  async execute() {
     const { app } = this;
 
     if (!fs.existsSync(this.app.path)) throw new AppModuleError(`Path ${app.path} does not exist`);
@@ -20,17 +19,41 @@ class AppModuleLoader {
     const stats = await fsp.stat(app.path);
     if (!stats.isDirectory()) throw new AppModuleError(`Path ${app.path} is not a directory`);
 
-    this.modules = await Result.of(this.#recursiveReadDir(app.path))
-      .filter(it => this.isScriptFile(it))
-      .sort((a, b) => a.localeCompare(b.localeCompare))
-      .map(it => [it, new AppModule(it, { dirname: app.path })])
-      .toObject()
-      .get();
-
-    Object.freeze(this.modules);
+    await this.#loadModules();
 
     return this;
   }
+
+  async #loadModules() {
+    const options = {
+      dirname: this.app.path,
+      relativePath: '.',
+      createRequire: this.#createRequire.bind(this),
+      createImport: this.#createImport.bind(this),
+    };
+
+    const files = await this.#recursiveReadDir(this.app.path);
+    const modules = files
+      .filter(it => this.#isScriptFile(it))
+      .map(it => new AppModule(it, options));
+
+    this.modules = Object.fromEntries(modules.map(it => [it.name, it]));
+
+    await Promise.all(modules.map(it => it.loadSource()));
+    return this.modules;
+  }
+
+  #createRequire(baseDir, relativePath) {
+    const internalRequire = module.createRequire(path.join(baseDir, relativePath));
+    const packageJSON = module.findPackageJSON(this.app.path);
+
+    function require(name) {
+      if (!name) throw new Error('Module name is required');
+    }
+
+    return require;
+  }
+  #createImport(baseDir, relativePath) {}
 
   async #recursiveReadDir(targetPath) {
     const isExists = fs.existsSync(targetPath);
@@ -58,7 +81,7 @@ class AppModuleLoader {
     return allFiles;
   }
 
-  isScriptFile(uri) {
+  #isScriptFile(uri) {
     return ['.js', '.mjs', '.ts', '.cjs'].includes(path.extname(uri));
   }
 }
