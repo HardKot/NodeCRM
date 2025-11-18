@@ -8,9 +8,9 @@ class SchemaModule {
   #registry;
 
   constructor(adapterConstructor = DefaultAdapter) {
-    this.#parser = new SchemaParser(this);
+    this.#parser = new SchemaParser();
     this.#registry = new SchemaRegistry(this);
-    this.#adapter = new adapterConstructor(this);
+    this.#adapter = new adapterConstructor();
   }
 
   get adapter() {
@@ -23,6 +23,14 @@ class SchemaModule {
 
   get parser() {
     return this.#parser;
+  }
+
+  get schemas() {
+    return this.#registry.schemas;
+  }
+
+  get structure() {
+    return this.#registry.structure;
   }
 
   registerSchema(name, value) {
@@ -45,22 +53,20 @@ class SchemaModule {
     return this;
   }
 
-  validateValue(name, value) {
+  createValidator(name) {
     const schema = this.#registry.get(name);
-    return schema.check(value);
+    if (!schema) {
+      throw new Error(`Schema "${name}" is not registered`);
+    }
+    return schema.check.bind(schema);
   }
 
-  transformValue(name, value) {
+  createTransformer(name) {
     const schema = this.#registry.get(name);
-    return schema.transform(value);
-  }
-
-  get schemas() {
-    return Array.from(this.#registry.schemas);
-  }
-
-  get structure() {
-    return Array.from(this.#registry.structure);
+    if (!schema) {
+      throw new Error(`Schema "${name}" is not registered`);
+    }
+    return schema.transform.bind(schema);
   }
 }
 

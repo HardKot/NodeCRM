@@ -5,11 +5,6 @@ import { Types } from './types.js';
 class SchemaParserError extends Error {}
 
 class SchemaParser {
-  #module;
-  constructor(module) {
-    this.#module = module;
-  }
-
   parser(source) {
     const srcType = this.sourceType(source);
     const parserName = 'parser' + srcType.charAt(0).toUpperCase() + srcType.slice(1);
@@ -36,16 +31,6 @@ class SchemaParser {
         required,
         options: {
           enum: type.split('|').map(v => v.trim()),
-        },
-      };
-    }
-
-    if (type.startsWith('@')) {
-      return {
-        Type: Types.REFERENCES,
-        required,
-        options: {
-          reference: type.slice(1),
         },
       };
     }

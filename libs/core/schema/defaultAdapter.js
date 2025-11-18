@@ -8,12 +8,6 @@ const recordType = {
 };
 
 class DefaultAdapter {
-  #module;
-
-  constructor(module) {
-    this.#module = module;
-  }
-
   factoryType(field) {
     const { Type, required, options } = field;
 
@@ -40,11 +34,6 @@ class DefaultAdapter {
         }
 
         return new SchemaField(params);
-
-      case Types.REFERENCES:
-        const { references } = options;
-        const type = this.#module.registry.get(references);
-        return this.factoryType(type);
 
       default:
         return new UnknownField();

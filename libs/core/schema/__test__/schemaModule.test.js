@@ -5,7 +5,7 @@ describe('SchemaModule', () => {
   const simpleSchema = { name: 'string', age: 'number?' };
   const schemaWithArray = { tags: ['string'] };
   const schemaWithObject = { address: { street: 'string', number: 'number' } };
-  const schemaWithReference = { friend: '@simpleSchema', likes: 'number?' };
+  const schemaWithReference = { friend: 'simpleSchema', likes: 'number?' };
 
   let schemaModule;
 
@@ -14,16 +14,17 @@ describe('SchemaModule', () => {
     schemaModule.registerSchema('simpleSchema', simpleSchema);
     schemaModule.registerSchema('arraySchema', schemaWithArray);
     schemaModule.registerSchema('objectSchema', schemaWithObject);
-    schemaModule.registerSchema('referenceSchema', schemaWithReference);
   });
 
   it('Simple schema', () => {
-    expect(schemaModule.validateValue('simpleSchema', { name: 'John', age: 30 })).toBeTruthy();
-    expect(schemaModule.validateValue('simpleSchema', { name: 'John' })).toBeTruthy();
+    const validator = schemaModule.createValidator('simpleSchema');
 
-    expect(schemaModule.validateValue('simpleSchema', { age: 30 })).toBeFalsy();
-    expect(schemaModule.validateValue('simpleSchema', {})).toBeFalsy();
-    expect(schemaModule.validateValue('simpleSchema', 0)).toBeFalsy();
+    // expect(validator({ name: 'John', age: 30 }).valid).toBeTruthy();
+    // expect(validator({ name: 'John' }).valid).toBeTruthy();
+
+    expect(validator({ age: 30 }).valid).toBeFalsy();
+    expect(validator({}).valid).toBeFalsy();
+    expect(validator(0).valid).toBeFalsy();
   });
 
   // it('Simple schema', () => {

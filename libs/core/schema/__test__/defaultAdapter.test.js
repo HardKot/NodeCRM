@@ -62,19 +62,6 @@ describe('DefaultAdapter', () => {
       expect(result).toBeInstanceOf(SchemaField);
     });
 
-    it('should resolve REFERENCES type using registry', () => {
-      const referencedType = { Type: Types.STRING, required: true };
-      mockRegistry.get.mockReturnValue(referencedType);
-
-      const result = adapter.factoryType({
-        Type: Types.REFERENCES,
-        options: { references: 'User' },
-      });
-
-      expect(mockRegistry.get).toHaveBeenCalledWith('User');
-      expect(result).toBeInstanceOf(ScalarField);
-    });
-
     it('should return UnknownField for unknown type', () => {
       const result = adapter.factoryType({ Type: 'INVALID_TYPE' });
       expect(result).toBeInstanceOf(UnknownField);

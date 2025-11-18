@@ -8,7 +8,8 @@ class SchemaRegistry {
   }
 
   get schemas() {
-    return Array.from(this.#schemas);
+    const structures = Array.from(this.#structure.keys());
+    return structures.map(name => this.get(name));
   }
 
   get structure() {

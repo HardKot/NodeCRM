@@ -8,7 +8,6 @@ const Types = Object.freeze({
   STRING: 4,
   BOOLEAN: 5,
   ENUM: 6,
-  REFERENCES: 7,
 });
 
 export { Types };
