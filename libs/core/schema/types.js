@@ -1,3 +1,5 @@
+'use strict';
+
 const Types = Object.freeze({
   UNKNOWN: 0,
   ARRAY: 1,

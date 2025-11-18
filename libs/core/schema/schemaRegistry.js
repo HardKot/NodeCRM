@@ -1,31 +1,45 @@
-import events from 'node:events';
-import path from 'node:path';
-import { Transform } from './transformUtils.js';
-
-class SchemaRegistry extends events.EventEmitter {
+class SchemaRegistry {
+  #module;
   #schemas = new Map();
-  #structures = new Map();
+  #structure = new Map();
 
-  constructor(app) {
-    super();
-
-    this.app = app;
-    this.adapter = app.adapters.get('schemas');
-    Object.freeze(this);
+  constructor(module) {
+    this.#module = module;
   }
 
-  async load() {
-    const schemas = await this.app.readModule('');
+  get schemas() {
+    return Array.from(this.#schemas);
+  }
 
-    for (const modulePath of schemas) {
-      const module = await import(modulePath);
-      const name = path.basename(modulePath);
+  get structure() {
+    return Array.from(this.#structure);
+  }
 
-      const structure = module.structure;
+  set(name, structure) {
+    this.#structure.set(name, structure);
+    return this;
+  }
 
-      if (!name || !structure) continue;
-      this.#structures.set(name, structure);
+  delete(name) {
+    this.#schemas.delete(name);
+    this.#structure.delete(name);
+    return this;
+  }
+
+  get(name) {
+    let schema = this.#schemas.get(name);
+
+    if (!schema) {
+      const structure = this.#structure.get(name);
+      if (!structure) {
+        throw new Error(`Schema "${name}" is not registered`);
+      }
+
+      schema = this.#module.adapter.factoryType(structure);
+      this.#schemas.set(name, schema);
     }
+
+    return schema;
   }
 }
 

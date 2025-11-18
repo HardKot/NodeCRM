@@ -1,6 +1,6 @@
 import { beforeEach, describe, it, expect } from '@jest/globals';
 import { SchemaParser } from '../schemaParser';
-import { Types } from '../Types.js';
+import { Types } from '../types.js';
 
 describe('SchemaParser', () => {
   let parser;

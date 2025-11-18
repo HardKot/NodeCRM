@@ -1,10 +1,15 @@
 'use strict';
 
-import { Types } from './Types.js';
+import { Types } from './types.js';
 
 class SchemaParserError extends Error {}
 
 class SchemaParser {
+  #module;
+  constructor(module) {
+    this.#module = module;
+  }
+
   parser(source) {
     const srcType = this.sourceType(source);
     const parserName = 'parser' + srcType.charAt(0).toUpperCase() + srcType.slice(1);
