@@ -5,7 +5,6 @@ describe('SchemaModule', () => {
   const simpleSchema = { name: 'string', age: 'number?' };
   const schemaWithArray = { tags: ['string'] };
   const schemaWithObject = { address: { street: 'string', number: 'number' } };
-  const schemaWithReference = { friend: 'simpleSchema', likes: 'number?' };
 
   let schemaModule;
 
@@ -16,23 +15,40 @@ describe('SchemaModule', () => {
     schemaModule.registerSchema('objectSchema', schemaWithObject);
   });
 
-  it('Simple schema', () => {
+  it('validate simple schema', () => {
     const validator = schemaModule.createValidator('simpleSchema');
 
-    // expect(validator({ name: 'John', age: 30 }).valid).toBeTruthy();
-    // expect(validator({ name: 'John' }).valid).toBeTruthy();
+    expect(validator({ name: 'John', age: 30 }).valid).toBeTruthy();
+    expect(validator({ name: 'John' }).valid).toBeTruthy();
 
     expect(validator({ age: 30 }).valid).toBeFalsy();
     expect(validator({}).valid).toBeFalsy();
     expect(validator(0).valid).toBeFalsy();
   });
 
-  // it('Simple schema', () => {
-  //   const { check } = schemaModule.registry.get("simpleSchema");
-  //
-  //   expect(check({ name: 'John', age: 30 })).toBeTruthy();
-  //   expect(check({ tags: ['tag1', 'tag2', 'tag3'] })).toBeTruthy();
-  //   expect(check({ address: { street: 'White street', number: 1 } })).toBeTruthy();
-  //   expect(check({ likes: 100, friend: { name: 'Petr', age: 25 } })).toBeTruthy();
-  // });
+  it('validate schema array', () => {
+    const validator = schemaModule.createValidator('arraySchema');
+
+    expect(validator({ tags: ['tag1', 'tag2', 'tag3'] }).valid).toBeTruthy();
+    expect(validator({ tags: [1, 2, 3] }).valid).toBeFalsy();
+    expect(validator({ tags: [['tag1', 'tag2', 'tag3']] }).valid).toBeFalsy();
+    expect(validator({ tags: { 0: 'tag1', 1: 'tag2' } }).valid).toBeFalsy();
+    expect(validator({ tags: 'tag1,tag2,tag3' }).valid).toBeFalsy();
+  });
+
+  it('validate schema object', () => {
+    const validator = schemaModule.createValidator('objectSchema');
+
+    expect(validator({ address: { street: 'Test', number: 12 } }).valid).toBeTruthy();
+    expect(
+      validator({
+        address: [
+          ['street', 'Test'],
+          ['number', 12],
+        ],
+      }).valid
+    ).toBeFalsy();
+    expect(validator({ address: ['street', 'Test', 'number', 12] }).valid).toBeFalsy();
+    expect(validator({ address: [{ street: 'Test', number: 12 }] }).valid).toBeFalsy();
+  });
 });
