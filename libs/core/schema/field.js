@@ -27,11 +27,11 @@ class ScalarField extends AbstractField {
   check(value) {
     if (!this.required && value === undefined) return CheckResult.Truthy;
     if (typeof value === this.scalar) return CheckResult.Truthy;
-    return CheckResult.Message(`Expected type ${this.scalar} but got ${typeof value}`);
+    return new CheckResult(false, `Expected type ${this.scalar} but got ${typeof value}`);
   }
 
   transform(value) {
-    if (this.required && value === undefined) return undefined;
+    if (!value === undefined) return undefined;
     switch (this.scalar) {
       case Types.NUMBER:
         return Number(value);
@@ -62,7 +62,7 @@ class EnumField extends AbstractField {
   check(value) {
     if (!this.required && value === undefined) return CheckResult.Truthy;
     if (this.#values.has(value)) return CheckResult.Truthy;
-    return CheckResult.Message(`Value "${value}" is not in enum [${this.values.join(', ')}]`);
+    return new CheckResult(false, `Value "${value}" is not in enum [${this.values.join(', ')}]`);
   }
 
   transform(value) {
@@ -88,7 +88,7 @@ class ArrayField extends AbstractField {
       const error = errors[i];
 
       if (!error.valid) {
-        checkResult.addError(`${i}`, error);
+        checkResult.addError(error, `${i}`);
       }
     }
 
@@ -114,8 +114,8 @@ class SchemaField extends AbstractField {
 
     for (const [key, field] of Object.entries(this.schema)) {
       const result = field.check(value[key]);
-      if (!result) {
-        errors.addError(key, result);
+      if (!result.valid) {
+        errors.addError(result, key);
       }
     }
     return errors;

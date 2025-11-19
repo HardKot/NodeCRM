@@ -1,16 +1,30 @@
 class CheckResult {
-  #errors;
+  #errors = [];
   #isValid;
 
   constructor(valid = true, errors = []) {
-    this.#errors = errors;
+    if (!Array.isArray(errors)) {
+      errors = [errors];
+    }
+
+    for (const error of errors) {
+      if (typeof error === 'object') {
+        this.#errors.push(error);
+      } else {
+        this.#errors.push({ path: '', message: error });
+      }
+    }
+
     this.#isValid = valid;
   }
 
-  addError(path, message) {
+  addError(message, path = '') {
+    this.#isValid = false;
     if (message instanceof CheckResult) {
       for (const error of message.errors) {
-        this.#errors.push({ path: path + error.path, message: error.message });
+        let name = `${path}`;
+        if (error.path) name += `.${error.path}`;
+        this.#errors.push({ path: path, message: error.message });
       }
       return this;
     }
@@ -19,7 +33,7 @@ class CheckResult {
   }
 
   get valid() {
-    return this.#isValid && !this.#errors.length;
+    return this.#isValid;
   }
 
   get errors() {
@@ -28,9 +42,6 @@ class CheckResult {
 
   static Falsy = new CheckResult(false);
   static Truthy = new CheckResult(true);
-  static Message(message) {
-    return new CheckResult(false, [{ path: '', message }]);
-  }
 }
 
 export { CheckResult };
