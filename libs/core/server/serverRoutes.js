@@ -1,23 +1,33 @@
-import { ArrayExtensions } from '#lib/utils';
-
-class ControllerNodeError extends Error {}
-
-class ControllerNode {
+class ServerRoutes {
   #children = [];
-  #value = [];
   #regexpKey = null;
 
   constructor(key = 'index') {
     this.key = key;
 
+    this.get = null;
+    this.post = null;
+    this.put = null;
+    this.delete = null;
+
     if (key.startsWith('<') && key.endsWith('>')) {
-      this.#regexpKey = /^[\d\w]+$/;
+      const type = key.slice(1, -1);
+      switch (type) {
+        case 'string':
+          this.#regexpKey = /^\w+$/;
+          break;
+        case 'number':
+          this.#regexpKey = /^\d+$/;
+          break;
+        default:
+          this.#regexpKey = /^[\d\w]+$/;
+      }
     } else {
       this.#regexpKey = new RegExp(`^${key}$`);
     }
   }
 
-  addValue(value, key = undefined) {
+  register(value, key = undefined, method = 'get') {
     if (!key) key = 'index';
     if (key.endsWith('/')) key = key + 'index';
     if (key.startsWith('/')) key = key.slice(1);
@@ -25,36 +35,33 @@ class ControllerNode {
     const [childKey, ...otherPath] = key.split('/');
 
     if (childKey === 'index') {
-      this.#value.push(value);
-
+      this[method] = value;
       return this;
     }
 
     let child = this.#children.find(it => it.key === childKey);
     if (!child) {
-      child = new ControllerNode(childKey);
+      child = new ServerRoutes(childKey);
       this.#children.push(child);
     }
 
-    child.addValue(value, otherPath.join('/'));
+    child.register(value, otherPath.join('/'), method);
 
     return this;
   }
 
-  getValue(key, valueFilter = null) {
-    if (!valueFilter) valueFilter = () => true;
-
+  route(key) {
     if (key.startsWith('/')) key = key.slice(1);
     if (key.endsWith('/')) key = key + 'index';
 
     const [childKey, ...otherPath] = key.split('/');
 
-    if (!childKey) return this.#value.find(valueFilter) ?? null;
+    if (!childKey) return this;
 
     let child = this.#children.find(it => it.#regexpKey.test(childKey));
 
-    return child?.getValue(otherPath.join('/')) ?? null;
+    return child?.route(otherPath.join('/')) ?? null;
   }
 }
 
-export { ControllerNode };
+export { ServerRoutes };
