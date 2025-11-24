@@ -1,24 +1,19 @@
 import { SchemaParser } from './schemaParser.js';
 import { DefaultAdapter } from './defaultAdapter.js';
-import { SchemaRegistry } from './schemaRegistry.js';
+import { Schema } from 'node:inspector';
+import { AbstractField } from './field.js';
 
 class SchemaModule {
-  #parser;
+  #parser = new SchemaParser();
+  #registry = new Map();
   #adapter;
-  #registry;
 
   constructor(adapterConstructor = DefaultAdapter) {
-    this.#parser = new SchemaParser();
-    this.#registry = new SchemaRegistry(this);
     this.#adapter = new adapterConstructor();
   }
 
   get adapter() {
     return this.#adapter;
-  }
-
-  get registry() {
-    return this.#registry;
   }
 
   get parser() {
@@ -29,15 +24,18 @@ class SchemaModule {
     return this.#registry.schemas;
   }
 
-  get structure() {
-    return this.#registry.structure;
+  registerSchema(name, value) {
+    const schema = this.factorySchema(value, name);
+    this.#registry.set(schema.name, schema);
+
+    return schema;
   }
 
-  registerSchema(name, value) {
-    const structure = this.#parser.parser(value);
-    this.#registry.set(name, structure);
+  updateSchema(name, value) {
+    const schema = this.factorySchema(value, name);
+    this.#registry.set(schema.name, schema);
 
-    return this;
+    return schema;
   }
 
   unregisterSchema(name) {
@@ -46,27 +44,17 @@ class SchemaModule {
     return this;
   }
 
-  updateSchema(name, value) {
-    const structure = this.#parser.parser(value);
-    this.#registry.set(name, structure);
-
-    return this;
+  getSchema(name) {
+    return this.#registry.get(name) ?? null;
   }
 
-  createValidator(name) {
-    const schema = this.#registry.get(name);
-    if (!schema) {
-      throw new Error(`Schema "${name}" is not registered`);
-    }
-    return schema.check.bind(schema);
-  }
+  factorySchema(value, name = '') {
+    if (!name) name = `schema_${Math.round(Math.random() * 10_000)}`;
 
-  createTransformer(name) {
-    const schema = this.#registry.get(name);
-    if (!schema) {
-      throw new Error(`Schema "${name}" is not registered`);
-    }
-    return schema.transform.bind(schema);
+    if (!(value instanceof Schema) && !(value instanceof AbstractField))
+      value = this.#parser.parser(value);
+    if (value instanceof AbstractField) value = new Schema(name, value);
+    return value;
   }
 }
 

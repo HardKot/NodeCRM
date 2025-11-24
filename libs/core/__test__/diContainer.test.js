@@ -2,7 +2,7 @@ import { describe, beforeEach, test, expect, jest } from '@jest/globals';
 
 import { DiContainer, DiContainerError, DiScope } from '../diContainer.js';
 
-class AComponent { }
+class AComponent {}
 
 class BComponent {
   constructor(aComponent) {

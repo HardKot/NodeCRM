@@ -1,13 +1,14 @@
 'use strict';
 
 import { Types } from './types.js';
+import { StringCase } from '#lib/utils';
 
 class SchemaParserError extends Error {}
 
 class SchemaParser {
   parser(source) {
     const srcType = this.sourceType(source);
-    const parserName = 'parser' + srcType.charAt(0).toUpperCase() + srcType.slice(1);
+    const parserName = StringCase.factoryCamelCase('parser', srcType);
     const parser = this[parserName];
 
     if (!parser) throw new SchemaParserError('No parser found for source type: ' + srcType);

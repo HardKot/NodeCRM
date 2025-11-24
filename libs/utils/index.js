@@ -4,3 +4,5 @@ export { Optional } from './optional.js';
 
 export { default as NullPointError } from './nullPointError.js';
 export { default as TypeError } from './typeError.js';
+export * as StringCase from './stringCase.js';
+export { ArrayExtensions } from './arrayExtensions.js';
