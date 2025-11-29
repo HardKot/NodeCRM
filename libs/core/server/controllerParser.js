@@ -1,6 +1,7 @@
 'use strict';
 
 import { StringCase } from '#lib/utils';
+import { RequestHandler } from './requestHandler';
 
 class ControllerParserError extends Error {}
 
@@ -17,88 +18,53 @@ class ControllerParser {
     return parser?.call(this, source);
   }
 
-  defaultGuard() {
-    return true;
+  parseObject(source) {
+    let result = this.parserMethodObject(source);
+    if (result.length > 0) return result;
+    return this.parserGroupObject(source);
   }
 
-  parseObject(source) {
-    const methods = this.#extractMethods(source);
-    const subControllers = this.#extractSubController(source);
+  parserMethodObject(source) {
+    if (!source.method) return [];
 
-    const { mapping, body, params, dependencies, guard } = source;
+    return [
+      new RequestHandler(source.method, {
+        mapping: source.mapping,
+        dependencies: source.dependencies,
+        method: source.httpMethod,
+        guard: source.guard,
+        bodySchema: source.types?.body,
+        paramsSchema: source.types?.params,
+        return: source.types?.return,
+        defaultStatus: source.defaultStatus,
+      }),
+    ];
+  }
 
-    let handlers = [];
+  parserGroupObject(source) {
+    const handlers = [];
 
-    for (const it in methods) {
-      if (!methods[it]) continue;
-      const handler = this.#createHandler(methods[it], {
-        mapping,
-        method: it,
-        dependencies,
-        body,
-        params,
-        guard,
-      });
-      handlers.push(handler);
-    }
+    for (const method of ['get', 'post', 'patch', 'put', 'delete']) {
+      const callback = source[method];
+      if (!callback) continue;
 
-    for (const subController of subControllers) {
-      handlers = handlers.concat(
-        [
-          this.parse({ ...subController, mapping: `${mapping}/${subController.mapping ?? '/'}` }),
-        ].flat()
+      handlers.push(
+        new RequestHandler(callback, {
+          mapping: source.mapping,
+          dependencies: source.dependencies,
+          method: source.method,
+          guard: source.guard,
+          bodySchema: source.types?.body,
+          paramsSchema: source.types?.params,
+          return: source.types?.return,
+        })
       );
     }
 
     return handlers;
   }
 
-  #createHandler(source, options = {}) {
-    let mapping = {
-      path: options.mapping || '/',
-      method: options.method ?? 'get',
-    };
-
-    let params = options.params ?? {};
-
-    const mappingParams = this.#parseMappingParams(mapping.path);
-    mapping.path = mappingParams.mapping;
-    params = { ...params, path: mappingParams.params, body: options.body };
-
-    return {
-      method: source,
-      params: params,
-      mapping: mapping,
-      dependencies: options.dependencies ?? [],
-      guard: options.guard ?? this.defaultGuard,
-      return: options.return,
-    };
-  }
-
-  #extractSubController(source) {
-    let extensions = source.extensions ?? source.use ?? [];
-    if (!Array.isArray(extensions)) extensions = [extensions];
-
-    return extensions;
-  }
-
-  #extractMethods(source) {
-    if (source.method) {
-      const httpMethod = source.httpMethod || 'get';
-      return { [httpMethod]: source.method };
-    }
-    const methods = {};
-
-    if (source.get) methods.get = source.get;
-    if (source.post) methods.post = source.post;
-    if (source.put) methods.put = source.put;
-    if (source.delete) methods.delete = source.delete;
-    if (source.patch) methods.patch = source.patch;
-
-    return methods;
-  }
-
-  #parseMappingParams(source) {
+  parseMappingParams(source) {
     const parts = source.split('/').filter(it => !!it);
     const mappingParams = {};
 
