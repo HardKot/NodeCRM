@@ -21,6 +21,7 @@ export default [
         clearInterval: 'readonly',
         URL: 'readonly',
         fetch: 'readonly',
+        AbortSignal: 'readonly',
       },
     },
     plugins: {
@@ -33,9 +34,9 @@ export default [
       'prefer-const': 'error',
       'no-var': 'error',
       'no-undef': 'error',
-      'semi': ['error', 'always'],
-      'quotes': ['error', 'single'],
-      'indent': ['error', 2],
+      semi: ['error', 'always'],
+      quotes: ['error', 'single'],
+      indent: ['error', 2],
       'comma-dangle': ['error', 'es5'],
       'eol-last': 'error',
       'no-trailing-spaces': 'error',
@@ -43,15 +44,8 @@ export default [
       'array-bracket-spacing': ['error', 'never'],
       'no-prototype-builtins': 'off',
     },
-    ignores: [
-      'node_modules/**',
-      'logs/**',
-      'dist/**',
-      'build/**',
-      'coverage/**',
-    ],
+    ignores: ['node_modules/**', 'logs/**', 'dist/**', 'build/**', 'coverage/**'],
   },
-  // Специальные правила для браузерных JS файлов
   {
     files: ['public/js/**/*.js'],
     languageOptions: {
@@ -66,12 +60,14 @@ export default [
       },
     },
     rules: {
-      'no-unused-vars': ['error', {
-        argsIgnorePattern: '^_',
-        varsIgnorePattern: '^_',
-        // Разрешаем неиспользуемые функции в браузерных скриптах (они вызываются из HTML)
-        vars: 'local'
-      }],
+      'no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          vars: 'local',
+        },
+      ],
     },
   },
   prettier,

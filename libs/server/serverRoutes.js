@@ -4,13 +4,14 @@ class ServerRoutes {
 
   constructor(key = 'index') {
     this.key = key;
+    this.isDynamic = key.startsWith('<') && key.endsWith('>');
 
     this.get = null;
     this.post = null;
     this.put = null;
     this.delete = null;
 
-    if (key.startsWith('<') && key.endsWith('>')) {
+    if (this.isDynamic) {
       const type = key.slice(1, -1);
       switch (type) {
         case 'string':
@@ -20,7 +21,7 @@ class ServerRoutes {
           this.#regexpKey = /^\d+$/;
           break;
         default:
-          this.#regexpKey = /^[\d\w]+$/;
+          this.#regexpKey = /^[\w\d]+$/;
       }
     } else {
       this.#regexpKey = new RegExp(`^${key}$`);
@@ -50,17 +51,17 @@ class ServerRoutes {
     return this;
   }
 
-  route(key) {
+  route(key, method = 'get') {
     if (key.startsWith('/')) key = key.slice(1);
     if (key.endsWith('/')) key = key + 'index';
 
     const [childKey, ...otherPath] = key.split('/');
 
-    if (!childKey) return this;
+    if (!childKey) return this[method] ?? null;
 
-    let child = this.#children.find(it => it.#regexpKey.test(childKey));
+    const child = this.#children.find(it => it.#regexpKey.test(childKey));
 
-    return child?.route(otherPath.join('/')) ?? null;
+    return child?.route(otherPath.join('/'), method) ?? null;
   }
 }
 
