@@ -1,6 +1,11 @@
 import http2 from 'node:http2';
+import stream from 'node:stream';
 
 class Response extends http2.Http2ServerResponse {
+  get isSend() {
+    return this.headersSent;
+  }
+
   status(code) {
     this.statusCode = code;
     return this;
@@ -39,16 +44,21 @@ class Response extends http2.Http2ServerResponse {
   }
 
   send() {
-    this.end(this.value);
-  }
-
-  sessionID(value) {
-    this.setHeader('Set-Cookie', `JSSESSIONID=${value}; HttpOnly; Path=/; SameSite=Strict`);
+    if (this.value instanceof stream.Stream) {
+      this.value.pipe(this);
+    } else {
+      this.end(this.value);
+    }
     return this;
   }
 
+  /**
+   * @param {http2.ServerHttp2Stream} stream
+   * @return {Response}
+   */
   static wrap(stream) {
     Object.setPrototypeOf(stream, Response.prototype);
+    Object.freeze(stream);
     return stream;
   }
 }

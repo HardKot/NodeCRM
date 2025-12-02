@@ -1,4 +1,4 @@
-class ServerRoutes {
+class Routes {
   #children = [];
   #regexpKey = null;
 
@@ -42,8 +42,13 @@ class ServerRoutes {
 
     let child = this.#children.find(it => it.key === childKey);
     if (!child) {
-      child = new ServerRoutes(childKey);
+      child = new Routes(childKey);
       this.#children.push(child);
+      this.#children.sort((a, b) => {
+        if (a.isDynamic && !b.isDynamic) return 1;
+        if (!a.isDynamic && b.isDynamic) return -1;
+        return 0;
+      });
     }
 
     child.register(value, otherPath.join('/'), method);
@@ -65,4 +70,4 @@ class ServerRoutes {
   }
 }
 
-export { ServerRoutes };
+export { Routes };

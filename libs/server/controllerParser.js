@@ -1,7 +1,7 @@
 'use strict';
 
 import { StringCase } from '#lib/utils';
-import { RequestHandler } from './requestHandler.js';
+import { Handler } from './handler.js';
 
 class ControllerParserError extends Error {}
 
@@ -19,7 +19,7 @@ class ControllerParser {
   }
 
   parseObject(source) {
-    let result = this.parserMethodObject(source);
+    const result = this.parserMethodObject(source);
     if (result.length > 0) return result;
     return this.parserGroupObject(source);
   }
@@ -28,7 +28,7 @@ class ControllerParser {
     if (!source.method) return [];
 
     return [
-      new RequestHandler(source.method, {
+      new Handler(source.method, {
         mapping: source.mapping,
         dependencies: source.dependencies,
         method: source.httpMethod,
@@ -49,7 +49,7 @@ class ControllerParser {
       if (!callback) continue;
 
       handlers.push(
-        new RequestHandler(callback, {
+        new Handler(callback, {
           mapping: source.mapping,
           dependencies: source.dependencies,
           method: source.method,

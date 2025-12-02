@@ -7,14 +7,14 @@ class RequestHandlerError extends Error {
   }
 }
 
-class RequestHandler {
+class Handler {
   constructor(callback, options = {}) {
     this.callback = callback;
     this.mapping = options.mapping ?? '/';
     this.dependencies = options.dependencies ?? [];
     this.method = options.method?.toUpperCase() ?? 'GET';
 
-    this.guard = options.guard ?? RequestHandler.fullAccess;
+    this.guard = options.guard ?? Handler.fullAccess;
 
     this.bodySchema = options.bodySchema;
     this.paramSchemas = options.paramSchemas;
@@ -28,21 +28,20 @@ class RequestHandler {
     this.matchingUrl = new RegExp(this.mapping.replaceAll(/<\w+>/, '\\w+'));
   }
 
+  /**
+   * @param {Request} request
+   * @param {Response} response
+   * @return {Promise<void>}
+   */
   async run(request, response) {
-    if (!this.isMethodImplemented(request)) throw new RequestHandlerError('Method not implemented');
-
     const hasAccess = await this.guard(request);
     if (!hasAccess) throw new RequestHandlerError('Forbidden', 403);
 
     const body = await this.getBody(request);
     const params = this.getParams(request);
 
-    const result = await this.callback({
-      body,
-      params,
-    });
-
-    response.status(this.defaultStatus).contentType(request.contentType).send();
+    const result = await this.callback({ body, params });
+    response.data(result, request.contentType).status(this.defaultStatus).send();
   }
 
   async getBody(request) {
@@ -61,13 +60,9 @@ class RequestHandler {
     return this.paramSchemas.from({ ...queryParams, ...urlParams });
   }
 
-  isMethodImplemented(request) {
-    return this.matchingUrl.test(request.url) && this.method === request.method.toUpperCase();
-  }
-
   static fullAccess() {
     return true;
   }
 }
 
-export { RequestHandler };
+export { Handler };

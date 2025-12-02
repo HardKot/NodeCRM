@@ -1,11 +1,11 @@
 import { describe, it, expect, beforeEach } from '@jest/globals';
-import { ServerRoutes } from '../serverRoutes.js';
+import { Routes } from '../routes.js';
 
 describe('ControllerNode', () => {
   let rootNode;
 
   beforeEach(() => {
-    rootNode = new ServerRoutes();
+    rootNode = new Routes();
   });
 
   it.each([

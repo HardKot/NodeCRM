@@ -2,7 +2,7 @@ import http2 from 'node:http2';
 import queryString from 'node:querystring';
 
 class Request extends http2.Http2ServerRequest {
-  contentType() {
+  get contentType() {
     return this.headers['content-type'] ?? 'application/json';
   }
 
@@ -22,7 +22,7 @@ class Request extends http2.Http2ServerRequest {
   }
 
   async json() {
-    if (this.contentType() === 'application/json') {
+    if (this.contentType === 'application/json') {
       const text = await this.text();
       const data = JSON.parse(text);
       return Object.freeze(data);
@@ -31,23 +31,21 @@ class Request extends http2.Http2ServerRequest {
   }
 
   async data() {
-    const contentType = this.contentType();
-
-    if (contentType === 'application/json') {
+    if (this.contentType === 'application/json') {
       return await this.json();
     }
 
-    throw new Error(`Request.data() does not support content type: ${contentType}`);
+    throw new Error(`Request.data() does not support content type: ${this.contentType}`);
   }
 
-  queryParams() {
+  get queryParams() {
     const [, queryParamsStr] = this.url.split('?');
     let data = {};
-    if (!queryParamsStr) data = queryString.parse(queryParamsStr);
+    if (queryParamsStr) data = queryString.parse(queryParamsStr);
     return Object.freeze(data);
   }
 
-  cookies() {
+  get cookies() {
     const cookieHeader = this.headers['cookie'];
     const cookies = {};
     if (cookieHeader) {
@@ -60,13 +58,9 @@ class Request extends http2.Http2ServerRequest {
     return Object.freeze(cookies);
   }
 
-  sessionID() {
-    const cookies = this.cookies();
-    return cookies['JSSESSIONID'] || null;
-  }
-
   static wrap(stream) {
     Object.setPrototypeOf(stream, Request.prototype);
+    Object.freeze(stream);
     return stream;
   }
 }

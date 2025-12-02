@@ -29,6 +29,10 @@ export function isString(v) {
   return typeof v === 'string';
 }
 
+export function isInt(v) {
+  return Number.isInteger(v);
+}
+
 export function notNull(v) {
   if (typeof v === 'object') {
     return v !== null;
