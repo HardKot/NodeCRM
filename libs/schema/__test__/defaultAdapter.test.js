@@ -1,5 +1,5 @@
 import { beforeEach, describe, it, expect, jest } from '@jest/globals';
-import { DefaultAdapter } from '../defaultAdapter';
+import { DefaultAdapter } from '../defaultAdapter.js';
 import { Types } from '../types.js';
 import { ScalarField, EnumField, ArrayField, SchemaField, UnknownField } from '../field.js';
 

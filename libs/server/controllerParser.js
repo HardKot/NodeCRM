@@ -1,7 +1,7 @@
 'use strict';
 
 import { StringCase } from '#lib/utils';
-import { RequestHandler } from './requestHandler';
+import { RequestHandler } from './requestHandler.js';
 
 class ControllerParserError extends Error {}
 

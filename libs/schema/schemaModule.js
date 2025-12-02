@@ -1,6 +1,6 @@
 import { SchemaParser } from './schemaParser.js';
 import { DefaultAdapter } from './defaultAdapter.js';
-import { Schema } from 'node:inspector';
+import { Schema } from './schema.js';
 import { AbstractField } from './field.js';
 
 class SchemaModule {
@@ -51,9 +51,13 @@ class SchemaModule {
   factorySchema(value, name = '') {
     if (!name) name = `schema_${Math.round(Math.random() * 10_000)}`;
 
-    if (!(value instanceof Schema) && !(value instanceof AbstractField))
+    if (!(value instanceof Schema) && !(value instanceof AbstractField)) {
       value = this.#parser.parser(value);
-    if (value instanceof AbstractField) value = new Schema(name, value);
+      value = this.#adapter.factoryType(value);
+    }
+    if (value instanceof AbstractField) {
+      value = new Schema(name, value);
+    }
     return value;
   }
 }

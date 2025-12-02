@@ -9,7 +9,7 @@ export function isFunction(v) {
   return typeof v === 'function';
 }
 
-export function isUndefiend(v) {
+export function isUndefined(v) {
   return v === undefined;
 }
 
@@ -18,7 +18,7 @@ export function isSymbol(v) {
 }
 
 export function isPrimitive(v) {
-  return ['number', 'bigint', 'boolean', 'string', 'undefiend', 'symbol'].includes(typeof v);
+  return ['number', 'bigint', 'boolean', 'string', 'undefined', 'symbol'].includes(typeof v);
 }
 
 export function isNull(v) {

@@ -1,4 +1,4 @@
-import { Types } from '../core/schema/types.js';
+import { Types } from '../schema/types.js';
 import { isFunction } from './types.js';
 
 class ArrayExtensions extends Array {

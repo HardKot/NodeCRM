@@ -12,7 +12,7 @@ class Schema {
   }
 
   validate(data) {
-    return this.#definition.validate.bind(this.#definition)(data);
+    return this.#definition.check.bind(this.#definition)(data);
   }
 
   transform(data) {
