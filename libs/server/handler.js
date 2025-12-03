@@ -1,4 +1,5 @@
 import * as Utils from './utils.js';
+import { Scope } from './scope.js';
 
 class RequestHandlerError extends Error {
   constructor(message, code = 500) {
@@ -24,8 +25,6 @@ class Handler {
     } else {
       this.defaultStatus = this.method === 'POST' ? 201 : 200;
     }
-
-    this.matchingUrl = new RegExp(this.mapping.replaceAll(/<\w+>/, '\\w+'));
   }
 
   /**
@@ -34,13 +33,18 @@ class Handler {
    * @return {Promise<void>}
    */
   async run(request, response) {
-    const hasAccess = await this.guard(request);
+    const user = Scope.current.user;
+    const hasAccess = await this.guard(user);
     if (!hasAccess) throw new RequestHandlerError('Forbidden', 403);
 
     const body = await this.getBody(request);
     const params = this.getParams(request);
 
-    const result = await this.callback({ body, params });
+    const result = await this.callback({
+      body,
+      params,
+      user,
+    });
     response.data(result, request.contentType).status(this.defaultStatus).send();
   }
 

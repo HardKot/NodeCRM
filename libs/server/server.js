@@ -6,6 +6,7 @@ import { Request } from './request.js';
 import { Response } from './response.js';
 import { Routes } from './routes.js';
 import { Session } from './session.js';
+import { Scope } from './scope.js';
 
 class Server {
   constructor(app, options = {}) {
@@ -27,7 +28,7 @@ class Server {
       key: this.tls.key,
       cert: this.tls.cert,
     });
-
+    this.server.setTimeout(this.requestTimeout);
     this.activeSessions = new Array(options.maxSession).fill(null);
 
     this.server.on('request', (req, res) => this.onRequest(req, res));
@@ -71,20 +72,22 @@ class Server {
   }
 
   async onRequest(request, response) {
-    try {
-      request = Request.wrap(request);
-      response = Response.wrap(response);
-      const handler = this.routes.route(request.url, request.method);
-      if (!handler) return this.onNotFound(request, response);
-      await Functions.runChains(this.middlewares, request, response);
-      if (response.isSend) return;
-      await handler.run(request, response);
-    } catch (e) {
-      if (e.name === 'AbortError') {
-        return this.onTimeout(request, response);
+    await Scope.run(async () => {
+      try {
+        request = Request.wrap(request);
+        response = Response.wrap(response);
+        const handler = this.routes.route(request.url, request.method);
+        if (!handler) return this.onNotFound(request, response);
+        await Functions.runChains(this.middlewares, request, response);
+        if (response.isSend) return;
+        await handler.run(request, response);
+      } catch (e) {
+        if (e.name === 'AbortError') {
+          return this.onTimeout(request, response);
+        }
+        return this.onRequestError(e, request, response);
       }
-      return this.onRequestError(e, request, response);
-    }
+    });
   }
 
   async onError(err) {

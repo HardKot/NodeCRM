@@ -25,13 +25,13 @@ class ControllerParser {
   }
 
   parserMethodObject(source) {
-    if (!source.method) return [];
+    if (!source.handler) return [];
 
     return [
-      new Handler(source.method, {
+      new Handler(source.handler, {
         mapping: source.mapping,
         dependencies: source.dependencies,
-        method: source.httpMethod,
+        method: source.method,
         guard: source.guard,
         bodySchema: source.types?.body,
         paramsSchema: source.types?.params,

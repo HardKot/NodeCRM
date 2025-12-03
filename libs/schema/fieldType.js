@@ -1,6 +1,6 @@
 'use strict';
 
-const Types = Object.freeze({
+const FieldType = Object.freeze({
   UNKNOWN: 0,
   ARRAY: 1,
   SCHEMA: 2,
@@ -10,4 +10,4 @@ const Types = Object.freeze({
   ENUM: 6,
 });
 
-export { Types };
+export { FieldType };

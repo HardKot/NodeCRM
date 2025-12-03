@@ -1,6 +1,6 @@
 import { beforeEach, describe, it, expect, jest } from '@jest/globals';
 import { DefaultAdapter } from '../defaultAdapter.js';
-import { Types } from '../types.js';
+import { FieldType } from '../fieldType.js';
 import { ScalarField, EnumField, ArrayField, SchemaField, UnknownField } from '../field.js';
 
 describe('DefaultAdapter', () => {
@@ -16,21 +16,21 @@ describe('DefaultAdapter', () => {
 
   describe('factoryType', () => {
     it('should create ScalarField for NUMBER type', () => {
-      const result = adapter.factoryType({ Type: Types.NUMBER, required: true });
+      const result = adapter.factoryType({ Type: FieldType.NUMBER, required: true });
       expect(result).toBeInstanceOf(ScalarField);
       expect(result.scalar).toBe('number');
       expect(result.required).toBe(true);
     });
 
     it('should create ScalarField for STRING type', () => {
-      const result = adapter.factoryType({ Type: Types.STRING, required: false });
+      const result = adapter.factoryType({ Type: FieldType.STRING, required: false });
       expect(result).toBeInstanceOf(ScalarField);
       expect(result.scalar).toBe('string');
       expect(result.required).toBe(false);
     });
 
     it('should create ScalarField for BOOLEAN type', () => {
-      const result = adapter.factoryType({ Type: Types.BOOLEAN, required: true });
+      const result = adapter.factoryType({ Type: FieldType.BOOLEAN, required: true });
       expect(result).toBeInstanceOf(ScalarField);
       expect(result.scalar).toBe('boolean');
     });
@@ -38,7 +38,7 @@ describe('DefaultAdapter', () => {
     it('should create EnumField for ENUM type', () => {
       const enumValues = ['option1', 'option2', 'option3'];
       const result = adapter.factoryType({
-        Type: Types.ENUM,
+        Type: FieldType.ENUM,
         required: true,
         options: { enum: enumValues },
       });
@@ -48,16 +48,16 @@ describe('DefaultAdapter', () => {
 
     it('should create ArrayField for ARRAY type', () => {
       const result = adapter.factoryType({
-        Type: Types.ARRAY,
-        options: { value: { Type: Types.STRING, required: false } },
+        Type: FieldType.ARRAY,
+        options: { value: { Type: FieldType.STRING, required: false } },
       });
       expect(result).toBeInstanceOf(ArrayField);
     });
 
     it('should create SchemaField for SCHEMA type', () => {
       const result = adapter.factoryType({
-        Type: Types.SCHEMA,
-        options: { schema: { Type: Types.STRING, required: false } },
+        Type: FieldType.SCHEMA,
+        options: { schema: { Type: FieldType.STRING, required: false } },
       });
       expect(result).toBeInstanceOf(SchemaField);
     });

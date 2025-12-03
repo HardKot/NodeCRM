@@ -1,6 +1,6 @@
 'use strict';
 
-import { Types } from './types.js';
+import { FieldType } from './fieldType.js';
 import { StringCase } from '#lib/utils';
 
 class SchemaParserError extends Error {}
@@ -23,12 +23,12 @@ class SchemaParser {
 
   parserString(source) {
     const required = !source.endsWith('?');
-    let type = !required ? source.slice(0, -1) : source;
+    const type = !required ? source.slice(0, -1) : source;
     const options = {};
 
     if (type.includes('|')) {
       return {
-        Type: Types.ENUM,
+        Type: FieldType.ENUM,
         required,
         options: {
           enum: type.split('|').map(v => v.trim()),
@@ -36,16 +36,16 @@ class SchemaParser {
       };
     }
 
-    if (Types[type.toUpperCase()]) {
+    if (FieldType[type.toUpperCase()]) {
       return {
-        Type: Types[type.toUpperCase()],
+        Type: FieldType[type.toUpperCase()],
         required,
         options,
       };
     }
 
     return {
-      Type: Types.UNKNOWN,
+      Type: FieldType.UNKNOWN,
       required,
       options: {
         unknownType: type,
@@ -60,11 +60,11 @@ class SchemaParser {
       return this.parserSchema(source);
     }
 
-    let { type, required = false, ...options } = source;
+    const { type, required = false, ...options } = source;
 
-    if (Types[type.toUpperCase()]) {
+    if (FieldType[type.toUpperCase()]) {
       return {
-        Type: Types[type.toUpperCase()],
+        Type: FieldType[type.toUpperCase()],
         required,
         options,
       };
@@ -72,7 +72,7 @@ class SchemaParser {
     options.unknownType = type;
 
     return {
-      Type: Types.UNKNOWN,
+      Type: FieldType.UNKNOWN,
       required,
       options,
     };
@@ -80,16 +80,22 @@ class SchemaParser {
 
   parserSchema(source) {
     const fields = [];
+    let prototype = Object.prototype;
+    const [firstKey] = Object.keys(source);
+    if (firstKey === 'Prototype') prototype = source['Prototype'];
+    if (firstKey === 'Constructor') prototype = source['Constructor'].prototype;
 
     for (const field in source) {
+      if (['Prototype', 'Constructor'].includes(field)) continue;
       fields.push([field, this.parser(source[field])]);
     }
 
     return {
-      Type: Types.SCHEMA,
+      Type: FieldType.SCHEMA,
       required: true,
       options: {
         schema: Object.fromEntries(fields),
+        proto: prototype,
       },
     };
   }
@@ -98,7 +104,7 @@ class SchemaParser {
     const field = source[0];
 
     return {
-      Type: Types.ARRAY,
+      Type: FieldType.ARRAY,
       required: true,
       options: {
         value: this.parser(field),

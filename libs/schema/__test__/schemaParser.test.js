@@ -1,6 +1,6 @@
 import { beforeEach, describe, it, expect } from '@jest/globals';
 import { SchemaParser } from '../schemaParser.js';
-import { Types } from '../types.js';
+import { FieldType } from '../fieldType.js';
 
 describe('SchemaParser', () => {
   let parser;
@@ -12,7 +12,7 @@ describe('SchemaParser', () => {
   it('parses a string with required flag', () => {
     const result = parser.parser('string');
     expect(result).toEqual({
-      Type: Types.STRING,
+      Type: FieldType.STRING,
       required: true,
       options: {},
     });
@@ -21,7 +21,7 @@ describe('SchemaParser', () => {
   it('parses a string without required flag', () => {
     const result = parser.parser('string?');
     expect(result).toEqual({
-      Type: Types.STRING,
+      Type: FieldType.STRING,
       required: false,
       options: {},
     });
@@ -30,11 +30,11 @@ describe('SchemaParser', () => {
   it('parses an array of strings', () => {
     const result = parser.parser(['string?']);
     expect(result).toEqual({
-      Type: Types.ARRAY,
+      Type: FieldType.ARRAY,
       required: true,
       options: {
         value: {
-          Type: Types.STRING,
+          Type: FieldType.STRING,
           required: false,
           options: {},
         },
@@ -45,7 +45,7 @@ describe('SchemaParser', () => {
   it('parses an object with type and required flag', () => {
     const result = parser.parser({ type: 'number', required: true });
     expect(result).toEqual({
-      Type: Types.NUMBER,
+      Type: FieldType.NUMBER,
       required: true,
       options: {},
     });
@@ -54,7 +54,7 @@ describe('SchemaParser', () => {
   it('parses an object with type only', () => {
     const result = parser.parser({ type: 'boolean' });
     expect(result).toEqual({
-      Type: Types.BOOLEAN,
+      Type: FieldType.BOOLEAN,
       required: false,
       options: {},
     });
@@ -64,12 +64,12 @@ describe('SchemaParser', () => {
     const schema = { field: 'string?' };
     const result = parser.parser(schema);
     expect(result).toEqual({
-      Type: Types.SCHEMA,
+      Type: FieldType.SCHEMA,
       required: true,
       options: {
         schema: {
           field: {
-            Type: Types.STRING,
+            Type: FieldType.STRING,
             required: false,
             options: {},
           },
@@ -81,7 +81,7 @@ describe('SchemaParser', () => {
   it('returns null for unsupported primitive types', () => {
     const result = parser.parser({ type: 'unsupported' });
     expect(result).toEqual({
-      Type: Types.UNKNOWN,
+      Type: FieldType.UNKNOWN,
       required: false,
       options: {
         unknownType: 'unsupported',

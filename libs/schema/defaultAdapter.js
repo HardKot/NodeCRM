@@ -1,10 +1,10 @@
 import { ArrayField, EnumField, ScalarField, SchemaField, UnknownField } from './field.js';
-import { Types } from './types.js';
+import { FieldType } from './fieldType.js';
 
 const recordType = {
-  [Types.NUMBER]: 'number',
-  [Types.STRING]: 'string',
-  [Types.BOOLEAN]: 'boolean',
+  [FieldType.NUMBER]: 'number',
+  [FieldType.STRING]: 'string',
+  [FieldType.BOOLEAN]: 'boolean',
 };
 
 class DefaultAdapter {
@@ -12,29 +12,29 @@ class DefaultAdapter {
     const { Type, required, options } = field;
 
     switch (Type) {
-      case Types.NUMBER:
-      case Types.STRING:
-      case Types.BOOLEAN:
+      case FieldType.NUMBER:
+      case FieldType.STRING:
+      case FieldType.BOOLEAN:
         return new ScalarField(recordType[Type], required);
 
-      case Types.ENUM:
+      case FieldType.ENUM: {
         const { enum: _enum } = options;
         return new EnumField(_enum, required);
-
-      case Types.ARRAY:
+      }
+      case FieldType.ARRAY: {
         const { value } = options;
         return new ArrayField(this.factoryType(value), required);
-
-      case Types.SCHEMA:
-        const { schema } = options;
+      }
+      case FieldType.SCHEMA: {
+        const { schema, proto } = options;
         const params = {};
 
         for (const key in schema) {
           params[key] = this.factoryType(schema[key]);
         }
 
-        return new SchemaField(params);
-
+        return new SchemaField(params, proto);
+      }
       default:
         return new UnknownField();
     }

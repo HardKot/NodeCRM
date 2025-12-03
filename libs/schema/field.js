@@ -1,6 +1,6 @@
 'use strict';
 
-import { Types } from './types.js';
+import { FieldType } from './fieldType.js';
 import { CheckResult } from './checkResult.js';
 
 class AbstractField {
@@ -8,7 +8,7 @@ class AbstractField {
     this.required = required;
   }
 
-  check(value) {
+  check() {
     return CheckResult.Falsy;
   }
 
@@ -33,11 +33,11 @@ class ScalarField extends AbstractField {
   transform(value) {
     if (!value === undefined) return undefined;
     switch (this.scalar) {
-      case Types.NUMBER:
+      case FieldType.NUMBER:
         return Number(value);
-      case Types.STRING:
+      case FieldType.STRING:
         return String(value);
-      case Types.BOOLEAN:
+      case FieldType.BOOLEAN:
         return Boolean(value);
       default:
         return value;
@@ -102,9 +102,10 @@ class ArrayField extends AbstractField {
 }
 
 class SchemaField extends AbstractField {
-  constructor(schema) {
+  constructor(schema, proto) {
     super(true);
     this.schema = schema;
+    this.proto = proto;
     Object.freeze(this);
   }
 
@@ -126,6 +127,7 @@ class SchemaField extends AbstractField {
     for (const [key, field] of Object.entries(this.schema)) {
       transformed[key] = field.transform(value[key]);
     }
+    Object.setPrototypeOf(transformed, this.proto);
     return transformed;
   }
 }
