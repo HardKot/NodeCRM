@@ -67,6 +67,7 @@ describe('SchemaParser', () => {
       Type: FieldType.SCHEMA,
       required: true,
       options: {
+        proto: {},
         schema: {
           field: {
             Type: FieldType.STRING,

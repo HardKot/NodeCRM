@@ -18,7 +18,7 @@ class Handler {
     this.guard = options.guard ?? Handler.fullAccess;
 
     this.bodySchema = options.bodySchema;
-    this.paramSchemas = options.paramSchemas;
+    this.paramsSchema = options.paramsSchema;
 
     if (options.defaultStatus) {
       this.defaultStatus = options.defaultStatus;
@@ -56,12 +56,12 @@ class Handler {
   }
 
   getParams(request) {
-    if (!this.paramSchemas) return null;
+    if (!this.paramsSchema) return null;
 
     const urlParams = Utils.urlParamsParser(this.mapping, request.url);
     const queryParams = request.queryParams();
 
-    return this.paramSchemas.from({ ...queryParams, ...urlParams });
+    return this.paramsSchema.from({ ...queryParams, ...urlParams });
   }
 
   static fullAccess() {

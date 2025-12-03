@@ -15,7 +15,7 @@ describe('ControllerNode', () => {
   ])('should add a value with path "%s"', (mapping, value) => {
     rootNode.register(value, mapping);
 
-    expect(rootNode.route(mapping).get).toBe(value);
+    expect(rootNode.route(mapping)).toBe(value);
   });
 
   it.each([
@@ -25,7 +25,7 @@ describe('ControllerNode', () => {
   ])('should handle path without leading slash "%s"', (mapping, value) => {
     rootNode.register(value, mapping);
 
-    expect(rootNode.route(mapping).get).toBe(value);
+    expect(rootNode.route(mapping)).toBe(value);
   });
 
   it('should return null for non-existing path', () => {
@@ -38,8 +38,8 @@ describe('ControllerNode', () => {
     rootNode.register('user-123-value', '/user/<number>');
     rootNode.register('post-123-value', '/post/<number>');
 
-    expect(rootNode.route('/user/123').get).toBe('user-123-value');
-    expect(rootNode.route('/user/456').get).toBe('user-123-value');
-    expect(rootNode.route('/post/777').get).toBe('post-123-value');
+    expect(rootNode.route('/user/123')).toBe('user-123-value');
+    expect(rootNode.route('/user/456')).toBe('user-123-value');
+    expect(rootNode.route('/post/777')).toBe('post-123-value');
   });
 });

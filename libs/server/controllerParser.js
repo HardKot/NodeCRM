@@ -6,6 +6,11 @@ import { Handler } from './handler.js';
 class ControllerParserError extends Error {}
 
 class ControllerParser {
+  #schemaParser = null;
+
+  constructor(schemaParser) {
+    if (schemaParser) this.#schemaParser = schemaParser;
+  }
   parse(source) {
     const srcType = typeof source;
 
@@ -26,6 +31,10 @@ class ControllerParser {
 
   parserMethodObject(source) {
     if (!source.handler) return [];
+    const { body = {}, params = {} } = source.type ?? {};
+    const bodySchema = this.#schemaParser.factorySchema(body);
+    const urlParams = this.parseMappingParams(source.mapping);
+    const paramsSchema = this.#schemaParser.factorySchema({ ...params, ...urlParams });
 
     return [
       new Handler(source.handler, {
@@ -33,9 +42,8 @@ class ControllerParser {
         dependencies: source.dependencies,
         method: source.method,
         guard: source.guard,
-        bodySchema: source.types?.body,
-        paramsSchema: source.types?.params,
-        return: source.types?.return,
+        bodySchema: bodySchema,
+        paramsSchema: paramsSchema,
         defaultStatus: source.defaultStatus,
       }),
     ];
@@ -49,19 +57,20 @@ class ControllerParser {
       if (!callback) continue;
 
       handlers.push(
-        new Handler(callback, {
+        this.parserMethodObject({
+          handler: callback,
           mapping: source.mapping,
           dependencies: source.dependencies,
           method: source.method,
           guard: source.guard,
-          bodySchema: source.types?.body,
-          paramsSchema: source.types?.params,
-          return: source.types?.return,
+          types: {
+            body: source.types?.body,
+            params: source.types?.params,
+          },
         })
       );
     }
-
-    return handlers;
+    return handlers.flat().filter(handler => !!handler);
   }
 
   parseMappingParams(source) {
@@ -73,13 +82,13 @@ class ControllerParser {
       if (!match) continue;
       mappingParams[i] = {
         name: match[1],
-        type: match[2] ? match[2].slice(1) : 'string',
+        type: match[2]?.slice(1) ?? 'string',
       };
 
       parts[i] = `<${mappingParams[i].type}>`;
     }
 
-    return { mapping: '/' + parts.join('/'), params: mappingParams };
+    return mappingParams;
   }
 }
 
