@@ -38,3 +38,7 @@ Thumbs.db
 *.db
 *.sqlite
 *.sqlite3
+
+# Покрытие тестов
+coverage/
+.nyc_output/

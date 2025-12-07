@@ -36,6 +36,8 @@ class ControllerParser {
     const urlParams = this.parseMappingParams(source.mapping);
     const paramsSchema = this.#schemaParser.factorySchema({ ...params, ...urlParams });
 
+    const imports = source.imports ?? [];
+
     return [
       new Handler(source.handler, {
         mapping: source.mapping,
@@ -46,7 +48,9 @@ class ControllerParser {
         paramsSchema: paramsSchema,
         defaultStatus: source.defaultStatus,
       }),
-    ];
+    ]
+      .concat(imports.map(it => this.parse({ ...it, mapping: `${source.mapping}/${it.mapping}` })))
+      .flat();
   }
 
   parserGroupObject(source) {
@@ -63,6 +67,7 @@ class ControllerParser {
           dependencies: source.dependencies,
           method: source.method,
           guard: source.guard,
+          imports: source.imports,
           types: {
             body: source.types?.body,
             params: source.types?.params,

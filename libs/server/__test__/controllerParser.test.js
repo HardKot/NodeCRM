@@ -51,7 +51,7 @@ describe('ControllerParser', () => {
     const source = {
       mapping: '/api',
       handler: () => {},
-      extensions: [subController],
+      imports: [subController],
     };
 
     const result = parser.parseObject(source);
