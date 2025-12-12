@@ -78,15 +78,15 @@ class Server {
         response = Response.wrap(response);
         const handler = this.routes.route(request.url, request.method);
         if (!handler) return this.onNotFound(request, response);
-        await Functions.runChains(this.middlewares, request, response);
-        if (response.isSend) return;
-        await handler.run(request, response);
+        await Functions.runChains([...this.middlewares, handler.run], request, response);
       } catch (e) {
         if (e.name === 'AbortError') {
           return this.onTimeout(request, response);
         }
         return this.onRequestError(e, request, response);
       }
+
+      if (!response.isSend) response.send(null).send();
     });
   }
 

@@ -5,15 +5,15 @@
   "description": "A simple CRM system built with Node.js.",
   "main": "app.js",
   "scripts": {
+    "precommit": "npm run check",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
-    "precommit": "npm run check"
+    "lint": "eslint"
   },
   "imports": {
     "#lib/utils": "./libs/utils/index.js"
   },
   "dependencies": {
-    "pg": "^8.16.3",
-    "typescript": "^5.9.3"
+    "pg": "^8.16.3"
   },
   "devDependencies": {
     "@eslint/js": "^9.37.0",
@@ -23,6 +23,7 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.4",
     "jest": "^30.2.0",
-    "prettier": "^3.6.2"
+    "prettier": "^3.6.2",
+    "typescript": "^5.9.3"
   }
 }
