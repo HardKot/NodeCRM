@@ -1,4 +1,4 @@
-import { beforeEach, describe, it, expect, jest } from '@jest/globals';
+import { beforeEach, describe, it, expect } from '@jest/globals';
 import { ComponentContainer, ComponentContainerError } from '../componentContainer.js';
 import { Component } from '../component.js';
 

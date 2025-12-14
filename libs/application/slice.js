@@ -1,22 +1,20 @@
 import fs from 'node:fs';
-import fsp from 'node:fs/promises';
 import path from 'node:path';
 import module from 'node:module';
 
 import { Code } from './code.js';
-import { CodeStorage } from './codeStorage.js';
 
 class Slice {
-  constructor(app, name, options = {}) {
-    this.name = name;
+  constructor(app, options = {}) {
     this.app = app;
+    this.slicePath = options.slicePath ?? './';
     this.codes = {};
 
     Object.freeze(this);
   }
 
   async load() {
-    const files = await this.loadFiles(this.app.path);
+    const files = await this.loadFiles(path.join(this.app.path, this.slicePath));
 
     for (const file of files) {
       const code = this.loadCode(path.resolve(file));
@@ -31,12 +29,12 @@ class Slice {
   async loadFiles(parent = './') {
     let results = [];
 
-    for (const content of await fsp.readdir(parent, {
+    for (const content of fs.readdirSync(parent, {
       withFileTypes: true,
     })) {
       const children = path.join(parent, content.name);
 
-      if (content.isFile() && content.name.endsWith(`${this.name}.js`)) {
+      if (content.isFile() && /.*\.(ts|cjs|mjs|tsx|jsx|js)/.test(content.name)) {
         results.push(children);
         continue;
       }
@@ -50,8 +48,8 @@ class Slice {
   }
 
   loadCode(absolutePath) {
-    if (CodeStorage.has(absolutePath)) {
-      return CodeStorage.get(absolutePath).exports;
+    if (this.codes[absolutePath]) {
+      return this.codes[absolutePath];
     }
     if (!fs.existsSync(absolutePath)) {
       return null;
@@ -64,8 +62,8 @@ class Slice {
       createRequire: this.createRequire.bind(this),
     });
     code.autoLoad();
-    CodeStorage.set(absolutePath, code);
-    return code.exports;
+    this.codes[absolutePath] = code;
+    return code;
   }
 
   createRequire(relativePath) {
@@ -73,10 +71,10 @@ class Slice {
     const self = this;
     function require(modulePath) {
       if (path.isAbsolute(modulePath)) {
-        if (path.relative(modulePath, this.app.path).startsWith('..')) {
+        if (path.relative(self.app.path, modulePath).startsWith('..')) {
           return originRequire(modulePath);
         }
-        return self.loadCode(modulePath);
+        return self.loadCode(modulePath)?.exports;
       }
 
       return originRequire(modulePath);

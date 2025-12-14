@@ -60,7 +60,7 @@ class Code {
       lineOffset: useStrict ? -2 : -1,
     });
 
-    const closure = script.runInContext(this.context, this.runOptions);
+    const closure = script.runInContext(Object.freeze(this.context), this.runOptions);
     Object.assign(this.exports, this.exportCommon(closure));
     return this.exports;
   }
@@ -163,4 +163,4 @@ const CODE_TYPE = Object.freeze({
   TS: 2,
 });
 
-export { CODE_TYPE, Code };
+export { CODE_TYPE, Code, CodeError };
