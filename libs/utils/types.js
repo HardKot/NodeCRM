@@ -49,3 +49,11 @@ export function requireNotNull(v, params) {
   if (typeof params === 'object') return params;
   throw new Error(params || 'Object is null or undefined');
 }
+
+export function requireArray(value) {
+  if (Array.isArray(value)) {
+    return value;
+  }
+
+  return [value];
+}

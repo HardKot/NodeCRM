@@ -112,6 +112,8 @@ class Code {
     this.dependencies.add(modulePath);
     return this.require(modulePath);
   }
+
+  static supportExtension = Object.freeze(['.js', '.cjs', '.mjs', '.ts']);
 }
 
 const EMPTY_CONTEXT = Object.freeze({});

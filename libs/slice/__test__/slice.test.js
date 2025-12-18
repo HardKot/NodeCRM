@@ -4,6 +4,7 @@ const fsMock = {
   readdirSync: jest.fn(),
   existsSync: jest.fn(),
   readFileSync: jest.fn(),
+  statSync: jest.fn(),
 };
 fsMock.default = fsMock;
 
@@ -34,22 +35,66 @@ describe('Slice', () => {
         isDirectory: () => false,
       },
     ]);
+    fs.statSync.mockImplementation(() => ({
+      isFile: () => false,
+    }));
     fs.existsSync.mockImplementation(path => !!mockFiles[path]);
     fs.readFileSync.mockImplementation(path => mockFiles[path]);
     const slice = new Slice({ path: '/app' });
 
-    await slice.load();
+    const codes = await slice.load();
 
-    expect(slice.codes['/app/module.service.js'].exports.value).toBe(1);
-    expect(slice.codes['/app/module.controller.js'].exports.value).toBe(2);
+    expect(codes['/app/module.service.js'].exports.value).toBe(1);
+    expect(codes['/app/module.controller.js'].exports.value).toBe(2);
+  });
+
+  it('Load modules from multiple directories', async () => {
+    const mockFiles = {
+      '/app/services/module.service.js': `'use strict'; module.exports = { value: 1 };`,
+      '/app/api/module.controller.js': `'use strict'; module.exports = { value: 2 };`,
+    };
+
+    fs.readdirSync.mockImplementation(it => {
+      if (it.includes('services'))
+        return [
+          {
+            name: 'module.service.js',
+            isFile: () => true,
+            isDirectory: () => false,
+          },
+        ];
+      if (it.includes('api'))
+        return [
+          {
+            name: 'module.controller.js',
+            isFile: () => true,
+            isDirectory: () => false,
+          },
+        ];
+      return [];
+    });
+
+    fs.statSync.mockImplementation(() => ({
+      isFile: () => false,
+    }));
+    fs.existsSync.mockImplementation(path => !!mockFiles[path]);
+    fs.readFileSync.mockImplementation(path => mockFiles[path]);
+    const slice = new Slice({ path: '/app' }, { path: ['./services', './api'] });
+
+    const codes = await slice.load();
+
+    expect(codes['/app/services/module.service.js'].exports.value).toBe(1);
+    expect(codes['/app/api/module.controller.js'].exports.value).toBe(2);
   });
 
   it('Handles empty directory', async () => {
     fs.readdirSync.mockImplementation(() => []);
+    fs.statSync.mockImplementation(() => ({
+      isFile: () => false,
+    }));
     const slice = new Slice({ path: '/empty' });
 
     const codes = await slice.load();
-
     expect(Object.keys(codes).length).toBe(0);
   });
 
@@ -66,10 +111,12 @@ describe('Slice', () => {
         isDirectory: () => false,
       },
     ]);
+    fs.statSync.mockImplementation(() => ({
+      isFile: () => false,
+    }));
     const slice = new Slice({ path: '/mixed' });
 
     const codes = await slice.load();
-
     expect(Object.keys(codes).length).toBe(0);
   });
 
@@ -87,8 +134,11 @@ describe('Slice', () => {
       '/app/module.util.js': `'use strict'; module.exports = { value: 3 };`,
       '/app/module.service.js': `
         'use strict'; 
+        const utils = require('./module.util.js')
+        
         module.exports = { 
-          getValue: function() { return require('./module.util.js').value; }, 
+          getValue: function() { return utils.value; }, 
+          utils,
         };`,
     };
 
@@ -109,8 +159,11 @@ describe('Slice', () => {
     fs.readFileSync.mockImplementation(path => mockFiles[path]);
 
     const slice = new Slice({ path: '/app' });
-    await slice.load();
-    const serviceCode = slice.codes['/app/module.service.js'];
-    expect(serviceCode.exports.getValue()).toBe(3);
+    const codes = await slice.load();
+
+    expect(codes['/app/module.service.js'].exports.getValue()).toBe(3);
+    expect(
+      codes['/app/module.service.js'].exports.utils === codes['/app/module.util.js'].exports
+    ).toBeTruthy();
   });
 });

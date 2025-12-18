@@ -1,21 +1,22 @@
 import events from 'node:events';
-import path from 'node:path';
-import { DiContainerModule } from '../diContainer/diContainerModule.js';
-import { SchemaModule } from '../schema/schemaModule.js';
+import { AppSpace } from './appSpace.js';
+import { AppConfig } from './appConfig.js';
 
 class Application extends events.EventEmitter {
   constructor() {
     super();
 
     this.path = process.cwd();
-    this.diContainer = new DiContainerModule();
-    this.schema = new SchemaModule();
+
+    this.config = new AppConfig(this);
+    this.space = new AppSpace(this);
 
     Object.freeze(this);
   }
 
-  resolvePath(...segments) {
-    return path.resolve(this.path, ...segments);
+  async load() {
+    await this.config.load();
+    await this.space.load();
   }
 }
 

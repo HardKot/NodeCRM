@@ -5,25 +5,32 @@ import module from 'node:module';
 import { Code } from './code.js';
 
 class Slice {
+  #codes = new Map();
+
   constructor(app, options = {}) {
     this.app = app;
-    this.slicePath = options.slicePath ?? './';
-    this.codes = {};
-
-    Object.freeze(this);
+    if (!Array.isArray(options.path)) {
+      options.path = [options.path ?? './'];
+    }
+    this.sliceCtx = options.context;
+    this.path = options.path.map(it => path.join(this.app.path, it));
   }
 
   async load() {
-    const files = await this.loadFiles(path.join(this.app.path, this.slicePath));
+    for (const it of this.path) {
+      const stat = fs.statSync(it);
+      if (stat.isFile()) {
+        this.#codes.main = this.loadCode(it);
+      }
 
-    for (const file of files) {
-      const code = this.loadCode(path.resolve(file));
-      if (code) {
-        this.codes[file] = code;
+      const files = await this.loadFiles(it);
+
+      for (const file of files) {
+        this.#codes.set(file, await this.loadCode(path.resolve(file)));
       }
     }
 
-    return this.codes;
+    return this.getModules();
   }
 
   async loadFiles(parent = './') {
@@ -32,9 +39,11 @@ class Slice {
     for (const content of fs.readdirSync(parent, {
       withFileTypes: true,
     })) {
+      if (content.name.startsWith('.') || content.name.startsWith('_')) continue;
+
       const children = path.join(parent, content.name);
 
-      if (content.isFile() && /.*\.(ts|cjs|mjs|tsx|jsx|js)/.test(content.name)) {
+      if (content.isFile() && Code.supportExtension.some(it => children.endsWith(it))) {
         results.push(children);
         continue;
       }
@@ -48,8 +57,8 @@ class Slice {
   }
 
   loadCode(absolutePath) {
-    if (this.codes[absolutePath]) {
-      return this.codes[absolutePath];
+    if (this.#codes.has(absolutePath)) {
+      return this.#codes.get(absolutePath);
     }
     if (!fs.existsSync(absolutePath)) {
       return null;
@@ -60,9 +69,10 @@ class Slice {
       dirname: path.dirname(absolutePath),
       relative: path.relative(this.app.path, path.dirname(absolutePath)),
       createRequire: this.createRequire.bind(this),
+      context: this.sliceCtx,
     });
     code.autoLoad();
-    this.codes[absolutePath] = code;
+    this.#codes.set(absolutePath, code);
     return code;
   }
 
@@ -81,6 +91,14 @@ class Slice {
     }
 
     return require;
+  }
+
+  getModule(modulePath) {
+    return this.#codes.get(modulePath);
+  }
+
+  getModules() {
+    return Object.fromEntries(this.#codes.entries());
   }
 }
 
