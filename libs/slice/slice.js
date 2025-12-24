@@ -3,55 +3,61 @@ import path from 'node:path';
 import module from 'node:module';
 
 import { Code } from './code.js';
+import fsp from 'node:fs/promises';
 
 class Slice {
   #codes = new Map();
 
-  constructor(app, options = {}) {
-    this.app = app;
-    if (!Array.isArray(options.path)) {
-      options.path = [options.path ?? './'];
-    }
+  constructor(options = {}) {
     this.sliceCtx = options.context;
-    this.path = options.path.map(it => path.join(this.app.path, it));
+    this.name = options.name ?? 'default';
+    this.appPath = options.appPath ?? process.cwd();
+    this.path = path.join(options.appPath, options.path ?? './');
+    this.logger = options.logger ?? console;
+
+    this.files = [];
+    this.modules = [];
   }
 
   async load() {
-    for (const it of this.path) {
-      const stat = fs.statSync(it);
-      if (stat.isFile()) {
-        this.#codes.main = this.loadCode(it);
-      }
+    this.#codes.clear();
+    await this.loadFiles(this.path);
+    await this.loadModules(this.path);
 
-      const files = await this.loadFiles(it);
-
-      for (const file of files) {
-        this.#codes.set(file, await this.loadCode(path.resolve(file)));
-      }
-    }
-
-    return this.getModules();
+    return this.modules;
   }
 
-  async loadFiles(parent = './') {
-    let results = [];
+  async loadModules() {
+    const modules = this.files
+      .filter(file => file.endsWith('.module.js'))
+      .map(file => this.loadCode(file));
 
-    for (const content of fs.readdirSync(parent, {
-      withFileTypes: true,
-    })) {
-      if (content.name.startsWith('.') || content.name.startsWith('_')) continue;
+    Object.freeze(modules);
+    this.modules = modules;
 
-      const children = path.join(parent, content.name);
+    return this.modules;
+  }
 
-      if (content.isFile() && Code.supportExtension.some(it => children.endsWith(it))) {
-        results.push(children);
-        continue;
-      }
-      if (content.isDirectory()) {
-        const nestedResults = await this.loadFiles(children);
-        results = results.concat(nestedResults);
+  async loadFiles() {
+    const results = [];
+    const dirs = [this.path];
+
+    for (const dir of dirs) {
+      const contents = await fsp.readdir(dir, { withFileTypes: true });
+
+      for (const content of contents) {
+        if (content.name.startsWith('.') || content.name.startsWith('_')) continue;
+        const children = path.join(dir, content.name);
+        if (content.isDirectory()) {
+          dirs.push(children);
+        } else if (content.isFile() && Code.supportExtension.some(it => children.endsWith(it))) {
+          results.push(children);
+        }
       }
     }
+
+    Object.freeze(results);
+    this.files = results;
 
     return results;
   }
@@ -67,7 +73,7 @@ class Slice {
     const code = new Code(source, {
       name: path.basename(absolutePath),
       dirname: path.dirname(absolutePath),
-      relative: path.relative(this.app.path, path.dirname(absolutePath)),
+      relative: path.relative(this.appPath, path.dirname(absolutePath)),
       createRequire: this.createRequire.bind(this),
       context: this.sliceCtx,
     });
@@ -81,7 +87,7 @@ class Slice {
     const self = this;
     function require(modulePath) {
       if (path.isAbsolute(modulePath)) {
-        if (path.relative(self.app.path, modulePath).startsWith('..')) {
+        if (path.relative(self.appPath, modulePath).startsWith('..')) {
           return originRequire(modulePath);
         }
         return self.loadCode(modulePath)?.exports;
@@ -91,14 +97,6 @@ class Slice {
     }
 
     return require;
-  }
-
-  getModule(modulePath) {
-    return this.#codes.get(modulePath);
-  }
-
-  getModules() {
-    return Object.fromEntries(this.#codes.entries());
   }
 }
 

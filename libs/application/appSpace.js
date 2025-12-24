@@ -1,52 +1,44 @@
 import path from 'node:path';
+import fs from 'node:fs';
 
 import { Slice } from '../slice/slice.js';
 
 class AppSpace {
   constructor(app) {
-    this.app = app;
-
     this.slices = [];
 
-    this.modules = {};
-    this.config = {};
+    this.logger = app.logger.create('Space');
+    this.config = Object.freeze({
+      root: app.config.get('space.root', app.path),
+      slices: app.config.get('space.slices', { root: './' }),
+    });
+    this.createSlice = options => new Slice(Object.assign({}, options, { context: app.context }));
+
     Object.freeze(this);
   }
 
-  async load() {
-    this.updateConfig();
-    this.updateSlice();
-
-    for (const slice of this.slices) {
-      const modules = await slice.load();
-
-      Object.assign(this.modules, modules);
-    }
+  async bootstrap() {
+    await this.loadSlices();
   }
 
-  updateConfig() {
-    const { config } = this.app;
+  async loadSlices() {
+    const slices = Object.entries(this.config.slices).map(([slice, pathSlice]) =>
+      this.createSlice({ name: slice, path: pathSlice })
+    );
 
-    this.config.root = config.getByName('space.root', path.join(this.app.path));
-    this.config.slices = config.getByName('space.slices', { root: './' });
+    await Promise.all(slices.map(slice => slice.load()));
 
-    //   {
-    //   infrastructure: ['repository', 'external', 'adapter'],
-    //   interface: ['api', 'events', 'rpc'],
-    //   domain: ['domain'],
-    // }
-    // );
+    this.slices = Object.fromEntries(slices.map(slice => [slice.name, slice]));
+
+    return this.slices;
   }
 
-  updateSlice() {
-    for (const slice in this.config.slices) {
-      this.slices.push(
-        new Slice(this.app, {
-          path: this.config.slices[slice].map(it => path.join(this.config.root, it)),
-          context: this.app.context,
-        })
-      );
-    }
+  async reloadSlice(name) {
+    const slice = this.slices[name];
+    if (!slice) return null;
+
+    await slice.load();
+    return slice;
   }
 }
 

@@ -8,8 +8,18 @@ const fsMock = {
 };
 fsMock.default = fsMock;
 
+const fsMockPromise = {
+  readdir: jest.fn(),
+  stat: jest.fn(),
+};
+
+fsMockPromise.default = fsMockPromise;
+
 jest.unstable_mockModule('node:fs', () => fsMock);
+jest.unstable_mockModule('node:fs/promises', () => fsMockPromise);
+
 const fs = await import('node:fs');
+const fsp = await import('node:fs/promises');
 const { Slice } = await import('../slice.js');
 
 describe('Slice', () => {
@@ -19,18 +29,12 @@ describe('Slice', () => {
 
   it('Load modules', async () => {
     const mockFiles = {
-      '/app/module.service.js': `'use strict'; module.exports = { value: 1 };`,
-      '/app/module.controller.js': `'use strict'; module.exports = { value: 2 };`,
+      '/app/test.module.js': `'use strict'; module.exports = { value: 1 };`,
     };
 
-    fs.readdirSync.mockImplementation(() => [
+    fsp.readdir.mockImplementation(() => [
       {
-        name: 'module.service.js',
-        isFile: () => true,
-        isDirectory: () => false,
-      },
-      {
-        name: 'module.controller.js',
+        name: 'test.module.js',
         isFile: () => true,
         isDirectory: () => false,
       },
@@ -40,66 +44,26 @@ describe('Slice', () => {
     }));
     fs.existsSync.mockImplementation(path => !!mockFiles[path]);
     fs.readFileSync.mockImplementation(path => mockFiles[path]);
-    const slice = new Slice({ path: '/app' });
+    const slice = new Slice({ appPath: '/app' });
 
     const codes = await slice.load();
 
-    expect(codes['/app/module.service.js'].exports.value).toBe(1);
-    expect(codes['/app/module.controller.js'].exports.value).toBe(2);
-  });
-
-  it('Load modules from multiple directories', async () => {
-    const mockFiles = {
-      '/app/services/module.service.js': `'use strict'; module.exports = { value: 1 };`,
-      '/app/api/module.controller.js': `'use strict'; module.exports = { value: 2 };`,
-    };
-
-    fs.readdirSync.mockImplementation(it => {
-      if (it.includes('services'))
-        return [
-          {
-            name: 'module.service.js',
-            isFile: () => true,
-            isDirectory: () => false,
-          },
-        ];
-      if (it.includes('api'))
-        return [
-          {
-            name: 'module.controller.js',
-            isFile: () => true,
-            isDirectory: () => false,
-          },
-        ];
-      return [];
-    });
-
-    fs.statSync.mockImplementation(() => ({
-      isFile: () => false,
-    }));
-    fs.existsSync.mockImplementation(path => !!mockFiles[path]);
-    fs.readFileSync.mockImplementation(path => mockFiles[path]);
-    const slice = new Slice({ path: '/app' }, { path: ['./services', './api'] });
-
-    const codes = await slice.load();
-
-    expect(codes['/app/services/module.service.js'].exports.value).toBe(1);
-    expect(codes['/app/api/module.controller.js'].exports.value).toBe(2);
+    expect(codes[0].exports.value).toBe(1);
   });
 
   it('Handles empty directory', async () => {
-    fs.readdirSync.mockImplementation(() => []);
+    fsp.readdir.mockImplementation(() => []);
     fs.statSync.mockImplementation(() => ({
       isFile: () => false,
     }));
-    const slice = new Slice({ path: '/empty' });
+    const slice = new Slice({ appPath: '/empty' });
 
     const codes = await slice.load();
     expect(Object.keys(codes).length).toBe(0);
   });
 
   it('Skips non-JS/TS files', async () => {
-    fs.readdirSync.mockImplementation(() => [
+    fsp.readdir.mockImplementation(() => [
       {
         name: 'readme.md',
         isFile: () => true,
@@ -114,15 +78,15 @@ describe('Slice', () => {
     fs.statSync.mockImplementation(() => ({
       isFile: () => false,
     }));
-    const slice = new Slice({ path: '/mixed' });
+    const slice = new Slice({ appPath: '/mixed' });
 
     const codes = await slice.load();
-    expect(Object.keys(codes).length).toBe(0);
+    expect(codes.length).toBe(0);
   });
 
   it('Returns null for non-existent files', async () => {
     fs.existsSync.mockImplementation(() => false);
-    const slice = new Slice({ path: '/nonexistent' });
+    const slice = new Slice({ appPath: '/nonexistent' });
 
     const code = slice.loadCode('/nonexistent/missing.js');
 
@@ -131,10 +95,10 @@ describe('Slice', () => {
 
   it('Require localModule', async () => {
     const mockFiles = {
-      '/app/module.util.js': `'use strict'; module.exports = { value: 3 };`,
-      '/app/module.service.js': `
+      '/app/util.js': `'use strict'; module.exports = { value: 3 };`,
+      '/app/test.module.js': `
         'use strict'; 
-        const utils = require('./module.util.js')
+        const utils = require('./util.js')
         
         module.exports = { 
           getValue: function() { return utils.value; }, 
@@ -142,14 +106,14 @@ describe('Slice', () => {
         };`,
     };
 
-    fs.readdirSync.mockImplementation(() => [
+    fsp.readdir.mockImplementation(() => [
       {
-        name: 'module.util.js',
+        name: 'util.js',
         isFile: () => true,
         isDirectory: () => false,
       },
       {
-        name: 'module.service.js',
+        name: 'test.module.js',
         isFile: () => true,
         isDirectory: () => false,
       },
@@ -158,12 +122,9 @@ describe('Slice', () => {
     fs.existsSync.mockImplementation(path => !!mockFiles[path]);
     fs.readFileSync.mockImplementation(path => mockFiles[path]);
 
-    const slice = new Slice({ path: '/app' });
+    const slice = new Slice({ appPath: '/app' });
     const codes = await slice.load();
 
-    expect(codes['/app/module.service.js'].exports.getValue()).toBe(3);
-    expect(
-      codes['/app/module.service.js'].exports.utils === codes['/app/module.util.js'].exports
-    ).toBeTruthy();
+    expect(codes[0].exports.getValue()).toBe(3);
   });
 });

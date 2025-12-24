@@ -6,11 +6,13 @@ import { Code } from '../slice/code.js';
 
 class AppConfig {
   constructor(app) {
-    this.app = app;
+    this.configFile = [...Code.supportExtension, '.json']
+      .map(it => path.join(app.path, `app.config${it}`))
+      .find(it => fs.existsSync(it));
     this.config = {};
   }
 
-  getByName(name, defaultValue) {
+  get(name, defaultValue) {
     const fieldsPath = name.split('.');
 
     let value = this.config;
@@ -21,11 +23,22 @@ class AppConfig {
     return value ?? defaultValue;
   }
 
-  async load() {
-    const configFile = this.findConfigFile();
-    if (!configFile) return null;
+  set(name, value) {
+    const fieldsPath = name.split('.');
+    let config = this.config;
+    for (let i = 0; i < fieldsPath.length; i++) {
+      const field = fieldsPath[i];
+      if (i === fieldsPath.length - 1) {
+        config[field] = value;
+      } else {
+        config[field] = config[field] || {};
+        config = config[field];
+      }
+    }
+  }
 
-    const config = await this.readConfigFile(configFile);
+  async bootstrap() {
+    const config = await this.readConfigFile(this.configFile);
     if (!config) return null;
 
     if (typeof config === 'function') {
@@ -38,12 +51,6 @@ class AppConfig {
       this.config = config;
     }
     Object.freeze(this.config);
-  }
-
-  findConfigFile() {
-    return [...Code.supportExtension, '.json']
-      .map(it => path.join(this.app.path, `app.config.${it}`))
-      .find(it => fs.existsSync(it));
   }
 
   async readConfigFile(pathSource) {
