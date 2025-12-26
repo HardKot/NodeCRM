@@ -2,6 +2,7 @@ import events from 'node:events';
 import { AppSpace } from './appSpace.js';
 import { AppLogger } from './appLogger.js';
 import { AppConfig } from './appConfig.js';
+import { DiContainerModule } from '../diContainer/diContainerModule.js';
 
 class Application extends events.EventEmitter {
   constructor() {
@@ -32,8 +33,11 @@ class Application extends events.EventEmitter {
       space: new AppSpace(this),
     };
 
+    await this.components.logger.bootstrap?.();
     await this.components.config.bootstrap();
     await this.components.space.bootstrap();
+
+    this.components.space.slices;
   }
 
   bootstrap() {

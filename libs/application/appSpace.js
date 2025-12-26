@@ -1,10 +1,10 @@
-import path from 'node:path';
-import fs from 'node:fs';
-
 import { Slice } from '../slice/slice.js';
+import fs from 'node:fs';
+import EventEmitter from 'node:events';
 
-class AppSpace {
+class AppSpace extends EventEmitter {
   constructor(app) {
+    super();
     this.slices = [];
 
     this.logger = app.logger.create('Space');
@@ -19,26 +19,38 @@ class AppSpace {
 
   async bootstrap() {
     await this.loadSlices();
+    await this.watchSlices();
   }
 
   async loadSlices() {
     const slices = Object.entries(this.config.slices).map(([slice, pathSlice]) =>
       this.createSlice({ name: slice, path: pathSlice })
     );
-
+    this.logger.info(`Detected ${slices.length} slices: ${slices.map(s => s.name).join(', ')}`);
     await Promise.all(slices.map(slice => slice.load()));
 
     this.slices = Object.fromEntries(slices.map(slice => [slice.name, slice]));
+    this.logger.info(`All slices loaded.`);
 
     return this.slices;
   }
 
-  async reloadSlice(name) {
-    const slice = this.slices[name];
-    if (!slice) return null;
+  watchSlices() {
+    const self = this;
+    for (const slice of this.slices) {
+      if (!fs.existsSync(slice.name)) continue;
+      let timeout = null;
 
-    await slice.load();
-    return slice;
+      fs.watch(slice.name, { recursive: true }, () => {
+        if (timeout) clearTimeout(timeout);
+        timeout = setTimeout(async () => {
+          self.logger.info(`Changes detected in slice "${slice.name}". Reloading...`);
+          await slice.load();
+          self.logger.info(`Slice "${slice.name}" reloaded.`);
+          self.emit('slice:reload', slice);
+        }, 100);
+      });
+    }
   }
 }
 

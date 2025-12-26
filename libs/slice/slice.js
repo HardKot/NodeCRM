@@ -70,8 +70,12 @@ class Slice {
       return null;
     }
     const source = fs.readFileSync(absolutePath, 'utf-8');
+    let name = path.basename(absolutePath);
+
+    if (name === 'index') name = path.dirname(absolutePath);
+
     const code = new Code(source, {
-      name: path.basename(absolutePath),
+      name: name,
       dirname: path.dirname(absolutePath),
       relative: path.relative(this.appPath, path.dirname(absolutePath)),
       createRequire: this.createRequire.bind(this),
