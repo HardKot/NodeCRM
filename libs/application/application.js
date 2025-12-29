@@ -2,46 +2,52 @@ import events from 'node:events';
 import { AppSpace } from './appSpace.js';
 import { AppLogger } from './appLogger.js';
 import { AppConfig } from './appConfig.js';
-import { DiContainerModule } from '../diContainer/diContainerModule.js';
+import { SchemaModule } from '../schema';
+import { setImmediate } from 'node:timers';
+import { ComponentContainerModule } from '../componentContainer';
 
 class Application extends events.EventEmitter {
   constructor() {
     super();
 
     this.path = process.cwd();
-    this.components = {};
+    this.logger = new AppLogger(this);
+    this.config = new AppConfig(this);
+    this.space = new AppSpace(this);
+    this.components = new ComponentContainerModule(this);
+    this.schemas = new SchemaModule();
 
     Object.freeze(this);
   }
 
-  get logger() {
-    return this.components.logger;
+  async bootstrap() {
+    const { logger, config, space } = this;
+
+    await logger.bootstrap?.();
+    await config.bootstrap?.();
+    await space.bootstrap?.();
   }
 
-  get config() {
-    return this.components.config.config;
+  registerModule(...modules) {
+    const self = this;
+    const { components, schemas } = this.prepareModule(...modules);
+
+    setImmediate(() => {
+      self.components.load.apply(self.components, components);
+      self.schemas.load.apply(self.schemas, schemas);
+    });
   }
 
-  get space() {
-    return this.components.space;
-  }
+  prepareModule(...modules) {
+    return {
+      components: modules
+        .map(module => [module.components, module.services, module.controllers])
+        .flat(2),
 
-  async loadComponents() {
-    this.components = {
-      logger: new AppLogger(this),
-      config: new AppConfig(this),
-      space: new AppSpace(this),
+      schemas: modules.map(module => module.schemas).flat(),
+
+      entrypoint: modules.map(module => module.entrypoints).flat(),
     };
-
-    await this.components.logger.bootstrap?.();
-    await this.components.config.bootstrap();
-    await this.components.space.bootstrap();
-
-    this.components.space.slices;
-  }
-
-  bootstrap() {
-    return this.space.bootstrap();
   }
 
   getConfig(name, defaultValue) {

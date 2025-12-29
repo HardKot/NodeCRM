@@ -6,11 +6,7 @@ import { AbstractField } from './field.js';
 class SchemaModule {
   #parser = new SchemaParser();
   #registry = new Map();
-  #adapter;
-
-  constructor(adapterConstructor = DefaultAdapter) {
-    this.#adapter = new adapterConstructor();
-  }
+  #adapter = new DefaultAdapter();
 
   get adapter() {
     return this.#adapter;
@@ -23,6 +19,8 @@ class SchemaModule {
   get schemas() {
     return this.#registry.schemas;
   }
+
+  load(...schemas) {}
 
   registerSchema(name, value) {
     const schema = this.factorySchema(value, name);

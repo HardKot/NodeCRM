@@ -6,3 +6,5 @@ export { default as NullPointError } from './nullPointError.js';
 export { default as TypeError } from './typeError.js';
 export * as StringCase from './stringCase.js';
 export * as Functions from './functions.js';
+
+export { ParserAbstract } from './parserAbstract.js';

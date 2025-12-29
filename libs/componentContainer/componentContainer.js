@@ -17,6 +17,11 @@ class ComponentContainer {
     return this;
   }
 
+  clear() {
+    this.components.clear();
+    this.graph = null;
+  }
+
   async build() {
     if (!this.graph) this.buildGraph();
     this.detectedCircularDependencies();

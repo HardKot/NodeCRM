@@ -1,7 +1,7 @@
 import { ComponentParser } from './componentParser.js';
 import { ComponentContainer } from './componentContainer.js';
 
-class DiContainerModule {
+class ComponentContainerModule {
   constructor() {
     this.parser = new ComponentParser();
     this.container = new ComponentContainer();
@@ -27,6 +27,8 @@ class DiContainerModule {
     }
     return [name, source];
   }
+
+  load(...components) {}
 }
 
-export { DiContainerModule };
+export { ComponentContainerModule };

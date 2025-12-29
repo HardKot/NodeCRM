@@ -15,8 +15,8 @@ class Slice {
     this.path = path.join(options.appPath, options.path ?? './');
     this.logger = options.logger ?? console;
 
-    this.files = [];
     this.modules = [];
+    this.files = [];
   }
 
   async load() {
