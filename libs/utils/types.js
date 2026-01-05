@@ -1,12 +1,13 @@
 export function isObject(v) {
-  if (typeof v === 'object') {
-    return v !== null && !Array.isArray(v);
-  }
-  return typeof v === 'function';
+  return typeof v === 'object' && !Array.isArray(v);
 }
 
 export function isFunction(v) {
-  return typeof v === 'function';
+  return typeof v === 'function' && !v.toString().startsWith('class');
+}
+
+export function isClass(v) {
+  return typeof v === 'function' && v.toString().startsWith('class');
 }
 
 export function isUndefined(v) {

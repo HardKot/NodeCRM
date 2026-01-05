@@ -14,7 +14,6 @@ class Code {
     this.relative = options.relative || '.';
     this.path = path.join(this.dirname, this.relative, this.name);
     this.type = options.type || this.definitionType();
-    this.dependencies = new Set(options.dependencies);
 
     this.runOptions = Object.freeze({
       timeout: 1000,
@@ -33,8 +32,6 @@ class Code {
 
     this.import = options.import || (resolve => import(path.join(this.path, resolve)));
     this.exports = {};
-
-    Object.freeze(this);
   }
 
   autoLoad() {
@@ -61,7 +58,9 @@ class Code {
     });
 
     const closure = script.runInContext(Object.freeze(this.context), this.runOptions);
-    Object.assign(this.exports, this.exportCommon(closure));
+    this.exports = this.exportCommon(closure);
+    Object.setPrototypeOf(this.exports, null);
+
     return this.exports;
   }
 
@@ -89,11 +88,10 @@ class Code {
   }
 
   exportCommon(closure) {
-    const exports = {};
     const __filename = this.relative;
     const __dirname = path.dirname(this.relative);
-    const module = { exports };
-    closure(exports, this.requireDependency.bind(this), module, __filename, __dirname);
+    const module = { exports: {} };
+    closure(module.exports, this.requireDependency.bind(this), module, __filename, __dirname);
     return module.exports;
   }
 
@@ -109,7 +107,6 @@ class Code {
     if (path.isAbsolute(modulePath) || modulePath.startsWith('.')) {
       modulePath = path.resolve(path.dirname(this.path), modulePath);
     }
-    this.dependencies.add(modulePath);
     return this.require(modulePath);
   }
 
