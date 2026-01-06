@@ -6,6 +6,7 @@ const fsMock = {
   existsSync: jest.fn(),
   readFileSync: jest.fn(),
   statSync: jest.fn(),
+  watch: jest.fn(),
 };
 fsMock.default = fsMock;
 
@@ -13,6 +14,7 @@ const fsMockPromise = {
   readdir: jest.fn(),
   stat: jest.fn(),
   readFile: jest.fn(),
+  watch: jest.fn(),
 };
 
 fsMockPromise.default = fsMockPromise;
@@ -27,6 +29,7 @@ const { Space } = await import('../space.js');
 describe('Space', () => {
   let space;
   let files;
+  let watchCallback;
   const mockLogger = { info: jest.fn(), error: jest.fn() };
 
   beforeEach(() => {
@@ -62,6 +65,26 @@ describe('Space', () => {
 
     fsp.readFile.mockImplementation(it => {
       return Promise.resolve(files[it]);
+    });
+
+    fs.watch.mockImplementation((path, options, callback) => {
+      watchCallback = callback;
+    });
+
+    fsp.watch.mockImplementation(() => {
+      return {
+        [Symbol.asyncIterator]() {
+          return {
+            async next() {
+              return new Promise(resolve => {
+                watchCallback = () => {
+                  resolve({ done: false, value: [] });
+                };
+              });
+            },
+          };
+        },
+      };
     });
   });
 
@@ -134,5 +157,57 @@ describe('Space', () => {
 
     expect(space.modules['app'].name).toBe('AppModule');
     expect(space.modules['beta'].name).toBe('BetaModule');
+  });
+
+  it('reloads modules on change', async () => {
+    files['/app/app.module.js'] = `'use strict'
+      const Service = require("./app.service.js");
+      
+      module.exports = class AppModule {
+        static services = [Service];
+      }
+    `;
+
+    files['/app/app.service.js'] = `'use strict'
+      module.exports = class AppService {
+        getAll() {
+          return [1, 2, 3];
+        }
+      }
+    `;
+
+    await space.load();
+    space.watch();
+
+    let service = space.modules['app'].services[0];
+    expect(service.name).toBe('AppService');
+
+    files['/app/app.service.js'] = `'use strict'
+      module.exports = class NewAppService {
+        getAll() {
+          return [3, 2, 1];
+        }
+      }
+    `;
+    watchCallback();
+    await new Promise(resolve => setTimeout(resolve, 50));
+
+    service = space.modules['app'].services[0];
+    expect(service.name).toBe('NewAppService');
+  });
+
+  it('read events', async () => {
+    const listener = jest.fn();
+    space.onPreLoad(listener);
+    space.onPostLoad(listener);
+
+    files['/app/app.module.js'] = `'use strict'
+      module.exports = class AppModule {}
+    `;
+
+    await space.load();
+    expect(listener).toHaveBeenCalledTimes(2);
+    expect(listener).toHaveBeenNthCalledWith(1, space);
+    expect(listener).toHaveBeenNthCalledWith(2, space);
   });
 });

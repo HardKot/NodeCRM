@@ -6,13 +6,12 @@ import module from 'node:module';
 
 import { Code } from './code';
 
-class Space extends events.EventEmitter {
+class Space {
   constructor(config) {
-    super();
-
     this.codes = new Map();
 
     this.logger = config.logger ?? console;
+    this.eventEmitter = new events.EventEmitter();
 
     if (!this.path) {
       this.path = process.cwd();
@@ -42,7 +41,7 @@ class Space extends events.EventEmitter {
     const { logger } = this;
 
     try {
-      this.emit('preLoad', this, this.codes);
+      this.eventEmitter.emit('preLoad', this);
       logger.info(`Load space from path '${this.path}'`);
       this.codes.clear();
 
@@ -51,18 +50,20 @@ class Space extends events.EventEmitter {
       files.filter(file => file.endsWith('.module.js')).forEach(file => this.#loadCode(file));
 
       logger.info(`Success load space from path '${this.path}'`);
-      this.emit('postLoad', this, this.codes);
+      this.eventEmitter.emit('postLoad', this);
     } catch (e) {
       logger.info(`Failed load space from path '${this.path}'`);
-      this.emit('error', e);
+      this.eventEmitter.emit('error', e);
     }
   }
 
-  watch() {
+  async watch() {
     const { logger } = this;
     let timeoutId = null;
 
-    fs.watch(this.path, { recursive: true }, () => {
+    const watcher = fsp.watch(this.path, { recursive: true });
+
+    for await (const _ of watcher) {
       clearTimeout(timeoutId);
 
       timeoutId = setTimeout(async () => {
@@ -72,10 +73,18 @@ class Space extends events.EventEmitter {
           logger.info(`Success '${this.path}' reloaded.`);
         } catch (e) {
           logger.error(`Space '${this.path}' failed reload`);
-          this.emit('error', e);
+          this.eventEmitter.emit('error', e);
         }
       }, timeoutId);
-    });
+    }
+  }
+
+  onPreLoad(listener) {
+    this.eventEmitter.on('preLoad', listener);
+  }
+
+  onPostLoad(listener) {
+    this.eventEmitter.on('postLoad', listener);
   }
 
   async #loadFiles() {
