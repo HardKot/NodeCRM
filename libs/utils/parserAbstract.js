@@ -1,10 +1,11 @@
 import { factoryCamelCase } from './stringCase.js';
+import { isClass, isFunction } from './types.js';
 
 class ParserAbstract {
-  parser(source) {
+  parse(source) {
     const srcType = this.sourceType(source);
 
-    const parserName = factoryCamelCase('parser', srcType);
+    const parserName = factoryCamelCase('parse', srcType);
     const parser = this[parserName];
 
     return parser?.call(this, source);
@@ -12,45 +13,54 @@ class ParserAbstract {
 
   sourceType(source) {
     if (Array.isArray(source)) return 'array';
-    if (typeof source === 'function')
-      return source.toString().startsWith('class') ? 'class' : 'function';
+    if (isFunction(source)) return 'function';
+    if (isClass(source)) return 'class';
     return typeof source;
   }
 
-  parserString() {
-    console.warn('parserString method not implemented');
+  parseString() {
+    console.warn('parseString method not implemented');
+    return {};
   }
 
-  parserObject() {
-    console.warn('parserObject method not implemented');
+  parseObject() {
+    console.warn('parseObject method not implemented');
+    return {};
   }
 
-  parserArray() {
-    console.warn('parserArray method not implemented');
+  parseArray() {
+    console.warn('parseArray method not implemented');
+    return {};
   }
 
-  parserNumber() {
-    console.warn('parserNumber method not implemented');
+  parseNumber() {
+    console.warn('parseNumber method not implemented');
+    return {};
   }
 
-  parserBoolean() {
-    console.warn('parserBoolean method not implemented');
+  parseBoolean() {
+    console.warn('parseBoolean method not implemented');
+    return {};
   }
 
-  parserUndefined() {
-    console.warn('parserUndefined method not implemented');
+  parseUndefined() {
+    console.warn('parseUndefined method not implemented');
+    return {};
   }
 
-  parserFunction() {
-    console.warn('parserFunction method not implemented');
+  parseFunction() {
+    console.warn('parseFunction method not implemented');
+    return {};
   }
 
-  parserSymbol() {
-    console.warn('parserSymbol method not implemented');
+  parseSymbol() {
+    console.warn('parseSymbol method not implemented');
+    return {};
   }
 
-  parserClass() {
-    console.warn('parserClass method not implemented');
+  parseClass() {
+    console.warn('parseClass method not implemented');
+    return {};
   }
 }
 

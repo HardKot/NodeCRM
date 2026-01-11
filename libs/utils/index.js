@@ -8,3 +8,4 @@ export * as StringCase from './stringCase.js';
 export * as Functions from './functions.js';
 
 export { ParserAbstract } from './parserAbstract.js';
+export { Table } from './table.js';

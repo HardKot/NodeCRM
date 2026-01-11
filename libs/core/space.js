@@ -7,7 +7,7 @@ import module from 'node:module';
 import { Code } from './code';
 
 class Space {
-  constructor(config) {
+  constructor(config = {}) {
     this.codes = new Map();
 
     this.logger = config.logger ?? console;
@@ -24,6 +24,7 @@ class Space {
 
     this.watchTimeout = config.watchTimeout ?? 500;
     this.codeContext = config.context ?? {};
+    this.abortController = new AbortController();
 
     Object.freeze(this);
   }
@@ -35,6 +36,10 @@ class Space {
     const modules = Object.fromEntries(entries);
     Object.freeze(modules);
     return modules;
+  }
+
+  stop() {
+    this.abortController.abort();
   }
 
   async load() {
@@ -61,7 +66,12 @@ class Space {
     const { logger } = this;
     let timeoutId = null;
 
-    const watcher = fsp.watch(this.path, { recursive: true });
+    const watcher = fsp.watch(this.path, {
+      recursive: true,
+      signal: this.abortController.signal,
+      encoding: 'utf-8',
+      persistent: false,
+    });
 
     for await (const _ of watcher) {
       clearTimeout(timeoutId);
@@ -80,11 +90,11 @@ class Space {
   }
 
   onPreLoad(listener) {
-    this.eventEmitter.on('preLoad', listener);
+    return this.eventEmitter.on('preLoad', listener);
   }
 
   onPostLoad(listener) {
-    this.eventEmitter.on('postLoad', listener);
+    return this.eventEmitter.on('postLoad', listener);
   }
 
   async #loadFiles() {

@@ -190,7 +190,7 @@ describe('Space', () => {
       }
     `;
     watchCallback();
-    await new Promise(resolve => setTimeout(resolve, 50));
+    await new Promise(resolve => setTimeout(resolve, 10));
 
     service = space.modules['app'].services[0];
     expect(service.name).toBe('NewAppService');

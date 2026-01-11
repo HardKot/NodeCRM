@@ -3,11 +3,15 @@ export function isObject(v) {
 }
 
 export function isFunction(v) {
-  return typeof v === 'function' && !v.toString().startsWith('class');
+  if (typeof v !== 'function') return false;
+  const str = Function.prototype.toString.call(v);
+  return !str.startsWith('class ');
 }
 
 export function isClass(v) {
-  return typeof v === 'function' && v.toString().startsWith('class');
+  if (typeof v !== 'function') return false;
+  const str = Function.prototype.toString.call(v);
+  return str.startsWith('class ');
 }
 
 export function isUndefined(v) {

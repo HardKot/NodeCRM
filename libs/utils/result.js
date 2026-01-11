@@ -1,99 +1,47 @@
 export default class Result {
-  constructor(result) {
-    if (!Array.isArray(result)) result = [result];
+  constructor(result, error) {
+    if (!!result && !Array.isArray(result)) result = [result];
+    if (!!error && !Array.isArray(error)) error = [error];
 
-    this.value = Promise.all(result).then(it => {
-      if (Array.isArray(it)) it = it.flat(1);
-      return it;
-    });
+    this.value = result ?? [];
+    this.error = error ?? [];
   }
 
-  map(callback) {
-    this.value = this.value.then(it => {
-      return Promise.all(it.map(callback));
-    });
+  hasError() {
+    return this.error.length > 0;
+  }
+
+  getError(index = 0) {
+    return this.error.at(index);
+  }
+
+  getValue(index = 0) {
+    return this.value.at(index);
+  }
+
+  map(left, right) {
+    this.value = this.value.map(left);
+    this.error = this.error.map(right);
     return this;
   }
 
-  filter(callback) {
-    this.value = this.value.then(it => Promise.all(it.filter(callback)));
+  filter(left, right) {
+    this.value = this.value.filter(left);
+    this.error = this.error.filter(right);
     return this;
   }
 
-  reduce(callback, initialValue) {
-    this.value = this.value
-      .then(it => Promise.all([it.reduce(callback, initialValue)]))
-      .then(it => it.flat());
+  flat(left, right) {
+    this.value = this.value.flatMap(left);
+    this.error = this.error.flatMap(right);
     return this;
-  }
-
-  get() {
-    return this.value;
-  }
-
-  then(callback) {
-    this.value = this.value.then(callback);
-    return this;
-  }
-
-  at(index) {
-    this.value = this.value.then(it => it[index]);
-    return this;
-  }
-
-  first() {
-    this.value = this.value.then(it => it[0]);
-    return this;
-  }
-
-  catch(callback) {
-    this.value = this.value.catch(callback);
-    return this;
-  }
-
-  finally(callback) {
-    this.value = this.value.finally(callback);
-    return this;
-  }
-
-  forEach(callback) {
-    this.value = this.value.then(it => {
-      it.forEach(callback);
-      return it;
-    });
-    return this;
-  }
-
-  flat(index) {
-    this.value = this.value.then(it => it.flat(index));
-    return this;
-  }
-
-  concat(array) {
-    this.value = this.value.then(it => it.concat(array));
-    return this;
-  }
-
-  sort(compareFunction) {
-    this.value = this.value.then(it => it.sort(compareFunction));
-    return this;
-  }
-
-  toMap() {
-    this.value = this.value.then(it => new Map(it));
-    return this;
-  }
-
-  toObject() {
-    this.value = this.value.then(it => Object.fromEntries(it));
-    return this;
-  }
-
-  copy() {
-    return new Result(this.value);
   }
 
   static of(value) {
-    return new Result(value);
+    return new Result(value, null);
+  }
+
+  static Reject(error) {
+    return new Result([], error);
   }
 }
