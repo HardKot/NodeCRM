@@ -6,12 +6,20 @@ import { ParserComponent, SUPPORT_SCOPES } from './parserComponent.js';
 class ContainerError extends Error {}
 
 class Container {
-  static create(components = []) {
+  static async create(components = [], { resolves = [], controllers = [] } = {}) {
     const container = new Container();
     for (const component of components) {
       container.add(component);
     }
-    container.build();
+
+    for (const resolve of resolves) {
+      container.add(resolve, { type: 'resolve' });
+    }
+    for (const controller of controllers) {
+      container.add(controller, { type: 'controller' });
+    }
+
+    await container.build();
     return container;
   }
 
@@ -35,8 +43,9 @@ class Container {
     }
   }
 
-  add(source) {
+  add(source, options = {}) {
     const component = this.#parse.parse(source);
+    Object.assign(component, options);
     if (this.#components.has(component.name))
       throw new ContainerError('Component already registered: ' + component.name);
     this.#components.set(component.name, component);

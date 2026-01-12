@@ -27,9 +27,13 @@ class Space {
   }
 
   get modules() {
+    return this.type('module');
+  }
+
+  type(name) {
     const entries = Array.from(this.#codes.entries())
-      .filter(([_, code]) => code.name.endsWith('.module.js'))
-      .map(([_, code]) => [code.name.replace('.module.js', ''), code.exports]);
+      .filter(([_, code]) => code.name.endsWith(`.${name}.js`))
+      .map(([_, code]) => [code.name.replace(`.${name}.js`, ''), code.exports]);
     const modules = Object.fromEntries(entries);
     Object.freeze(modules);
     return modules;

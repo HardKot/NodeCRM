@@ -17,8 +17,10 @@ class Instance {
 
     this.space.onPostLoad(async () => {
       this.logger.info('Loaded modules from space at', this.space.path);
-
-      this.container;
+      this.container = await Container.create([], {
+        controllers: this.space.type('controller'),
+        resolves: this.space.type('resolve'),
+      });
     });
   }
 }
