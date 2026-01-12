@@ -7,30 +7,27 @@ import module from 'node:module';
 import { Code } from './code';
 
 class Space {
+  #eventEmitter = new events.EventEmitter();
+  #abortController = new AbortController();
+  #codes = new Map();
+
   constructor(config = {}) {
-    this.codes = new Map();
-
-    this.logger = config.logger ?? console;
-    this.eventEmitter = new events.EventEmitter();
-
-    if (!this.path) {
+    if (!config.path) {
       this.path = process.cwd();
     } else if (path.isAbsolute(config.path)) {
       this.path = config.path;
     } else {
       this.path = path.join(process.cwd(), config.path);
     }
-    this.path = config.path ?? process.cwd();
 
     this.watchTimeout = config.watchTimeout ?? 500;
     this.codeContext = config.context ?? {};
-    this.abortController = new AbortController();
 
     Object.freeze(this);
   }
 
   get modules() {
-    const entries = Array.from(this.codes.entries())
+    const entries = Array.from(this.#codes.entries())
       .filter(([_, code]) => code.name.endsWith('.module.js'))
       .map(([_, code]) => [code.name.replace('.module.js', ''), code.exports]);
     const modules = Object.fromEntries(entries);
@@ -39,36 +36,26 @@ class Space {
   }
 
   stop() {
-    this.abortController.abort();
+    this.#abortController.abort();
   }
 
   async load() {
-    const { logger } = this;
+    this.#eventEmitter.emit('preLoad', this);
+    this.#codes.clear();
 
-    try {
-      this.eventEmitter.emit('preLoad', this);
-      logger.info(`Load space from path '${this.path}'`);
-      this.codes.clear();
+    const files = await this.#loadFiles();
 
-      const files = await this.#loadFiles();
+    files.filter(file => file.endsWith('.module.js')).forEach(file => this.#loadCode(file));
 
-      files.filter(file => file.endsWith('.module.js')).forEach(file => this.#loadCode(file));
-
-      logger.info(`Success load space from path '${this.path}'`);
-      this.eventEmitter.emit('postLoad', this);
-    } catch (e) {
-      logger.info(`Failed load space from path '${this.path}'`);
-      this.eventEmitter.emit('error', e);
-    }
+    this.#eventEmitter.emit('postLoad', this);
   }
 
   async watch() {
-    const { logger } = this;
     let timeoutId = null;
 
     const watcher = fsp.watch(this.path, {
       recursive: true,
-      signal: this.abortController.signal,
+      signal: this.#abortController.signal,
       encoding: 'utf-8',
       persistent: false,
     });
@@ -78,23 +65,28 @@ class Space {
 
       timeoutId = setTimeout(async () => {
         try {
-          logger.info(`Changes detected in space '${this.path}'. Reloading...`);
-          await this.load();
-          logger.info(`Success '${this.path}' reloaded.`);
+          this.#eventEmitter.emit('update', this);
         } catch (e) {
-          logger.error(`Space '${this.path}' failed reload`);
-          this.eventEmitter.emit('error', e);
+          this.#eventEmitter.emit('error', e);
         }
       }, timeoutId);
     }
   }
 
   onPreLoad(listener) {
-    return this.eventEmitter.on('preLoad', listener);
+    return this.#eventEmitter.on('preLoad', listener);
   }
 
   onPostLoad(listener) {
-    return this.eventEmitter.on('postLoad', listener);
+    return this.#eventEmitter.on('postLoad', listener);
+  }
+
+  onUpdate(listener) {
+    return this.#eventEmitter.on('update', listener);
+  }
+
+  onError(error) {
+    return this.#eventEmitter.on('error', error);
   }
 
   async #loadFiles() {
@@ -121,8 +113,8 @@ class Space {
   }
 
   #loadCode(absolutePath) {
-    if (this.codes.has(absolutePath)) {
-      return this.codes.get(absolutePath);
+    if (this.#codes.has(absolutePath)) {
+      return this.#codes.get(absolutePath);
     }
     if (!fs.existsSync(absolutePath)) {
       return null;
@@ -139,7 +131,7 @@ class Space {
       context: this.codeContext,
     });
     code.autoLoad();
-    this.codes.set(absolutePath, code);
+    this.#codes.set(absolutePath, code);
     return code;
   }
 

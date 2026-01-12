@@ -178,6 +178,7 @@ describe('Space', () => {
 
     await space.load();
     space.watch();
+    space.onUpdate(() => space.load());
 
     let service = space.modules['app'].services[0];
     expect(service.name).toBe('AppService');

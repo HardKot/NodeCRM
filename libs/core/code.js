@@ -10,20 +10,16 @@ class Code {
   constructor(source, options = {}) {
     this.source = source;
     this.name = options.name;
-    this.dirname = options.dirname || process.cwd();
-    this.relative = options.relative || '.';
+    this.dirname = options.dirname ?? process.cwd();
+    this.relative = options.relative ?? '.';
     this.path = path.join(this.dirname, this.relative, this.name);
-    this.type = options.type || this.definitionType();
+    this.type = options.type ?? this.definitionType();
 
     this.runOptions = Object.freeze({
       timeout: 1000,
-      ...(options.runOptions || {}),
+      ...(options.runOptions ?? {}),
     });
-    this.context = vm.createContext({
-      ...NODE_CONTEXT,
-      ...DEFAULT_CONTEXT,
-      ...(options.context || EMPTY_CONTEXT),
-    });
+    this.context = vm.createContext(options.context ?? EMPTY_CONTEXT);
 
     this.require = module.createRequire(this.path);
     if (options.createRequire) {
@@ -162,4 +158,4 @@ const CODE_TYPE = Object.freeze({
   TS: 2,
 });
 
-export { CODE_TYPE, Code, CodeError };
+export { CODE_TYPE, Code, CodeError, NODE_CONTEXT, DEFAULT_CONTEXT };

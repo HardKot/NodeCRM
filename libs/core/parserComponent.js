@@ -14,24 +14,23 @@ class ParserComponent extends ParserAbstract {
       dependencies: source.inject ?? source.dependencies ?? [],
       type: source.type,
       scope: SUPPORT_SCOPES[source.scope?.toUpperCase()] ?? SUPPORT_SCOPES.SINGLETON,
-      eager: source.eager ?? false,
+      eager: source.eager ?? true,
     };
   }
 
   parseFunction(source) {
-    return this.parseObject({
-      ...source,
-      name: source.name,
-      factory: deps => source.bind(deps),
-    });
+    return {
+      ...this.parseObject(source),
+      factory: deps => source.bind({ ...deps, config: source.config }),
+    };
   }
 
   parseClass(source) {
-    return this.parseObject({
-      ...source,
-      name: source.name,
-      factory: deps => new source(...Object.values(deps)),
-    });
+    return {
+      ...this.parseObject(source),
+      factory: deps => new source(...Object.values(deps), source.config),
+      name: source.name ?? source.prototype.constructor.name,
+    };
   }
 }
 

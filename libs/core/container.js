@@ -6,6 +6,15 @@ import { ParserComponent, SUPPORT_SCOPES } from './parserComponent.js';
 class ContainerError extends Error {}
 
 class Container {
+  static create(components = []) {
+    const container = new Container();
+    for (const component of components) {
+      container.add(component);
+    }
+    container.build();
+    return container;
+  }
+
   #parse = new ParserComponent();
   #scope = new AsyncLocalStorage();
 
@@ -56,13 +65,13 @@ class Container {
     }
   }
 
-  get(binding) {
+  async get(binding) {
     const component = this.#components.get(binding);
     if (!component) return null;
 
     if (component.scope === SUPPORT_SCOPES.SINGLETON) {
       if (!this.#instances.has(component)) {
-        const instance = this.#createComponent(component);
+        const instance = await this.#createComponent(component);
         this.#instances.set(component, instance);
       }
       return this.#instances.get(component);
@@ -78,29 +87,30 @@ class Container {
       }
 
       if (!scopedInstances.has(component)) {
-        const instance = this.#createComponent(component);
+        const instance = await this.#createComponent(component);
         scopedInstances.set(component, instance);
       }
       return scopedInstances.get(component);
     }
 
-    return this.#createComponent(component);
+    return await this.#createComponent(component);
   }
 
-  type(type) {
+  async type(type) {
     const instances = [];
     for (const component of this.#components.values()) {
-      if (component.type === type) instances.push(this.get(component.name));
+      if (component.type === type) instances.push(await this.get(component.name));
     }
     return instances;
   }
 
-  build() {
+  async build() {
     if (this.#detectedMissing()) return;
     if (this.#detectedCircular()) return;
 
     for (const component of this.#components.values()) {
-      if (component.eager && component.scope === SUPPORT_SCOPES.SINGLETON) this.get(component.name);
+      if (component.eager && component.scope === SUPPORT_SCOPES.SINGLETON)
+        await this.get(component.name);
     }
   }
 
@@ -127,12 +137,14 @@ class Container {
     this.#interceptors.add(component, interceptor);
   }
 
-  #createComponent(component) {
+  async #createComponent(component) {
     if (!component) return null;
 
-    const dependency = Object.fromEntries(component.dependencies.map(it => [it, this.get(it)]));
+    const dependency = Object.fromEntries(
+      await Promise.all(component.dependencies.map(async it => [it, await this.get(it)]))
+    );
     let instance = component.factory(dependency);
-    instance.postConstructor?.();
+    await instance.postConstructor?.();
 
     const decorators = this.#decorators.get(component);
     const interceptors = this.#interceptors.get(component);

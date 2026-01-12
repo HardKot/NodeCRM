@@ -1,5 +1,8 @@
-class AppLogger {
+import console from 'node:console';
+
+class Logger extends console.Console {
   constructor(config = {}) {
+    super();
     this.prefix = config.prefix ?? '';
   }
 
@@ -24,7 +27,7 @@ class AppLogger {
 
   async print(level, args, time) {
     const message = `${time} | ${this.prefix} | ${level.toUpperCase()} : ${Array.from(arguments).join(' ')}`;
-    const print = console[level] ?? console.log;
+    const print = super[level] ?? super.log;
 
     print(message.replace('| | ', ''));
   }
@@ -34,7 +37,7 @@ class AppLogger {
   }
 
   create(prefix) {
-    return new AppLogger({ prefix: `${prefix}` });
+    return new Logger({ prefix: `${prefix}` });
   }
 
   static getTime() {
@@ -43,4 +46,4 @@ class AppLogger {
   }
 }
 
-export { AppLogger };
+export { Logger };

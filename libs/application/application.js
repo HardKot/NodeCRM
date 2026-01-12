@@ -1,6 +1,6 @@
 import events from 'node:events';
 import { AppSpace } from './appSpace.js';
-import { AppLogger } from './appLogger.js';
+import { Logger } from '../core/logger.js';
 import { AppConfig } from './appConfig.js';
 import { SchemaModule } from '../schema';
 import { setImmediate } from 'node:timers';
@@ -11,7 +11,7 @@ class Application extends events.EventEmitter {
     super();
 
     this.path = process.cwd();
-    this.logger = new AppLogger(this);
+    this.logger = new Logger(this);
     this.config = new AppConfig(this);
     this.space = new AppSpace(this);
     this.components = new ComponentContainerModule(this);
