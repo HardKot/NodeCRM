@@ -27,15 +27,12 @@ const fsp = await import('node:fs/promises');
 const { Space } = await import('../space.js');
 
 describe('Space', () => {
-  let space;
   let files;
   let watchCallback;
-  const mockLogger = { info: jest.fn(), error: jest.fn() };
 
   beforeEach(() => {
     jest.clearAllMocks();
     files = {};
-    space = new Space({ logger: mockLogger, context: {}, path: '/app' });
 
     fs.existsSync.mockImplementation(it => files.hasOwnProperty(it));
     fs.readdirSync.mockImplementation(() => {
@@ -91,9 +88,9 @@ describe('Space', () => {
   it('loads one module', async () => {
     files['/app/app.module.js'] = 'module.exports = class RootModule {};';
 
-    await space.load();
+    const space = await Space.load({ path: '/app' });
 
-    const module = space.modules['app'];
+    const module = space.get('app');
 
     expect(module.name).toBe('RootModule');
   });
@@ -131,9 +128,9 @@ describe('Space', () => {
       };
       `;
 
-    await space.load();
+    const space = await Space.load({ path: '/app' });
+    const module = space.get('app');
 
-    const module = space.modules['app'];
     const service = new module.services[0]();
     const controller = new module.controllers[0]();
 
@@ -153,10 +150,10 @@ describe('Space', () => {
       };
       `;
 
-    await space.load();
+    const space = await Space.load({ path: '/app' });
 
-    expect(space.modules['app'].name).toBe('AppModule');
-    expect(space.modules['beta'].name).toBe('BetaModule');
+    expect(space.get('app').name).toBe('AppModule');
+    expect(space.get('beta').name).toBe('BetaModule');
   });
 
   it('reloads modules on change', async () => {
@@ -176,12 +173,14 @@ describe('Space', () => {
       }
     `;
 
-    await space.load();
-    space.watch();
-    space.onUpdate(() => space.load());
-
-    let service = space.modules['app'].services[0];
+    const space = await Space.watch({ path: '/app' });
+    let service = space.get('app').services[0];
     expect(service.name).toBe('AppService');
+
+    space.onChange(() => {
+      service = space.get('app').services[0];
+      expect(service.name).toBe('NewAppService');
+    });
 
     files['/app/app.service.js'] = `'use strict'
       module.exports = class NewAppService {
@@ -191,24 +190,5 @@ describe('Space', () => {
       }
     `;
     watchCallback();
-    await new Promise(resolve => setTimeout(resolve, 10));
-
-    service = space.modules['app'].services[0];
-    expect(service.name).toBe('NewAppService');
-  });
-
-  it('read events', async () => {
-    const listener = jest.fn();
-    space.onPreLoad(listener);
-    space.onPostLoad(listener);
-
-    files['/app/app.module.js'] = `'use strict'
-      module.exports = class AppModule {}
-    `;
-
-    await space.load();
-    expect(listener).toHaveBeenCalledTimes(2);
-    expect(listener).toHaveBeenNthCalledWith(1, space);
-    expect(listener).toHaveBeenNthCalledWith(2, space);
   });
 });

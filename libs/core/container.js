@@ -1,6 +1,5 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
-import { Table, Types } from '#lib/utils';
-
+import { Table } from '#lib/utils';
 import { ParserComponent, SUPPORT_SCOPES } from './parserComponent.js';
 
 class ContainerError extends Error {}
@@ -29,7 +28,6 @@ class Container {
   #components = new Map();
   #instances = new Map();
   #decorators = new Table();
-  #interceptors = new Table();
 
   async runScope(callback) {
     const instances = new Map();
@@ -141,11 +139,6 @@ class Container {
     this.#decorators.add(component, decorator);
   }
 
-  intercept(name, interceptor) {
-    const component = this.#components.get(name);
-    this.#interceptors.add(component, interceptor);
-  }
-
   async #createComponent(component) {
     if (!component) return null;
 
@@ -156,39 +149,9 @@ class Container {
     await instance.postConstructor?.();
 
     const decorators = this.#decorators.get(component);
-    const interceptors = this.#interceptors.get(component);
-    const clearInstance = instance;
 
     for (const decorator of decorators) {
       instance = decorator(instance, dependency);
-    }
-
-    if (interceptors.length > 0) {
-      instance = new Proxy(instance, {
-        get(target, key) {
-          const original = target[key];
-          if (!Types.isFunction(original)) return original;
-
-          return async function () {
-            for (const interceptor of interceptors) {
-              await interceptor.before?.(clearInstance, key, arguments);
-            }
-
-            try {
-              const result = original.apply(target, arguments);
-              for (const interceptor of interceptors) {
-                await interceptor.after?.(clearInstance, key, result);
-              }
-              return result;
-            } catch (error) {
-              for (const interceptor of interceptors) {
-                await interceptor.error?.(clearInstance, key, error);
-              }
-              throw error;
-            }
-          };
-        },
-      });
     }
 
     return instance;
