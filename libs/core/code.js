@@ -55,7 +55,6 @@ class Code {
 
     const closure = script.runInContext(Object.freeze(this.context), this.runOptions);
     this.exports = this.exportCommon(closure);
-    Object.setPrototypeOf(this.exports, null);
 
     return this.exports;
   }
@@ -87,6 +86,8 @@ class Code {
     const __filename = this.relative;
     const __dirname = path.dirname(this.relative);
     const module = { exports: {} };
+    Object.setPrototypeOf(module.exports, null);
+    Object.setPrototypeOf(module, null);
     closure(module.exports, this.requireDependency.bind(this), module, __filename, __dirname);
     return module.exports;
   }

@@ -90,15 +90,15 @@ describe('Space', () => {
 
     const space = await Space.load({ path: '/app' });
 
-    const module = space.get('app');
+    const module = space.get('app.module');
 
     expect(module.name).toBe('RootModule');
   });
 
   it('loads module with dependency', async () => {
     files['/app/app.module.js'] = `'use strict';
-      const Service = require("./app.service.js"); 
-      const Controller = require("./app.controller.js"); 
+      const Service = require("./app.service"); 
+      const Controller = require("./app.controller"); 
       
       module.exports = class RootModule { 
         static services = [Service];
@@ -106,7 +106,7 @@ describe('Space', () => {
       };
       `;
     files['/app/app.controller.js'] = `'use strict';
-      const Service = require("./app.service.js"); 
+      const Service = require("./app.service"); 
       module.exports = class RootController { 
         constructor() {
           this.service = new Service();
@@ -158,7 +158,7 @@ describe('Space', () => {
 
   it('reloads modules on change', async () => {
     files['/app/app.module.js'] = `'use strict'
-      const Service = require("./app.service.js");
+      const Service = require("./app.service");
       
       module.exports = class AppModule {
         static services = [Service];

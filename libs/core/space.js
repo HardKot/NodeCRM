@@ -27,7 +27,7 @@ class Space {
   #eventEmitter = new events.EventEmitter();
   #abortController = new AbortController();
   #codes = new Map();
-  #modules = {};
+  #modules = new Map();
 
   constructor(config = {}) {
     if (!config.path) {
@@ -41,16 +41,16 @@ class Space {
     this.watchTimeout = config.watchTimeout ?? 500;
     this.codeContext = config.context ?? {};
 
-    Object.freeze(this.#modules);
     Object.freeze(this);
   }
 
   getAll() {
-    return this.#modules;
+    return this.#modules.values().toArray();
   }
 
   get(name) {
-    return this.#modules[name];
+    if (!name.endsWith('.module')) name += '.module';
+    return this.#modules.get(name);
   }
 
   stop() {
@@ -77,15 +77,14 @@ class Space {
     this.#eventEmitter.emit('preLoad');
 
     const files = await this.#loadFiles();
-    const modules = [];
 
     for (const file of files) {
-      if (!file.endsWith('.module.js')) continue;
-      const module = this.#loadCode(file);
-      modules.push([module.name.replace('.module.js', ''), await module.exports]);
-    }
+      const moduleName = this.#getModuleName(file);
+      if (!moduleName.endsWith('.module')) continue;
 
-    this.#modules = Object.fromEntries(modules);
+      const module = this.#loadCode(file);
+      this.#modules.set(moduleName, await module.exports);
+    }
 
     this.#eventEmitter.emit('postLoad');
   }
@@ -139,8 +138,10 @@ class Space {
   }
 
   #loadCode(absolutePath) {
-    if (this.#codes.has(absolutePath)) {
-      return this.#codes.get(absolutePath);
+    const moduleName = this.#getModuleName(absolutePath);
+
+    if (this.#codes.has(moduleName)) {
+      return this.#codes.get(moduleName);
     }
     if (!fs.existsSync(absolutePath)) {
       return null;
@@ -157,7 +158,7 @@ class Space {
       context: this.codeContext,
     });
     code.autoLoad();
-    this.#codes.set(absolutePath, code);
+    this.#codes.set(moduleName, code);
     return code;
   }
 
@@ -170,13 +171,28 @@ class Space {
         if (path.relative(self.path, modulePath).startsWith('..')) {
           return originRequire(modulePath);
         }
-        return self.#loadCode(modulePath)?.exports;
+
+        if (Code.supportExtension.includes(path.extname(modulePath)))
+          return self.#loadCode(modulePath)?.exports;
+
+        for (const ext of Code.supportExtension) {
+          const module = self.#loadCode(`${modulePath}${ext}`)?.exports;
+          if (module) return module;
+        }
+
+        return null;
       }
 
       return originRequire(modulePath);
     }
 
     return require;
+  }
+
+  #getModuleName(absolutePath) {
+    let moduleName = path.relative(this.path, absolutePath);
+    moduleName = moduleName.replace(path.parse(moduleName).ext, '');
+    return moduleName;
   }
 }
 
