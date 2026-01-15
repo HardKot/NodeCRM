@@ -1,6 +1,6 @@
 'use strict';
 
-import { StringCase } from '#lib/utils';
+import { StringCase } from '../utils';
 import { Handler } from './handler.js';
 
 class ControllerParserError extends Error {}

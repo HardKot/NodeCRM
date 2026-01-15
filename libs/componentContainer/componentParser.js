@@ -1,4 +1,4 @@
-import { StringCase } from '#lib/utils';
+import { StringCase } from '../utils';
 import { Component } from './component.js';
 import { DiScope } from './diScope.js';
 

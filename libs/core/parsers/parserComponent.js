@@ -1,4 +1,4 @@
-import { ParserAbstract } from '#lib/utils';
+import { ParserAbstract } from '../../utils';
 
 const SUPPORT_SCOPES = Object.freeze({
   SINGLETON: 0,
@@ -10,7 +10,7 @@ class ParserComponent extends ParserAbstract {
   parseObject(source) {
     return {
       name: source.name,
-      factory: source.factory,
+      factory: source.factory ?? (() => source),
       dependencies: source.inject ?? source.dependencies ?? [],
       type: source.type,
       scope: SUPPORT_SCOPES[source.scope?.toUpperCase()] ?? SUPPORT_SCOPES.SINGLETON,
@@ -21,14 +21,14 @@ class ParserComponent extends ParserAbstract {
   parseFunction(source) {
     return {
       ...this.parseObject(source),
-      factory: deps => source.bind({ ...deps, config: source.config }),
+      factory: deps => source.bind({ ...deps, module: source.module }),
     };
   }
 
   parseClass(source) {
     return {
       ...this.parseObject(source),
-      factory: deps => new source(...Object.values(deps), source.config),
+      factory: deps => new source(...Object.values(deps), source.module),
       name: source.name ?? source.prototype.constructor.name,
     };
   }

@@ -1,7 +1,7 @@
 'use strict';
 
 import { FieldType } from './fieldType.js';
-import { StringCase } from '#lib/utils';
+import { StringCase } from '../utils';
 
 class SchemaParserError extends Error {}
 

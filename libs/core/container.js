@@ -1,21 +1,14 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
-import { Table } from '#lib/utils';
-import { ParserComponent, SUPPORT_SCOPES } from './parserComponent.js';
+import { Table } from '../utils';
+import { ParserComponent, SUPPORT_SCOPES } from './parsers/parserComponent.js';
 
 class ContainerError extends Error {}
 
 class Container {
-  static async create(components = [], { resolves = [], controllers = [] } = {}) {
+  static async create(components = []) {
     const container = new Container();
     for (const component of components) {
       container.add(component);
-    }
-
-    for (const resolve of resolves) {
-      container.add(resolve, { type: 'resolve' });
-    }
-    for (const controller of controllers) {
-      container.add(controller, { type: 'controller' });
     }
 
     await container.build();

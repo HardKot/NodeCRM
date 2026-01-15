@@ -1,6 +1,6 @@
 import http2 from 'node:http2';
 
-import { Functions, Types } from '#lib/utils';
+import { Functions, Types } from '../utils';
 
 import { Request } from './request.js';
 import { Response } from './response.js';
