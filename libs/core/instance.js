@@ -65,38 +65,24 @@ class Instance {
     };
   }
 
-  #moduleResolve(moduleSource) {
+  #processModule(moduleSource, processed = new Set()) {
     if (Types.isString(moduleSource)) {
       moduleSource = this.space.get(moduleSource);
+      moduleSource.name = moduleSource.name ?? moduleSource;
       if (!moduleSource) throw new InstanceError(`Module "${moduleSource}" not found in space`);
     }
-    const module = this.parser.parse(moduleSource);
+    const moduleConfig = this.parser.parse(moduleSource);
+    if (processed.has(moduleConfig.name)) return;
+    processed.add(moduleConfig.name);
 
-    const instance = module.factory(this);
-    let providers = new Set();
-    let controllers = new Set();
+    const instance = moduleConfig.factory(this);
 
-    if (Types.isFunction(module.providers)) {
-      providers = new Set(module.providers(instance));
-    } else if (Array.isArray(module.providers)) {
-      providers = new Set(module.providers);
-    }
-
-    if (Types.isFunction(module.controllers)) {
-      controllers = new Set(module.controllers(instance));
-    } else if (Array.isArray(module.controllers)) {
-      controllers = new Set(module.controllers);
-    }
-
-    for (const provider of [providers, controllers].flat()) {
-      provider.module = instance;
-    }
-
-    for (const importedModuleSource of module.imports) {
-      const importedModule = this.#moduleResolve(importedModuleSource);
-
-      importedModule.providers.forEach(it => providers.add(it));
-      importedModule.controllers.forEach(it => controllers.add(it));
+    const providers = new Set(moduleConfig.providers(instance));
+    const controllers = new Set(moduleConfig.controllers(instance));
+    const imports = new Set(moduleConfig.imports?.map(it => this.#processModule(it, processed)));
+    for (const imported of imports) {
+      for (const provider of imported.providers) providers.add(provider);
+      for (const controller of imported.controllers) controllers.add(controller);
     }
 
     return {
@@ -109,7 +95,7 @@ class Instance {
     const moduleSource = this.space.get('app.module');
     if (!moduleSource) throw new InstanceError('App module not found in space');
 
-    const { providers, controllers } = this.#moduleResolve(moduleSource);
+    const { providers, controllers } = this.#processModule(moduleSource);
 
     for (const provider of providers) provider.type = 'provider';
     for (const controller of controllers) {

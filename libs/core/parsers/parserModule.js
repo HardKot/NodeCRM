@@ -4,8 +4,8 @@ class ParserModule extends ParserAbstract {
   parseObject(source) {
     return {
       name: source.name,
-      providers: this.#extractProviders(source),
-      controllers: this.#extractControllers(source),
+      providers: source.providers ?? (() => []),
+      controllers: source.controllers ?? (() => []),
       imports: source.imports ?? {},
       factory: source.factory ?? (() => source),
     };

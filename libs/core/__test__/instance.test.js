@@ -112,8 +112,8 @@ describe('instance', () => {
         factory: (instance) => {
           return {};
         },
-        providers: [AppService],
-        controllers: [],
+        providers: () => [AppService],
+        controllers: () => [],
         imports: [],
       };
     `;
@@ -140,8 +140,8 @@ describe('instance', () => {
       const { ExtraService } = require('./extra.service');
       
       module.exports = {
-        providers: [ExtraService],
-        controllers: [],
+        providers: () => [ExtraService],
+        controllers: () => [],
         imports: [],
       };
     `;
@@ -150,8 +150,8 @@ describe('instance', () => {
       const { AppService } = require('./app.service');
         
       module.exports = {
-        providers: [AppService],
-        controllers: [],
+        providers: () => [AppService],
+        controllers: () => [],
         imports: ['extra.module'],
       };
     `;
