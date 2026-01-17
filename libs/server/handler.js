@@ -12,7 +12,7 @@ class Handler {
   constructor(callback, options = {}) {
     this.callback = callback;
     this.mapping = options.mapping ?? '/';
-    this.dependencies = options.dependencies ?? [];
+    this.dependencies = options.inject ?? [];
     this.method = options.method?.toUpperCase() ?? 'GET';
 
     this.guard = options.guard ?? Handler.fullAccess;

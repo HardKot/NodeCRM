@@ -109,11 +109,8 @@ describe('instance', () => {
       const { AppService } = require('./app.service');
         
       module.exports = {
-        factory: (instance) => {
-          return {};
-        },
-        providers: () => [AppService],
-        controllers: () => [],
+        providers: [AppService],
+        consumers: [],
         imports: [],
       };
     `;
@@ -140,19 +137,20 @@ describe('instance', () => {
       const { ExtraService } = require('./extra.service');
       
       module.exports = {
-        providers: () => [ExtraService],
-        controllers: () => [],
+        providers: [ExtraService],
+        consumers: [],
         imports: [],
       };
     `;
 
     files['/app/app.module.js'] = `'use strict';
       const { AppService } = require('./app.service');
+      const ExtraModule = require('./extra.module');
         
       module.exports = {
-        providers: () => [AppService],
-        controllers: () => [],
-        imports: ['extra.module'],
+        providers: [AppService],
+        consumers: [],
+        imports: [ExtraModule],
       };
     `;
 

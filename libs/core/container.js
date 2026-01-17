@@ -1,26 +1,27 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { Table } from '../utils';
-import { ParserComponent, SUPPORT_SCOPES } from './parsers/parserComponent.js';
+import { Component, SUPPORT_SCOPES } from './component.js';
 
 class ContainerError extends Error {}
 
 class Container {
   static async create(components = []) {
-    const container = new Container();
-    for (const component of components) {
-      container.add(component);
-    }
-
+    const container = new Container(components.map(it => Component.parse(it)));
     await container.build();
+
     return container;
   }
 
-  #parse = new ParserComponent();
   #scope = new AsyncLocalStorage();
 
-  #components = new Map();
+  #bindings = new Map();
   #instances = new Map();
   #decorators = new Table();
+
+  constructor(components = []) {
+    const entries = components.map(it => it.binding.map(bind => [bind, it])).flat();
+    this.#bindings = new Map(entries);
+  }
 
   async runScope(callback) {
     const instances = new Map();
@@ -35,38 +36,15 @@ class Container {
   }
 
   add(source, options = {}) {
-    const component = this.#parse.parse(source);
+    const component = Component.parse(source);
     Object.assign(component, options);
-    if (this.#components.has(component.name))
+    if (this.#bindings.has(component.name))
       throw new ContainerError('Component already registered: ' + component.name);
-    this.#components.set(component.name, component);
-  }
-
-  update(source) {
-    const component = this.#parse.parse(source);
-    if (!this.#components.has(component.name))
-      throw new ContainerError('Component not registered: ' + component.name);
-    this.#components.set(component.name, component);
-
-    if (this.#instances.has(component)) {
-      const instance = this.#instances.get(component);
-      instance.dispose?.();
-      this.#instances.delete(component);
-    }
-
-    this.#components.set(component.name, component);
-
-    for (const dependent of this.#components.values()) {
-      if (dependent.dependencies.includes(component.name) && this.#instances.has(dependent)) {
-        const dependentInstance = this.#instances.get(dependent);
-        dependentInstance.dispose?.();
-        this.#instances.delete(dependent);
-      }
-    }
+    this.#bindings.set(component.name, component);
   }
 
   async get(binding) {
-    const component = this.#components.get(binding);
+    const component = this.#bindings.get(binding);
     if (!component) return null;
 
     if (component.scope === SUPPORT_SCOPES.SINGLETON) {
@@ -98,7 +76,7 @@ class Container {
 
   async type(type) {
     const instances = [];
-    for (const component of this.#components.values()) {
+    for (const component of this.#bindings.values()) {
       if (component.type === type) instances.push(await this.get(component.name));
     }
     return instances;
@@ -108,27 +86,14 @@ class Container {
     if (this.#detectedMissing()) return;
     if (this.#detectedCircular()) return;
 
-    for (const component of this.#components.values()) {
+    for (const component of this.#bindings.values()) {
       if (component.eager && component.scope === SUPPORT_SCOPES.SINGLETON)
         await this.get(component.name);
     }
   }
 
-  clear() {
-    for (const instance of this.#instances.values()) {
-      instance.dispose?.();
-    }
-
-    this.#components.clear();
-    this.#instances.clear();
-  }
-
-  has(binding) {
-    return this.#components.has(binding);
-  }
-
   decorate(name, decorator) {
-    const component = this.#components.get(name);
+    const component = this.#bindings.get(name);
     this.#decorators.add(component, decorator);
   }
 
@@ -136,7 +101,7 @@ class Container {
     if (!component) return null;
 
     const dependency = Object.fromEntries(
-      await Promise.all(component.dependencies.map(async it => [it, await this.get(it)]))
+      await Promise.all(component.inject.map(async it => [it, await this.get(it)]))
     );
     let instance = component.factory(dependency);
     await instance.postConstructor?.();
@@ -151,9 +116,9 @@ class Container {
   }
 
   #detectedMissing() {
-    for (const component of this.#components.values()) {
-      for (const dep of component.dependencies) {
-        if (!this.#components.has(dep)) {
+    for (const component of this.#bindings.values()) {
+      for (const dep of component.inject) {
+        if (!this.#bindings.has(dep)) {
           throw new ContainerError(
             `Missing dependency: Component "${component.name}" depends on "${dep}", which is not registered in the container.`
           );
@@ -181,14 +146,14 @@ class Container {
       visited.add(name);
       recStack.add(name);
 
-      const node = this.#components.get(name);
-      for (const dep of node.dependencies) hasCycle(dep, [...path, name]);
+      const node = this.#bindings.get(name);
+      for (const dep of node.inject) hasCycle(dep, [...path, name]);
 
       recStack.delete(name);
       return false;
     };
 
-    for (const graphName of this.#components.keys()) {
+    for (const graphName of this.#bindings.keys()) {
       hasCycle(graphName);
     }
 

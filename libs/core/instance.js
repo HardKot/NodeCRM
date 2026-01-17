@@ -4,7 +4,7 @@ import cluster from 'node:cluster';
 import { Space } from './space.js';
 import { NODE_CONTEXT } from './code.js';
 import { Container } from './container.js';
-import { ParserModule } from './parsers/parserModule.js';
+import { Module } from './module.js';
 import { Types } from '../utils';
 
 class InstanceError extends Error {}
@@ -34,7 +34,6 @@ class Instance {
   }
 
   async fork() {
-    this.parser = new ParserModule();
     this.container = await Container.create();
     this.space = await Space.watch({
       context: this.context,
@@ -65,51 +64,21 @@ class Instance {
     };
   }
 
-  #processModule(moduleSource, processed = new Set()) {
-    if (Types.isString(moduleSource)) {
-      moduleSource = this.space.get(moduleSource);
-      moduleSource.name = moduleSource.name ?? moduleSource;
-      if (!moduleSource) throw new InstanceError(`Module "${moduleSource}" not found in space`);
-    }
-    const moduleConfig = this.parser.parse(moduleSource);
-    if (processed.has(moduleConfig.name)) return;
-    processed.add(moduleConfig.name);
-
-    const instance = moduleConfig.factory(this);
-
-    const providers = new Set(moduleConfig.providers(instance));
-    const controllers = new Set(moduleConfig.controllers(instance));
-    const imports = new Set(moduleConfig.imports?.map(it => this.#processModule(it, processed)));
-    for (const imported of imports) {
-      for (const provider of imported.providers) providers.add(provider);
-      for (const controller of imported.controllers) controllers.add(controller);
-    }
-
-    return {
-      providers,
-      controllers,
-    };
-  }
-
   async #buildAppModule() {
     const moduleSource = this.space.get('app.module');
     if (!moduleSource) throw new InstanceError('App module not found in space');
 
-    const { providers, controllers } = this.#processModule(moduleSource);
+    const module = Module.parse(moduleSource);
 
-    for (const provider of providers) provider.type = 'provider';
-    for (const controller of controllers) {
-      controller.type = 'controller';
-    }
+    for (const provider of module.allProviders) provider.type = 'provider';
+    for (const controller of module.allConsumers) controller.type = 'consumer';
 
-    this.container = await Container.create(
-      [providers.values().toArray(), controllers.values().toArray()].flat()
-    );
+    this.container = await Container.create([module.allProviders, module.allConsumers].flat());
     this.logger.info(
       'Application module loaded with',
-      providers.length,
+      module.allProviders.length,
       'providers and',
-      controllers.length,
+      module.allConsumers.length,
       'controllers'
     );
   }

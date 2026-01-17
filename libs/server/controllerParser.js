@@ -41,7 +41,7 @@ class ControllerParser {
     return [
       new Handler(source.handler, {
         mapping: source.mapping,
-        dependencies: source.dependencies,
+        inject: source.inject,
         method: source.method,
         guard: source.guard,
         bodySchema: bodySchema,
@@ -64,7 +64,7 @@ class ControllerParser {
         this.parserMethodObject({
           handler: callback,
           mapping: source.mapping,
-          dependencies: source.dependencies,
+          inject: source.inject,
           method: source.method,
           guard: source.guard,
           imports: source.imports,
