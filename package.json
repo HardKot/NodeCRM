@@ -1,9 +1,8 @@
 {
-  "name": "node-crm",
+  "name": "@spacejs",
   "type": "module",
   "version": "1.0.0",
-  "description": "A simple CRM system built with Node.js.",
-  "main": "app.js",
+  "description": "Framework for building multi-tenant SaaS applications",
   "scripts": {
     "precommit": "npm run check",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",

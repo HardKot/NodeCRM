@@ -1,25 +1,15 @@
-import { SchemaField } from './field.js';
+import { SchemaField } from './fields';
+import { fieldParser } from './fieldParser.js';
 
-class Schema {
-  constructor(name, definition) {
-    this.name = name;
-    this.definition = definition;
-  }
+class SchemaError extends Error {}
 
-  validate(data) {
-    return this.definition.check.bind(this.definition)(data);
-  }
-
-  transform(data) {
-    return this.definition.transform.bind(this.definition)(data);
-  }
-
-  from(data) {
-    if (!(this.definition instanceof SchemaField))
-      throw new Error('SchemaField must be a SchemaField');
-
-    return this.definition.from.bind(this.definition)(data);
+class Schema extends SchemaField {
+  static parse(schemaDefinition) {
+    if (typeof schemaDefinition !== 'object' || schemaDefinition === null) {
+      throw new SchemaError('Schema definition must be a non-null object');
+    }
+    return fieldParser.parse(schemaDefinition);
   }
 }
 
-export { Schema };
+export { Schema, SchemaError };

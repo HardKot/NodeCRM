@@ -34,7 +34,7 @@ const componentParser = new Parser({
       scope,
       ObjectUtils.firstNotNullValue('eager', source, options),
       source.binding,
-      { ...scope }
+      { ...source }
     );
   },
   parseClass: function (source, options) {
@@ -49,7 +49,7 @@ const componentParser = new Parser({
       scope,
       ObjectUtils.firstNotNullValue('eager', source, options),
       source.binding,
-      { ...scope }
+      { ...source }
     );
   },
 });

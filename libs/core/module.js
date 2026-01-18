@@ -1,12 +1,10 @@
-import { ObjectUtils, Parser, TreeNode, Types } from '../utils/index.js';
+import { ObjectUtils, Parser } from '../utils/index.js';
 
 const moduleParser = new Parser({
   parseObject: function (source, options) {
     return new Module(
       ObjectUtils.firstNotNullValue('name', source, options),
-      source.bootstrap ?? (() => source),
-      ObjectUtils.firstNotNullValue('providers', source, options),
-      ObjectUtils.firstNotNullValue('consumers', source, options),
+      () => source,
       ObjectUtils.firstNotNullValue('imports', source, options)
     );
   },
@@ -14,81 +12,66 @@ const moduleParser = new Parser({
     return new Module(
       ObjectUtils.firstNotNullValue('name', source, options),
       source,
-      ObjectUtils.firstNotNullValue('providers', source, options),
-      ObjectUtils.firstNotNullValue('consumers', source, options),
       ObjectUtils.firstNotNullValue('imports', source, options)
     );
   },
   parseClass: function (source, options) {
-    let bootstrap = source.bootsrap;
-    if (!Types.isFunction(bootstrap)) {
-      bootstrap = (app, module) => new source(app).bootstrap(module);
-    }
-
     return new Module(
       ObjectUtils.firstNotNullValue('name', source, options),
-      bootstrap,
-      ObjectUtils.firstNotNullValue('providers', source, options),
-      ObjectUtils.firstNotNullValue('consumers', source, options),
+      app => new source(app),
       ObjectUtils.firstNotNullValue('imports', source, options)
     );
   },
 });
 
 class Module {
-  /** @type {TreeNode<Module>} */
-  #graph;
-
-  constructor(name, bootstrap, providers = [], consumers = [], imports = []) {
-    this.#graph = new TreeNode(this, null);
+  constructor(name, factory, imports = []) {
     this.name = name;
-    this.bootsrap = bootstrap;
 
-    this.providers = providers;
-    this.consurmers = consumers;
+    const instance = factory();
     this.imports = imports.map(it => Module.parse(it));
 
-    for (const module of this.imports) {
-      this.#graph.add(module.#graph);
-      module.#graph.parent = this;
-    }
+    this.providers = new Set(
+      [[instance.providers ?? []], this.imports.map(it => it.providers ?? [])].flat(2)
+    );
+    this.consumers = new Set(
+      [[instance.consumers ?? []], this.imports.map(it => it.consumers ?? [])].flat(2)
+    );
+
+    this.selfOnModuleInit = instance.onModuleInit?.bind(instance);
+    this.selfOnApplicationBootstrap = instance.onApplicationBootstrap?.bind(instance);
+    this.selfOnModuleDestroy = instance.onModuleDestroy?.bind(instance);
+    this.selfOnApplicationShutdown = instance.onApplicationShutdown?.bind(instance);
 
     Object.freeze(this);
   }
 
-  #providersCache = null;
-  get allProviders() {
-    if (this.#providersCache) return this.#providersCache;
-    const providers = new Set(this.providers);
-    for (const module of this.imports) {
-      for (const provider of module.allProviders) {
-        providers.add(provider);
-      }
+  async onModuleInit(app) {
+    await this.selfOnModuleInit?.(app);
+    for (const importedModule of this.imports) {
+      await importedModule.onModuleInit(app);
     }
-    this.#providersCache = Array.from(providers);
-    return this.#providersCache;
   }
 
-  #consumersCache = null;
-  get allConsumers() {
-    if (this.#consumersCache) return this.#consumersCache;
-    const consumers = new Set(this.consurmers);
-    for (const module of this.imports) {
-      for (const consumer of module.allConsumers) {
-        consumers.add(consumer);
-      }
+  async onApplicationBootstrap(app) {
+    await this.selfOnApplicationBootstrap?.(app);
+    for (const importedModule of this.imports) {
+      await importedModule.onApplicationBootstrap(app);
     }
-    this.#consumersCache = Array.from(consumers);
-    return this.#consumersCache;
   }
 
-  hasCircle() {
-    return this.#graph.hasCircle();
+  async onModuleDestroy(app) {
+    await this.selfOnModuleDestroy?.(app);
+    for (const importedModule of this.imports) {
+      await importedModule.onModuleDestroy(app);
+    }
   }
 
-  async run(app) {
-    await this.bootsrap(app, this);
-    await Promise.all(this.imports.map(it => it.run(app)));
+  async onApplicationShutdown(app) {
+    await this.selfOnApplicationShutdown?.(app);
+    for (const importedModule of this.imports) {
+      await importedModule.onApplicationShutdown(app);
+    }
   }
 
   static parse(source, options = {}) {

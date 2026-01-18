@@ -5,7 +5,6 @@ import { Space } from './space.js';
 import { NODE_CONTEXT } from './code.js';
 import { Container } from './container.js';
 import { Module } from './module.js';
-import { Types } from '../utils';
 
 class InstanceError extends Error {}
 
@@ -70,15 +69,19 @@ class Instance {
 
     const module = Module.parse(moduleSource);
 
-    for (const provider of module.allProviders) provider.type = 'provider';
-    for (const controller of module.allConsumers) controller.type = 'consumer';
+    for (const provider of module.providers) {
+      if (!provider.type) provider.type = 'provider';
+    }
+    for (const consumer of module.consumers) {
+      if (!consumer.type) consumer.type = 'consumer';
+    }
 
-    this.container = await Container.create([module.allProviders, module.allConsumers].flat());
+    this.container = await Container.create([module.providers, module.consumers].flat());
     this.logger.info(
       'Application module loaded with',
-      module.allProviders.length,
+      module.providers.size,
       'providers and',
-      module.allConsumers.length,
+      module.consumers.size,
       'controllers'
     );
   }

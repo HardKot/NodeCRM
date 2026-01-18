@@ -2,6 +2,13 @@ import http2 from 'node:http2';
 import queryString from 'node:querystring';
 
 class Request extends http2.Http2ServerRequest {
+  get path() {
+    let [path] = this.url.split('?');
+    if (path.endsWith('/')) path += 'index';
+
+    return path;
+  }
+
   get contentType() {
     return this.headers['content-type'] ?? 'application/json';
   }
@@ -27,7 +34,7 @@ class Request extends http2.Http2ServerRequest {
       const data = JSON.parse(text);
       return Object.freeze(data);
     }
-    throw new Error('RequestDecorator.json() is not supported');
+    throw new Error('Request.json() is not supported');
   }
 
   async data() {
@@ -58,6 +65,10 @@ class Request extends http2.Http2ServerRequest {
     return Object.freeze(cookies);
   }
 
+  /**
+   * @param {http2.ServerHttp2Stream} stream
+   * @return {Request}
+   */
   static wrap(stream) {
     Object.setPrototypeOf(stream, Request.prototype);
     Object.freeze(stream);

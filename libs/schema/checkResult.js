@@ -11,7 +11,7 @@ class CheckResult {
       if (typeof error === 'object') {
         this.#errors.push(error);
       } else {
-        this.#errors.push({ slicePath: '', message: error });
+        this.#errors.push({ path: '', message: error });
       }
     }
 
@@ -23,12 +23,12 @@ class CheckResult {
     if (message instanceof CheckResult) {
       for (const error of message.errors) {
         let name = `${path}`;
-        if (error.slicePath) name += `.${error.slicePath}`;
-        this.#errors.push({ slicePath: path, message: error.message });
+        if (error.path) name += `.${error.path}`;
+        this.#errors.push({ path, message: error.message });
       }
       return this;
     }
-    this.#errors.push({ slicePath: path, message });
+    this.#errors.push({ path, message });
     return this;
   }
 

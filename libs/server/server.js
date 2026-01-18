@@ -1,65 +1,87 @@
 import http2 from 'node:http2';
 
-import { Functions, Types } from '../utils';
-
 import { Request } from './request.js';
 import { Response } from './response.js';
 import { Routes } from './routes.js';
-import { Session } from './session.js';
-import { Scope } from './scope.js';
+
+class ServerError extends Error {
+  constructor(message, code) {
+    super(message);
+    this.code = code || 500;
+  }
+}
 
 class Server {
   constructor(app, options = {}) {
     this.app = app;
-    this.middlewares = options.middlewares ?? [];
     this.port = options.port ?? 3000;
     this.host = options.host ?? '127.0.0.1';
     this.tls = options.tls;
     this.requestTimeout = options.timeout ?? 60_000;
-    this.maxSession = options.maxSession ?? 1024;
+    this.maxSessions = options.maxSessions ?? 1024;
 
-    if (!this.tls || !this.tls.key || !this.tls.cert) {
+    if (!this.tls?.key || !this.tls?.cert) {
       throw new Error('TSL key and certificate are required to create a secure HTTP/2 server.');
     }
 
-    this.routes = new Routes(this.app);
     this.server = http2.createSecureServer({
       allowHTTP1: true,
       key: this.tls.key,
       cert: this.tls.cert,
     });
+
     this.server.setTimeout(this.requestTimeout);
-    this.activeSessions = new Array(options.maxSession).fill(null);
+    this.activeSessions = new Set();
+    this.routes = new Routes();
 
-    this.server.on('request', (req, res) => this.onRequest(req, res));
-    this.server.on('session', session => this.onSession(session));
-    this.server.on('error', err => this.onError(err));
+    this.server.on('request', this.onRequest.bind(this));
+    this.server.on('session', this.onSession.bind(this));
 
-    this.onNotFound = options.onNotFound ?? Server.defaultOnNotFound;
-    this.onRequestError = options.onRequestError ?? Server.defaultOnRequestError;
-    this.onTimeout = options.onTimeout ?? Server.defaultOnTimeout;
     Object.freeze(this);
   }
 
+  setConsumers(consumers) {
+    this.routes = Routes.create(consumers);
+    return this;
+  }
+
+  async onRequest(req, res) {
+    const request = Request.wrap(req);
+    const response = Response.wrap(res);
+
+    try {
+      const handler = this.routes.route(request.path);
+      if (!handler) {
+        return this.onError(new ServerError('Not Found', 404), response);
+      }
+
+      const body = await request.json();
+      const result = await handler.run(request, body);
+
+      return response.json(result).send();
+    } catch (e) {
+      return this.onError(e, response);
+    }
+  }
+
+  onError(error, response) {
+    response.status = error?.code || 500;
+    response.json({ error: error?.message || 'Internal Server Error' });
+    response.send();
+  }
+
   onSession(session) {
-    session = Session.wrap(session);
-    const freeIndex = this.activeSessions.findIndex(s => s === null);
-    if (freeIndex === -1) return session.close();
-    this.activeSessions[freeIndex] = session;
+    this.activeSessions.add(session);
 
     session.on('close', () => {
-      const index = this.activeSessions.indexOf(session);
-      if (index !== -1) this.activeSessions[index] = null;
+      this.activeSessions.delete(session);
     });
   }
 
   start() {
-    return new Promise(resolve => {
-      this.server.listen(this.port, this.host, () => {
-        this.app.emit('server.started', this);
-        resolve();
-      });
-    });
+    if (!this.server.listening) return;
+
+    this.server.listen(this.port);
   }
 
   stop() {
@@ -70,45 +92,6 @@ class Server {
       });
     });
   }
-
-  async onRequest(request, response) {
-    await Scope.run(async () => {
-      try {
-        request = Request.wrap(request);
-        response = Response.wrap(response);
-        const handler = this.routes.route(request.url, request.method);
-        if (!handler) return this.onNotFound(request, response);
-        await Functions.runChains([...this.middlewares, handler.run], request, response);
-      } catch (e) {
-        if (e.name === 'AbortError') {
-          return this.onTimeout(request, response);
-        }
-        return this.onRequestError(e, request, response);
-      }
-
-      if (!response.isSend) response.send(null).send();
-    });
-  }
-
-  async onError(err) {
-    console.error('Server error:', err);
-  }
-
-  static defaultOnNotFound(request, response) {
-    if (response.isSend) return;
-    response.status(404).data('Not Found', request.contentType).send();
-  }
-
-  static defaultOnRequestError(err, request, response) {
-    if (response.isSend) return;
-    response.status(Types.isInt(err?.code) ? err.code : 500);
-    response.data(err.message, request.contentType).send();
-  }
-
-  static defaultOnTimeout(request, response) {
-    if (response.isSend) return;
-    response.status(503).data('Service Unavailable', request.contentType).send();
-  }
 }
 
-export { Server };
+export { Server, ServerError };

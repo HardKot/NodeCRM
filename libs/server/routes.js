@@ -68,6 +68,16 @@ class Routes {
 
     return child?.route(otherPath.join('/'), method) ?? null;
   }
+
+  static create(consumers = []) {
+    const root = new Routes();
+
+    for (const consumer of consumers) {
+      root.register(consumer, consumer.mapping, consumer.method ?? 'get');
+    }
+
+    return root;
+  }
 }
 
 export { Routes };

@@ -1,4 +1,3 @@
-export { SchemaRegistry } from './schemaRegistry.js';
-export { DefaultAdapter } from './defaultAdapter.js';
-export { SchemaParser } from './schemaParser.js';
-export { SchemaModule } from './schemaModule.js';
+export { CheckResult } from './checkResult.js';
+export { Field } from './field.js';
+export { Schema } from './schema.js';
