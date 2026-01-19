@@ -5,10 +5,21 @@ import { Space } from './space.js';
 import { NODE_CONTEXT } from './code.js';
 import { Container } from './container.js';
 import { Module } from './module.js';
+import { ObjectUtils, Types } from '../utils/index.js';
 
 class InstanceError extends Error {}
 
 class Instance {
+  static async run(config = {}) {
+    const instance = new Instance(config);
+    if (cluster.isPrimary) {
+      await instance.master();
+    } else {
+      await instance.fork();
+    }
+    return instance;
+  }
+
   constructor(config = {}) {
     this.prefix = 'App';
     if (cluster.isWorker) this.prefix += `:Worker-${cluster.worker.id}`;
@@ -18,6 +29,7 @@ class Instance {
     this.logger = config.logger ?? console;
     this.path = config.path ?? process.cwd();
     this.extendes = config.extendes ?? [];
+    this.consumers = {};
   }
 
   async master() {
@@ -53,14 +65,14 @@ class Instance {
     });
   }
 
-  measureMemory() {
-    const memoryUsage = process.memoryUsage();
-    return {
-      rss: `${(memoryUsage.rss / 1024 / 1024).toFixed(2)} MB`,
-      heapTotal: `${(memoryUsage.heapTotal / 1024 / 1024).toFixed(2)} MB`,
-      heapUsed: `${(memoryUsage.heapUsed / 1024 / 1024).toFixed(2)} MB`,
-      external: `${(memoryUsage.external / 1024 / 1024).toFixed(2)} MB`,
-    };
+  async execute(path, ...args) {
+    const runner = ObjectUtils.goTo(this.consumers, path, null);
+    if (Types.isNull(runner) || Types.isUndefined(runner))
+      throw new InstanceError(`Consumer not found at path: ${path}`);
+    if (!Types.isFunction(runner))
+      throw new InstanceError(`Consumer at path is not a function: ${path}`);
+
+    return await runner(...args);
   }
 
   async #buildAppModule() {
@@ -77,23 +89,11 @@ class Instance {
     }
 
     this.container = await Container.create([module.providers, module.consumers].flat());
-    this.logger.info(
-      'Application module loaded with',
-      module.providers.size,
-      'providers and',
-      module.consumers.size,
-      'controllers'
-    );
-  }
+    const consumersEntries = await this.container.type('consumer');
+    this.consumers = Object.fromEntries(consumersEntries);
+    Object.freeze(this.consumers);
 
-  static async run(config = {}) {
-    const instance = new Instance(config);
-    if (cluster.isPrimary) {
-      await instance.master();
-    } else {
-      await instance.fork();
-    }
-    return instance;
+    // TODO: отправка сигнала о готовности consumers
   }
 }
 

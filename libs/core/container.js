@@ -74,9 +74,14 @@ class Container {
     return await this.#createComponent(component);
   }
 
+  getComponents() {
+    return new Set(this.#bindings.values()).values().toArray();
+  }
+
   async type(type) {
     const instances = [];
-    for (const component of this.#bindings.values()) {
+    const components = new Set(this.#bindings.values());
+    for (const component of components.values()) {
       if (component.type === type) instances.push(await this.get(component.name));
     }
     return instances;

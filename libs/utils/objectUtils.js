@@ -11,6 +11,20 @@ class ObjectUtils {
     }
     return null;
   }
+
+  static goTo(obj, path, defaultValue = undefined) {
+    const keys = path.split('.');
+    let current = obj;
+
+    for (const key of keys) {
+      if (current && Object.prototype.hasOwnProperty.call(current, key)) {
+        current = current[key];
+      } else {
+        return defaultValue;
+      }
+    }
+    return current;
+  }
 }
 
 export { ObjectUtils };
