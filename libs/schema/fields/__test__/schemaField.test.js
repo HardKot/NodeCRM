@@ -2,7 +2,8 @@ import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 
 import { SchemaField } from '../schemaField.js';
 import { BaseField } from '../baseField.js';
-import { CheckResult } from '../../checkResult.js';
+import { Result } from '../../../utils/index.js';
+import { ValidateError } from '../fieldError.js';
 
 class TestField extends BaseField {
   constructor() {
@@ -25,9 +26,9 @@ describe('SchemaField check', () => {
       a: new TestField(),
       b: new TestField(),
     });
-    TestField.__mockCheck.mockReturnValue(CheckResult.Truthy);
+    TestField.__mockCheck.mockReturnValue(Result.success());
     const result = field.check({ a: 1, b: 2 });
-    expect(result.valid).toBe(true);
+    expect(result.isSuccess).toBe(true);
   });
 
   it('should invalidate object with invalid fields', () => {
@@ -35,9 +36,9 @@ describe('SchemaField check', () => {
       a: new TestField(),
       b: new TestField(),
     });
-    TestField.__mockCheck.mockReturnValueOnce(CheckResult.Falsy);
+    TestField.__mockCheck.mockReturnValueOnce(Result.failure(new ValidateError('Invalid field')));
     const result = field.check({ a: 1, b: 2 });
-    expect(result.valid).toBe(false);
+    expect(result.isSuccess).toBe(false);
   });
 
   it('should invalidate non-object values', () => {
@@ -45,7 +46,7 @@ describe('SchemaField check', () => {
       a: new TestField(),
     });
     const result = field.check('not an object');
-    expect(result.valid).toBe(false);
+    expect(result.isSuccess).toBe(false);
   });
 
   it('should call field check for each schema field', () => {
@@ -54,7 +55,7 @@ describe('SchemaField check', () => {
       b: new TestField(),
       c: new TestField(),
     });
-    TestField.__mockCheck.mockReturnValue(CheckResult.Truthy);
+    TestField.__mockCheck.mockReturnValue(Result.success());
     field.check({ a: 1, b: 2, c: 3 });
     expect(TestField.__mockCheck).toHaveBeenCalledTimes(3);
   });

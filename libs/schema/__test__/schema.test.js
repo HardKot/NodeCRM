@@ -1,6 +1,7 @@
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 
-import { Schema, SchemaError } from '../schema.js';
+import { Schema } from '../schema.js';
+import { SchemaError } from '../schemaError.js';
 
 describe('Schema', () => {
   beforeEach(() => {
@@ -35,5 +36,53 @@ describe('Schema', () => {
     expect(() => Schema.parse(null)).toThrow(SchemaError);
     expect(() => Schema.parse('invalid')).toThrow(SchemaError);
     expect(() => Schema.parse(42)).toThrow(SchemaError);
+  });
+});
+
+describe('Validation of Schema Parsing', () => {
+  it('should validate parsed schema fields correctly', () => {
+    const schemaDefinition = {
+      user: {
+        name: 'string',
+        age: 'number',
+      },
+      email: 'string?',
+      password: 'string',
+    };
+
+    const schema = Schema.parse(schemaDefinition);
+
+    const validData = {
+      user: {
+        name: 'John Doe',
+        age: 25,
+      },
+      password: 'pass123',
+    };
+
+    const invalidDataMissingRequired = {
+      user: 'Jane Doe',
+      password: true,
+    };
+
+    const invalidDataWrongType = {
+      user: {
+        name: 'Jane Doe',
+        age: '25',
+      },
+      password: 'pass123',
+      email: 12345,
+      age: 'thirty',
+    };
+
+    expect(schema.check(validData).isSuccess).toBe(true);
+    expect(schema.check(invalidDataMissingRequired).errorOrNull()?.errors).toEqual({
+      password: ["Expected type 'string' but got 'boolean'"],
+      user: ['Expected an object'],
+    });
+    expect(schema.check(invalidDataWrongType).errorOrNull()?.errors).toEqual({
+      'user.age': ["Expected type 'number' but got 'string'"],
+      email: ["Expected type 'string' but got 'number'"],
+    });
   });
 });

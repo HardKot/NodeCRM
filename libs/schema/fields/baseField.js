@@ -1,6 +1,7 @@
 'use strict';
 
-import { CheckResult } from '../checkResult.js';
+import { Result } from '../../utils/index.js';
+import { ValidateError } from './fieldError.js';
 
 class BaseField {
   constructor(required = false) {
@@ -8,7 +9,7 @@ class BaseField {
   }
 
   check() {
-    return CheckResult.Falsy;
+    return Result.failure(new ValidateError('Invalid item'));
   }
 
   transform(value) {

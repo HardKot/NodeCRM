@@ -1,51 +1,40 @@
-import os from 'node:os';
-import cluster from 'node:cluster';
-
 import { Space } from './space.js';
 import { NODE_CONTEXT } from './code.js';
 import { Container } from './container.js';
 import { Module } from './module.js';
 import { ObjectUtils, Types } from '../utils/index.js';
+import EventEmitter from 'node:events';
+import path from 'node:path';
+
+const InstanceEvent = Object.freeze({
+  BUILD: 'build',
+  UPDATE: 'update',
+});
 
 class InstanceError extends Error {}
 
-class Instance {
+class Instance extends EventEmitter {
   static async run(config = {}) {
     const instance = new Instance(config);
-    if (cluster.isPrimary) {
-      await instance.master();
-    } else {
-      await instance.fork();
-    }
+    await instance.init();
+    await instance.build();
     return instance;
   }
 
   constructor(config = {}) {
-    this.prefix = 'App';
-    if (cluster.isWorker) this.prefix += `:Worker-${cluster.worker.id}`;
+    super();
 
     this.context = Object.assign({}, NODE_CONTEXT, this.context);
     this.watchTimeout = config.watchTimeout ?? 500;
-    this.logger = config.logger ?? console;
     this.path = config.path ?? process.cwd();
+    this.prefix = config.prefix ?? `Instance@${path.relative(this.path, process.cwd())}`;
     this.extendes = config.extendes ?? [];
     this.consumers = {};
   }
 
-  async master() {
-    const workers = new Set();
-    const numCPUs = os.availableParallelism();
-    this.logger.info(`Master process is running with ${numCPUs} CPUs`);
-
-    for (const cpu of numCPUs) {
-      const worker = cluster.fork();
-      workers.add(worker);
-      this.logger.info(`Forked worker #${cpu} pid: ${worker.process.pid}`);
-    }
-  }
-
-  async fork() {
+  async init() {
     this.container = await Container.create();
+
     this.space = await Space.watch({
       context: this.context,
       path: this.path,
@@ -53,15 +42,20 @@ class Instance {
     });
 
     for (const extend of this.extendes) {
-      this.logger.info(`Loading extended ${extend.name}`);
-      await extend.extend(this);
+      console.info(this.prefix, `Loading extended ${extend.name}`);
+      await extend.init?.(this);
     }
+  }
 
-    await this.#buildAppModule();
+  async build() {
+    await this.#buildModules();
+    await Promise.all(this.extendes.map(it => it.build?.(this)));
+    this.emit(InstanceEvent.BUILD);
 
     this.space.onChange(() => {
-      this.logger.info('Detected changes in space at', this.path);
-      this.#buildAppModule();
+      console.info(this.prefix, 'Detected changes in space at', this.path);
+      this.#buildModules();
+      this.emit(InstanceEvent.UPDATE);
     });
   }
 
@@ -75,7 +69,7 @@ class Instance {
     return await runner(...args);
   }
 
-  async #buildAppModule() {
+  async #buildModules() {
     const moduleSource = this.space.get('app.module');
     if (!moduleSource) throw new InstanceError('App module not found in space');
 
@@ -92,8 +86,6 @@ class Instance {
     const consumersEntries = await this.container.type('consumer');
     this.consumers = Object.fromEntries(consumersEntries);
     Object.freeze(this.consumers);
-
-    // TODO: отправка сигнала о готовности consumers
   }
 }
 

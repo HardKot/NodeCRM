@@ -1,8 +1,9 @@
 'use strict';
 
-import { CheckResult } from '../checkResult.js';
 import { BaseField } from './baseField.js';
-import { Types } from '../../utils/index.js';
+import { Result, Types } from '../../utils';
+
+import { ValidateError } from './fieldError.js';
 
 class ArrayField extends BaseField {
   constructor(itemField, required) {
@@ -13,20 +14,24 @@ class ArrayField extends BaseField {
   }
 
   check(value) {
-    if (!this.required && value === undefined) return CheckResult.Truthy;
-    if (!Array.isArray(value)) return CheckResult.Falsy;
-    const checkResult = new CheckResult(true);
-    const errors = value.map(item => this.itemField.check(item));
+    if (!this.required && value === undefined) return Result.success();
+    if (!Array.isArray(value)) return Result.failure(new ValidateError('Expected an array'));
 
-    for (let i = 0; i < errors.length; i++) {
-      const error = errors[i];
+    let hasError = false;
+    const error = new ValidateError('');
 
-      if (!error.valid) {
-        checkResult.addError(error, `${i}`);
-      }
+    for (let i = 0; i < value.length; i++) {
+      const itemCheck = this.itemField.check(value[i]);
+      if (itemCheck.isSuccess) continue;
+      hasError = true;
+      error.addError(itemCheck.errorOrNull(), `[${i}]`);
     }
 
-    return checkResult;
+    if (hasError) {
+      return Result.failure(error);
+    } else {
+      return Result.success();
+    }
   }
 
   transform(value) {

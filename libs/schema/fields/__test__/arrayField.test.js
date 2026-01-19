@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 
-import { CheckResult } from '../../checkResult.js';
-
 import { ArrayField } from '../arrayField.js';
 import { BaseField } from '../baseField.js';
+import { Result } from '../../../utils';
+import { ValidateError } from '../fieldError.js';
 
 class TestField extends BaseField {
   constructor() {
@@ -23,27 +23,27 @@ describe('ArrayField check', () => {
 
   it('should validate array with valid items', () => {
     const field = new ArrayField(new TestField());
-    TestField.__mockCheck.mockReturnValue(CheckResult.Truthy);
+    TestField.__mockCheck.mockReturnValue(Result.success());
     const result = field.check([1, 2, 3]);
-    expect(result.valid).toBe(true);
+    expect(result.isSuccess).toBe(true);
   });
 
   it('should invalidate array with invalid items', () => {
     const field = new ArrayField(new TestField());
-    TestField.__mockCheck.mockReturnValueOnce(CheckResult.Falsy);
+    TestField.__mockCheck.mockReturnValueOnce(Result.failure(new ValidateError('Invalid item')));
     const result = field.check([1, 2, 3]);
-    expect(result.valid).toBe(false);
+    expect(result.isSuccess).toBe(false);
   });
 
   it('should invalidate non-array values', () => {
     const field = new ArrayField(new TestField());
     const result = field.check('not an array');
-    expect(result.valid).toBe(false);
+    expect(result.isSuccess).toBe(false);
   });
 
   it('should call item field check for each item', () => {
     const field = new ArrayField(new TestField());
-    TestField.__mockCheck.mockReturnValue(CheckResult.Truthy);
+    TestField.__mockCheck.mockReturnValue(Result.success());
     field.check([1, 2, 3]);
     expect(TestField.__mockCheck).toHaveBeenCalledTimes(3);
   });

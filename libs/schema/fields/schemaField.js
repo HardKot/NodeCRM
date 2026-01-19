@@ -1,6 +1,6 @@
-import { CheckResult } from '../checkResult.js';
 import { BaseField } from './baseField.js';
-import { Types } from '../../utils/index.js';
+import { Result, Types } from '../../utils/index.js';
+import { ValidateError } from './fieldError.js';
 
 class SchemaField extends BaseField {
   constructor(schema, proto = null) {
@@ -11,16 +11,23 @@ class SchemaField extends BaseField {
   }
 
   check(value) {
-    if (typeof value !== 'object' || value === null) return CheckResult.Falsy;
-    const errors = new CheckResult();
+    if (!Types.isObject(value)) return Result.failure(new ValidateError('Expected an object'));
+
+    let hasError = false;
+    const error = new ValidateError('');
 
     for (const [key, field] of Object.entries(this.schema)) {
-      const result = field.check(value[key]);
-      if (!result.valid) {
-        errors.addError(result, key);
-      }
+      const itemCheck = field.check(value[key]);
+      if (itemCheck.isSuccess) continue;
+      hasError = true;
+      error.addError(itemCheck.errorOrNull(), key);
     }
-    return errors;
+
+    if (hasError) {
+      return Result.failure(error);
+    } else {
+      return Result.success();
+    }
   }
 
   transform(value) {

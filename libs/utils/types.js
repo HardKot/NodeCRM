@@ -56,6 +56,10 @@ class Types {
 
     return false;
   }
+
+  static isBoolean(v) {
+    return typeof v === 'boolean';
+  }
 }
 
 export { Types, TypeError };

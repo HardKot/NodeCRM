@@ -1,5 +1,7 @@
-import { CheckResult } from '../checkResult.js';
 import { BaseField } from './baseField.js';
+import { Result } from '../../utils/index.js';
+
+import { ValidateError } from './fieldError.js';
 
 class ScalarField extends BaseField {
   constructor(name, required) {
@@ -9,9 +11,11 @@ class ScalarField extends BaseField {
   }
 
   check(value) {
-    if (!this.required && value === undefined) return CheckResult.Truthy;
-    if (typeof value === this.scalar) return CheckResult.Truthy;
-    return new CheckResult(false, `Expected type ${this.scalar} but got ${typeof value}`);
+    if (!this.required && value === undefined) return Result.success();
+    if (typeof value === this.scalar) return Result.success();
+    return Result.failure(
+      new ValidateError(`Expected type '${this.scalar}' but got '${typeof value}'`)
+    );
   }
 
   transform(value) {

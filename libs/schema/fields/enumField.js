@@ -1,7 +1,9 @@
 'use strict';
 
-import { CheckResult } from '../checkResult.js';
 import { BaseField } from './baseField.js';
+import { Result } from '../../utils';
+
+import { ValidateError } from './fieldError.js';
 
 class EnumField extends BaseField {
   #values;
@@ -17,9 +19,11 @@ class EnumField extends BaseField {
   }
 
   check(value) {
-    if (!this.required && value === undefined) return CheckResult.Truthy;
-    if (this.#values.has(value)) return CheckResult.Truthy;
-    return new CheckResult(false, `Value "${value}" is not in enum [${this.values.join(', ')}]`);
+    if (!this.required && value === undefined) return Result.success();
+    if (this.#values.has(value)) return Result.success();
+    return Result.failure(
+      new ValidateError(`Value "${value}" is not in enum [${this.values.join(', ')}]`)
+    );
   }
 
   transform(value) {
