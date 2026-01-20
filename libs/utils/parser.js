@@ -1,5 +1,5 @@
-import { factoryCamelCase } from './stringCase.js';
-import { Types } from './types.js';
+const { factoryCamelCase } = require('./stringCase.js');
+const { Types } = require('./types.js');
 
 class ParserError extends Error {}
 
@@ -30,4 +30,4 @@ class Parser {
   }
 }
 
-export { Parser };
+module.exports = { Parser };

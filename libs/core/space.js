@@ -1,10 +1,10 @@
-import fs from 'node:fs';
-import fsp from 'node:fs/promises';
-import events from 'node:events';
-import path from 'node:path';
-import module from 'node:module';
+const fs = require('node:fs');
+const fsp = require('node:fs/promises');
+const events = require('node:events');
+const path = require('node:path');
+const nodeModule = require('node:module');
 
-import { Code } from './code';
+const { Code } = require('./code');
 
 class Space {
   static async load(config = {}) {
@@ -163,7 +163,7 @@ class Space {
   }
 
   #createRequire(relativePath) {
-    const originRequire = module.createRequire(relativePath);
+    const originRequire = nodeModule.createRequire(relativePath);
     const self = this;
 
     function require(modulePath) {
@@ -196,4 +196,4 @@ class Space {
   }
 }
 
-export { Space };
+module.exports = { Space };

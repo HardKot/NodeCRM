@@ -1,5 +1,4 @@
-import { describe, it, expect } from '@jest/globals';
-import { EnumField } from '../enumField.js';
+const { EnumField } = require('../enumField.js');
 
 describe('EnumField check', () => {
   it('should validate value in enum', () => {

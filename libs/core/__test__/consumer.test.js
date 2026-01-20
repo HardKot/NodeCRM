@@ -1,8 +1,7 @@
-import { describe, it, expect, jest } from '@jest/globals';
-import { Consumer, ConsumerError } from '../consumer.js';
-import { AccessError } from '../access.js';
-import stream from 'node:stream';
-import streamWeb from 'node:stream/web';
+const { Consumer, ConsumerError } = require('../consumer.js');
+const { AccessError } = require('../access.js');
+const stream = require('node:stream');
+const streamWeb = require('node:stream/web');
 
 describe('Consumer', () => {
   describe('constructor', () => {

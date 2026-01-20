@@ -1,8 +1,13 @@
-import path from 'node:path';
-import vm from 'node:vm';
-import module from 'node:module';
+const path = require('node:path');
+const vm = require('node:vm');
+const nodeModule = require('node:module');
 
-const ts = await import('typescript').catch(() => null);
+let ts = null;
+try {
+  ts = require('typescript');
+} catch (e) {
+  // TypeScript not installed
+}
 
 class CodeError extends Error {}
 
@@ -21,7 +26,7 @@ class Code {
     });
     this.context = vm.createContext(options.context ?? EMPTY_CONTEXT);
 
-    this.require = module.createRequire(this.path);
+    this.require = nodeModule.createRequire(this.path);
     if (options.createRequire) {
       this.require = options.createRequire(this.path);
     }
@@ -85,11 +90,11 @@ class Code {
   exportCommon(closure) {
     const __filename = this.relative;
     const __dirname = path.dirname(this.relative);
-    const module = { exports: {} };
-    Object.setPrototypeOf(module.exports, null);
-    Object.setPrototypeOf(module, null);
-    closure(module.exports, this.requireDependency.bind(this), module, __filename, __dirname);
-    return module.exports;
+    const _module = { exports: {} };
+    Object.setPrototypeOf(_module.exports, null);
+    Object.setPrototypeOf(_module, null);
+    closure(_module.exports, this.requireDependency.bind(this), _module, __filename, __dirname);
+    return _module.exports;
   }
 
   definitionType() {
@@ -159,4 +164,4 @@ const CODE_TYPE = Object.freeze({
   TS: 2,
 });
 
-export { CODE_TYPE, Code, CodeError, NODE_CONTEXT, DEFAULT_CONTEXT };
+module.exports = { CODE_TYPE, Code, CodeError, NODE_CONTEXT, DEFAULT_CONTEXT };

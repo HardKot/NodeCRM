@@ -26,4 +26,4 @@ class ServerAuthMiddleware {
   }
 }
 
-export { ServerAuthMiddleware };
+module.exports = { ServerAuthMiddleware };

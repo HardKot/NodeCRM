@@ -16,4 +16,4 @@ class Table extends Map {
   }
 }
 
-export { Table };
+module.exports = { Table };

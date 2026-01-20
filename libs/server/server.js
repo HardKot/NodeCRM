@@ -1,8 +1,8 @@
-import http2 from 'node:http2';
+const http2 = require('node:http2');
 
-import { Request } from './request.js';
-import { Response } from './response.js';
-import { Routes } from './routes.js';
+const { Request } = require('./request.js');
+const { Response } = require('./response.js');
+const { Routes } = require('./routes.js');
 
 class ServerError extends Error {
   constructor(message, code) {
@@ -94,4 +94,4 @@ class Server {
   }
 }
 
-export { Server, ServerError };
+module.exports = { Server, ServerError };

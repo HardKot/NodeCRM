@@ -1,8 +1,8 @@
-import { Result, Types } from '../utils/index.js';
-import { Schema } from '../schema/index.js';
-import stream from 'node:stream';
-import streamWeb from 'node:stream/web';
-import { AccessError, factoryAccess, PrivateAccess } from './access.js';
+const { Result, Types } = require('../utils/index.js');
+const { Schema } = require('../schema/index.js');
+const stream = require('node:stream');
+const streamWeb = require('node:stream/web');
+const { AccessError, factoryAccess, PrivateAccess } = require('./access.js');
 
 class ConsumerError extends Error {}
 
@@ -90,4 +90,4 @@ class Consumer {
   }
 }
 
-export { Consumer, ConsumerError };
+module.exports = { Consumer, ConsumerError };

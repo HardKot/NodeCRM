@@ -1,8 +1,14 @@
 {
   "compilerOptions": {
     "target": "ES6",
-    "module": "ESNext",
-    "lib": ["ES2015"]
+    "module": "CommonJS",
+    "lib": ["ES2015"],
+    "types": ["node", "jest"],
+    "allowJs": true,
+    "checkJs": true,
+    "maxNodeModuleJsDepth": 1,
+    "moduleResolution": "node"
   },
+  "include": ["libs/**/*"],
   "exclude": ["node_modules"]
 }

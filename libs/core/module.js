@@ -1,4 +1,4 @@
-import { ObjectUtils, Parser } from '../utils/index.js';
+const { ObjectUtils, Parser } = require('../utils/index.js');
 
 const moduleParser = new Parser({
   parseObject: function (source, options) {
@@ -79,4 +79,4 @@ class Module {
   }
 }
 
-export { Module, moduleParser };
+module.exports = { Module, moduleParser };

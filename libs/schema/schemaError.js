@@ -1,3 +1,3 @@
 class SchemaError extends Error {}
 
-export { SchemaError };
+module.exports = { SchemaError };

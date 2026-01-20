@@ -1,4 +1,4 @@
-export function runChains(chains, ...args) {
+function runChains(chains, ...args) {
   return new Promise((resolve, reject) => {
     function next(index) {
       const runner = this.middlewares[index] ?? resolve;
@@ -11,3 +11,5 @@ export function runChains(chains, ...args) {
     }
   });
 }
+
+module.exports = { runChains };

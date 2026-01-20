@@ -1,10 +1,10 @@
-import { Space } from './space.js';
-import { NODE_CONTEXT } from './code.js';
-import { Container } from './container.js';
-import { Module } from './module.js';
-import { ObjectUtils, Types } from '../utils/index.js';
-import EventEmitter from 'node:events';
-import path from 'node:path';
+const { Space } = require('./space.js');
+const { NODE_CONTEXT } = require('./code.js');
+const { Container } = require('./container.js');
+const { Module } = require('./module.js');
+const { ObjectUtils, Types } = require('../utils/index.js');
+const EventEmitter = require('node:events');
+const path = require('node:path');
 
 const InstanceEvent = Object.freeze({
   BUILD: 'build',
@@ -89,4 +89,4 @@ class Instance extends EventEmitter {
   }
 }
 
-export { Instance };
+module.exports = { Instance };

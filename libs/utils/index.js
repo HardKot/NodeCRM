@@ -1,11 +1,22 @@
-export { Types } from './types.js';
+const { Types } = require('./types.js');
 
-export * as StringCase from './stringCase.js';
-export * as Functions from './functions.js';
+const StringCase = require('./stringCase.js');
+const Functions = require('./functions.js');
 
-export { ObjectUtils } from './objectUtils.js';
+const { ObjectUtils } = require('./objectUtils.js');
 
-export { Parser } from './parser.js';
-export { Table } from './table.js';
-export { TreeNode } from './treeNode.js';
-export { Result } from './result.js';
+const { Parser } = require('./parser.js');
+const { Table } = require('./table.js');
+const { TreeNode } = require('./treeNode.js');
+const { Result } = require('./result.js');
+
+module.exports = {
+  Types,
+  StringCase,
+  Functions,
+  ObjectUtils,
+  Parser,
+  Table,
+  TreeNode,
+  Result,
+};

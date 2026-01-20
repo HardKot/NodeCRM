@@ -1,2 +1,4 @@
-export { Field } from './field.js';
-export { Schema } from './schema.js';
+const { Field } = require('./field.js');
+const { Schema } = require('./schema.js');
+
+module.exports = { Field, Schema };

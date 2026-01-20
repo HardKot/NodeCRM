@@ -1,4 +1,4 @@
-import { ObjectUtils, Parser, Types } from '../utils';
+const { ObjectUtils, Parser, Types } = require('../utils');
 
 const SUPPORT_SCOPES = Object.freeze({
   SINGLETON: 0,
@@ -75,4 +75,4 @@ class Component {
   }
 }
 
-export { Component, SUPPORT_SCOPES, componentParser };
+module.exports = { Component, SUPPORT_SCOPES, componentParser };

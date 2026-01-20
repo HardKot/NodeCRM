@@ -1,5 +1,5 @@
-import http2 from 'node:http2';
-import queryString from 'node:querystring';
+const http2 = require('node:http2');
+const queryString = require('node:querystring');
 
 class Request extends http2.Http2ServerRequest {
   get path() {
@@ -76,4 +76,4 @@ class Request extends http2.Http2ServerRequest {
   }
 }
 
-export { Request };
+module.exports = { Request };

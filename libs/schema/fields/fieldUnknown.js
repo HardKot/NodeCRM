@@ -1,9 +1,9 @@
 'use strict';
 
-import { fieldParser } from '../fieldParser.js';
-import { BaseField } from './baseField.js';
-import { Result } from '../../utils/index.js';
-import { ValidateError } from './fieldError.js';
+const { fieldParser } = require('../fieldParser.js');
+const { BaseField } = require('./baseField.js');
+const { Result } = require('../../utils/index.js');
+const { ValidateError } = require('./fieldError.js');
 
 class UnknownField extends BaseField {
   check() {
@@ -19,4 +19,4 @@ class UnknownField extends BaseField {
   }
 }
 
-export { UnknownField };
+module.exports = { UnknownField };

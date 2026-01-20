@@ -1,9 +1,9 @@
 'use strict';
 
-import { BaseField } from './baseField.js';
-import { Result, Types } from '../../utils';
+const { BaseField } = require('./baseField.js');
+const { Result, Types } = require('../../utils');
 
-import { ValidateError } from './fieldError.js';
+const { ValidateError } = require('./fieldError.js');
 
 class ArrayField extends BaseField {
   constructor(itemField, required) {
@@ -42,4 +42,4 @@ class ArrayField extends BaseField {
   }
 }
 
-export { ArrayField };
+module.exports = { ArrayField };

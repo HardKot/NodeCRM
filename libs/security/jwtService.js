@@ -1,4 +1,4 @@
-import crypto from 'node:crypto';
+const crypto = require('node:crypto');
 
 class JwtService {
   #secret;
@@ -48,4 +48,4 @@ class JwtService {
   }
 }
 
-export { JwtService };
+module.exports = { JwtService };

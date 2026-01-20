@@ -1,5 +1,4 @@
-import { describe, it, expect, jest } from '@jest/globals';
-import { Code, CODE_TYPE, CodeError } from '../code.js';
+const { Code, CODE_TYPE, CodeError } = require('../code.js');
 
 describe('Code', () => {
   it('type detection', () => {

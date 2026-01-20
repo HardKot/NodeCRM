@@ -1,7 +1,7 @@
-import { BaseField } from './baseField.js';
-import { Result } from '../../utils/index.js';
+const { BaseField } = require('./baseField.js');
+const { Result } = require('../../utils/index.js');
 
-import { ValidateError } from './fieldError.js';
+const { ValidateError } = require('./fieldError.js');
 
 class ScalarField extends BaseField {
   constructor(name, required) {
@@ -31,4 +31,4 @@ class ScalarField extends BaseField {
   };
 }
 
-export { ScalarField };
+module.exports = { ScalarField };

@@ -27,4 +27,4 @@ class ObjectUtils {
   }
 }
 
-export { ObjectUtils };
+module.exports = { ObjectUtils };

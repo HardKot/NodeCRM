@@ -1,4 +1,4 @@
-import http2 from 'node:http2';
+const http2 = require('node:http2');
 
 class ServerModule {
   constructor(options) {
@@ -15,3 +15,5 @@ class ServerModule {
   onModuleDestroy() {}
   onApplicationShutdown() {}
 }
+
+module.exports = { ServerModule };

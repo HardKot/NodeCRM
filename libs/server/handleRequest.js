@@ -1,8 +1,8 @@
-import * as querystring from 'node:querystring';
-import stream from 'node:stream';
-import streamWeb from 'node:stream/web';
+const querystring = require('node:querystring');
+const stream = require('node:stream');
+const streamWeb = require('node:stream/web');
 
-import { Field, Schema } from '../schema/index.js';
+const { Field, Schema } = require('../schema/index.js');
 
 class HandleRequest {
   #consumer;
@@ -89,4 +89,4 @@ class HandleRequest {
   }
 }
 
-export { HandleRequest };
+module.exports = { HandleRequest };

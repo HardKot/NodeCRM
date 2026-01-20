@@ -1,9 +1,7 @@
-import { describe, it, expect, jest, beforeEach } from '@jest/globals';
-
-import { SchemaField } from '../schemaField.js';
-import { BaseField } from '../baseField.js';
-import { Result } from '../../../utils/index.js';
-import { ValidateError } from '../fieldError.js';
+const { SchemaField } = require('../schemaField.js');
+const { BaseField } = require('../baseField.js');
+const { Result } = require('../../../utils/index.js');
+const { ValidateError } = require('../fieldError.js');
 
 class TestField extends BaseField {
   constructor() {
