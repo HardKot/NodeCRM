@@ -18,7 +18,7 @@ class Consumer {
     if (Types.isFunction(metadata.access)) {
       this.access = metadata.access;
     } else if (Types.isString(metadata.access)) {
-      this.access = factoryAccess(this.access);
+      this.access = factoryAccess(metadata.access);
     } else {
       this.access = PrivateAccess;
     }
@@ -32,7 +32,7 @@ class Consumer {
     }
 
     if ([stream.Writable, streamWeb.WritableStream].includes(metadata.returns)) {
-      this.returns = metadata.body;
+      this.returns = metadata.returns;
     } else if (Types.isObject(metadata.returns)) {
       this.returns = Schema.parse(metadata.returns);
     } else if (Types.isString(metadata.returns)) {
@@ -49,8 +49,29 @@ class Consumer {
       const hasAccess = await this.access(user);
       if (!hasAccess) return Result.failure(new AccessError('Access denied'));
 
-      const paramsIsValid = this.params.validate(params);
-      const bodyIsValid = this.body ? this.body.validate(body) : true;
+      if (!this.params) params = {};
+      const validateParams = this.params?.check(params);
+      if (validateParams?.isFailure)
+        return Result.failure(validateParams.getOrElse(new ConsumerError('Invalid params')));
+
+      if (!this.body) body = null;
+      if (this.bodyIsStream() && !Types.isReadableStream(body))
+        return Result.failure(new ConsumerError('Invalid body stream'));
+      const bodyValidate = this.body?.check(body);
+      if (bodyValidate?.isFailure)
+        return Result.failure(bodyValidate.getOrElse(new ConsumerError('Invalid body')));
+
+      const result = await this.#runner({ body, params, user });
+
+      if (this.returnsIsStream()) {
+        if (Types.isWritableStream(result)) {
+          return Result.success(result);
+        }
+        return Result.failure(new ConsumerError('Invalid return stream'));
+      }
+
+      if (this.body) return Result.success(this.body.transform(result));
+      return Result.success();
     } catch (e) {
       if (e instanceof Error) {
         return Result.failure(e);
@@ -59,4 +80,14 @@ class Consumer {
       return Result.failure(new ConsumerError(`Consumer execution failed: ${e}`));
     }
   }
+
+  bodyIsStream() {
+    return this.body === stream.Readable || this.body === streamWeb.ReadableStream;
+  }
+
+  returnsIsStream() {
+    return this.returns === stream.Writable || this.returns === streamWeb.WritableStream;
+  }
 }
+
+export { Consumer, ConsumerError };

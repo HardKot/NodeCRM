@@ -1,3 +1,6 @@
+import stream from 'node:stream';
+import streamWeb from 'node:stream/web';
+
 class TypeError extends Error {}
 
 class Types {
@@ -59,6 +62,18 @@ class Types {
 
   static isBoolean(v) {
     return typeof v === 'boolean';
+  }
+
+  static isWritableStream(v) {
+    if (v instanceof stream.Writable) return true;
+    if (v instanceof streamWeb.WritableStream) return true;
+    return false;
+  }
+
+  static isReadableStream(v) {
+    if (v instanceof stream.Readable) return true;
+    if (v instanceof streamWeb.ReadableStream) return true;
+    return false;
   }
 }
 
