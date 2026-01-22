@@ -1,13 +1,26 @@
+import { Types } from '../utils/index.js';
+
 class Metadata {
   #registry = new Map();
 
   static extractFrom(obj) {
-    const metadata = new Metadata();
-    const entries = Object.entries(obj).filter(([key, _]) => key.startsWith?.('$'));
+    const keys = ['access', 'body', 'params', 'returns'].concat(
+      Object.keys(obj).filter(key => key.startsWith?.('$'))
+    );
 
-    metadata.#registry = new Map(entries);
-    Object.freeze(metadata);
-    return metadata;
+    const entries = [];
+
+    for (const key of keys) {
+      if (key in obj) entries.push([key, obj[key]]);
+    }
+
+    return new Metadata(entries);
+  }
+
+  constructor(entries = null) {
+    if (Types.isObject(entries)) entries = Object.entries(entries);
+    this.#registry = new Map(entries);
+    Object.freeze(this);
   }
 
   define(key, value) {

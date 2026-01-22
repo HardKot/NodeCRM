@@ -1,44 +1,46 @@
-import { Result, Types } from '../utils/index.js';
+import { Result, Types, Optional } from '../utils/index.js';
 import { Schema } from '../schema/index.js';
 import stream from 'node:stream';
 import streamWeb from 'node:stream/web';
 import { AccessError, factoryAccess, PrivateAccess } from './access.js';
+import { Metadata } from './metadata.js';
 
 class ConsumerError extends Error {}
 
 class Handler {
   #runner;
-  constructor(runner, metadata) {
+  constructor(runner, metadata = {}) {
     if (!Types.isFunction(runner)) throw new ConsumerError(`Consumer runner must be a function`);
+    if (!(metadata instanceof Metadata)) metadata = new Metadata(metadata);
     this.#runner = runner;
 
-    this.params = metadata.params && Schema.parse(metadata.params);
+    this.access = Optional.ofNullable(metadata.get('access'))
+      .map(it => {
+        if (Types.isFunction(it)) return it;
+        if (Types.isString(it)) return factoryAccess(it);
+        return null;
+      })
+      .orElse(PrivateAccess);
 
-    if (Types.isFunction(metadata.access)) {
-      this.access = metadata.access;
-    } else if (Types.isString(metadata.access)) {
-      this.access = factoryAccess(metadata.access);
-    } else {
-      this.access = PrivateAccess;
-    }
+    this.params = Optional.ofNullable(metadata.get('params'))
+      .map(it => Schema.parse(it))
+      .getOrNull();
 
-    if ([stream.Readable, streamWeb.ReadableStream].includes(metadata.body)) {
-      this.body = metadata.body;
-    } else if (Types.isObject(metadata.body)) {
-      this.body = Schema.parse(metadata.body);
-    } else {
-      this.body = null;
-    }
+    this.body = Optional.ofNullable(metadata.get('body'))
+      .map(it => {
+        if ([stream.Readable, streamWeb.ReadableStream].includes(it)) return it;
+        if (Types.isObject(it)) return Schema.parse(it);
+        return null;
+      })
+      .getOrNull();
 
-    if ([stream.Writable, streamWeb.WritableStream].includes(metadata.returns)) {
-      this.returns = metadata.returns;
-    } else if (Types.isObject(metadata.returns)) {
-      this.returns = Schema.parse(metadata.returns);
-    } else if (Types.isString(metadata.returns)) {
-      this.returns = metadata.returns;
-    } else {
-      this.returns = null;
-    }
+    this.returns = Optional.ofNullable(metadata.get('returns'))
+      .map(it => {
+        if ([stream.Writable, streamWeb.WritableStream].includes(it)) return it;
+        if (Types.isObject(it)) return Schema.parse(it);
+        return null;
+      })
+      .getOrNull();
 
     Object.freeze(this);
   }
@@ -69,7 +71,7 @@ class Handler {
         return Result.failure(new ConsumerError('Invalid return stream'));
       }
 
-      if (this.body) return Result.success(this.body.transform(result));
+      if (this.returns) return Result.success(this.returns.transform(result));
       return Result.success();
     } catch (e) {
       if (e instanceof Error) {

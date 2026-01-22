@@ -79,11 +79,9 @@ class Instance extends EventEmitter {
   }
 
   async execute(path, ...args) {
-    const runner = ObjectUtils.goTo(this.consumers, path, null);
+    const runner = this.handlers[path];
     if (Types.isNull(runner) || Types.isUndefined(runner))
       throw new InstanceError(`Consumer not found at path: ${path}`);
-    if (!Types.isFunction(runner))
-      throw new InstanceError(`Consumer at path is not a function: ${path}`);
 
     return await runner.run(...args);
   }
@@ -111,7 +109,7 @@ class Instance extends EventEmitter {
     const handlers = [];
     for (const [name, consumer, meta] of consumersEntries) {
       if (Types.isFunction(consumer)) {
-        this.add([name, new Handler(consumer, meta)]);
+        handlers.push([name, new Handler(consumer, meta)]);
       } else if (Types.isObject(consumer)) {
         for (const handlerName in consumer) {
           if (!Types.isFunction(consumer[handlerName])) continue;

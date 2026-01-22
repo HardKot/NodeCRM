@@ -36,7 +36,6 @@ jest.unstable_mockModule('node:cluster', () => {
 
 const fs = await import('node:fs');
 const fsp = await import('node:fs/promises');
-const cluster = await import('node:cluster');
 const { Instance } = await import('../instance.js');
 
 describe('instance', () => {
@@ -163,5 +162,38 @@ describe('instance', () => {
     });
 
     expect(instance).toBeInstanceOf(Instance);
+  });
+
+  it('run execute handler', async () => {
+    files['/app/test.controller.js'] = `'use strict';
+      function testHandler({ body, params, user }) {
+        return { message: 'Hello, ' + body.name };
+      }
+      testHandler.body = { name: 'string' };
+      testHandler.returns = { message: 'string' };
+      testHandler.access = 'public';
+      
+      module.exports = { testHandler };
+    `;
+
+    files['/app/app.module.js'] = `'use strict';
+      const { testHandler } = require('./test.controller');
+      
+      module.exports = {
+        providers: [],
+        consumers: [testHandler],
+        imports: [],
+      };
+    `;
+
+    const instance = await Instance.run({
+      path: '/app',
+      stdout: process.stdout,
+      stderr: process.stderr,
+    });
+
+    const result = await instance.execute('testHandler', { name: 'World' });
+    expect(result.isSuccess).toBe(true);
+    expect(result.getOrElse({})).toEqual({ message: 'Hello, World' });
   });
 });
