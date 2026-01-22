@@ -82,7 +82,8 @@ class Container {
     const instances = [];
     const components = new Set(this.#bindings.values());
     for (const component of components.values()) {
-      if (component.type === type) instances.push(await this.get(component.name));
+      if (component.type !== type) continue;
+      instances.push([component.name, await this.get(component.name), component.meta]);
     }
     return instances;
   }

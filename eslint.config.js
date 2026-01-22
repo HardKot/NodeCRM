@@ -57,6 +57,7 @@ export default [
         confirm: 'readonly',
         FormData: 'readonly',
         fetch: 'readonly',
+        AbortSignal: 'readonly',
       },
     },
     rules: {

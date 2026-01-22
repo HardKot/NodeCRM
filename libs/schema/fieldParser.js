@@ -1,13 +1,10 @@
 'use strict';
 
-import { Parser } from '../utils/index.js';
-import { EnumField } from './fields/enumField.js';
-import { ScalarField } from './fields/scalarField.js';
-import { FieldError } from './fields/fieldError.js';
-import { SchemaField } from './fields/schemaField.js';
-import { ArrayField } from './fields/arrayField.js';
+import { Parser } from '../utils';
+import { Field } from './field.js';
+import { FieldError } from './fields/index.js';
 
-const _cacheMap = new WeakMap();
+const cache = new WeakMap();
 
 export const fieldParser = new Parser({
   parseString(source) {
@@ -15,7 +12,7 @@ export const fieldParser = new Parser({
     let type = !required ? source.slice(0, -1) : source;
 
     if (type.includes('|')) {
-      return new EnumField(
+      return new Field.Enum(
         type.split('|').map(v => v.trim()),
         required
       );
@@ -23,15 +20,15 @@ export const fieldParser = new Parser({
 
     type = type.toLocaleString();
 
-    if (type in ScalarField.supportTypes) {
-      return new ScalarField(type, required);
+    if (type in Field.Scalar.supportTypes) {
+      return new Field.Scalar(type, required);
     }
 
     throw new FieldError(`Unsupported field type: ${type}`);
   },
 
   parseObject(source) {
-    if (_cacheMap.has(source)) return _cacheMap.get(source);
+    if (cache.has(source)) return cache.get(source);
 
     const [firstKey] = Object.keys(source);
 
@@ -42,15 +39,15 @@ export const fieldParser = new Parser({
     const { required = false, ...options } = source;
     const type = source.type.toLowerCase();
 
-    if (ScalarField.supportTypes in type) {
-      return new ScalarField(type, required);
+    if (Field.Scalar.supportTypes in type) {
+      return new Field.Scalar(type, required);
     }
 
     throw new FieldError(`Unsupported field type: ${type}`);
   },
 
   parseSchema(source) {
-    if (_cacheMap.has(source)) return _cacheMap.get(source);
+    if (cache.has(source)) return cache.get(source);
 
     const fieldsEntries = [];
     const [firstKey] = Object.keys(source);
@@ -65,12 +62,12 @@ export const fieldParser = new Parser({
 
     for (const field in source) fieldsEntries.push([field, this.parse(source[field])]);
 
-    return new SchemaField(Object.fromEntries(fieldsEntries), proto);
+    return new Field.Schema(Object.fromEntries(fieldsEntries), proto);
   },
 
   parseArray(source) {
     const field = source[0];
 
-    return new ArrayField(this.parse(field), true);
+    return new Field.Array(this.parse(field), true);
   },
 });

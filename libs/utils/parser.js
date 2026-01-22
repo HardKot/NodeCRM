@@ -1,4 +1,4 @@
-import { factoryCamelCase } from './stringCase.js';
+import { StringUtils } from './stringUtils.js';
 import { Types } from './types.js';
 
 class ParserError extends Error {}
@@ -19,7 +19,7 @@ class Parser {
   parse(source, options = {}) {
     const srcType = this.sourceType(source);
 
-    const parserName = factoryCamelCase('parse', srcType);
+    const parserName = StringUtils.factoryCamelCase('parse', srcType);
     const parser = this[parserName];
 
     if (!parser) {

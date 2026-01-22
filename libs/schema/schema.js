@@ -1,11 +1,10 @@
 import { SchemaField } from './fields';
 import { fieldParser } from './fieldParser.js';
-import { SchemaError } from './schemaError.js';
 
+class SchemaError extends Error {}
 class Schema extends SchemaField {
   constructor(field) {
     super(field.schema, field.proto);
-    Object.freeze(this);
   }
 
   check(value) {
@@ -18,9 +17,11 @@ class Schema extends SchemaField {
     if (typeof schemaDefinition !== 'object' || schemaDefinition === null) {
       throw new SchemaError('Schema definition must be a non-null object');
     }
+    const schema = fieldParser.parse(schemaDefinition);
+    if (schema instanceof SchemaField) Object.setPrototypeOf(schema, Schema.prototype);
 
-    return new Schema(fieldParser.parse(schemaDefinition));
+    return schema;
   }
 }
 
-export { Schema };
+export { Schema, SchemaError };

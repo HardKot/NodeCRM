@@ -7,7 +7,6 @@ class SchemaField extends BaseField {
     super(true);
     this.schema = schema;
     this.proto = proto;
-    Object.freeze(this);
   }
 
   check(value) {

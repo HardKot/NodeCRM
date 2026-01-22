@@ -117,6 +117,8 @@ describe('instance', () => {
 
     const instance = await Instance.run({
       path: '/app',
+      stdout: process.stdout,
+      stderr: process.stderr,
     });
 
     expect(instance).toBeInstanceOf(Instance);
@@ -156,6 +158,8 @@ describe('instance', () => {
 
     const instance = await Instance.run({
       path: '/app',
+      stdout: process.stdout,
+      stderr: process.stderr,
     });
 
     expect(instance).toBeInstanceOf(Instance);

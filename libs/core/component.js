@@ -1,4 +1,5 @@
 import { ObjectUtils, Parser, Types } from '../utils';
+import { Metadata } from './metadata.js';
 
 const SUPPORT_SCOPES = Object.freeze({
   SINGLETON: 0,
@@ -19,7 +20,7 @@ const componentParser = new Parser({
       scope,
       ObjectUtils.firstNotNullValue('eager', source, options),
       source.binding,
-      source
+      Metadata.extractFrom(source)
     );
   },
   parseFunction: function (source, options) {
@@ -34,7 +35,7 @@ const componentParser = new Parser({
       scope,
       ObjectUtils.firstNotNullValue('eager', source, options),
       source.binding,
-      { ...source }
+      Metadata.extractFrom(source)
     );
   },
   parseClass: function (source, options) {
@@ -49,7 +50,7 @@ const componentParser = new Parser({
       scope,
       ObjectUtils.firstNotNullValue('eager', source, options),
       source.binding,
-      { ...source }
+      Metadata.extractFrom(source)
     );
   },
 });

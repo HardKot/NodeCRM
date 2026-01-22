@@ -2,9 +2,11 @@ import { Space } from './space.js';
 import { NODE_CONTEXT } from './code.js';
 import { Container } from './container.js';
 import { Module } from './module.js';
-import { ObjectUtils, Types } from '../utils/index.js';
+import { ObjectUtils, Types, StringUtils } from '../utils/index.js';
 import EventEmitter from 'node:events';
 import path from 'node:path';
+import { Handler } from './handler.js';
+import { Logger } from './logger.js';
 
 const InstanceEvent = Object.freeze({
   BUILD: 'build',
@@ -12,6 +14,14 @@ const InstanceEvent = Object.freeze({
 });
 
 class InstanceError extends Error {}
+
+function moduleExportRuleDefault(name, source) {
+  const nameCamel = StringUtils.factoryCamelCase(...name.split('.'));
+
+  if (source[nameCamel]) return source[nameCamel];
+  if (source.default) return source.default;
+  return source;
+}
 
 class Instance extends EventEmitter {
   static async run(config = {}) {
@@ -28,8 +38,15 @@ class Instance extends EventEmitter {
     this.watchTimeout = config.watchTimeout ?? 500;
     this.path = config.path ?? process.cwd();
     this.prefix = config.prefix ?? `Instance@${path.relative(this.path, process.cwd())}`;
+    this.moduleExportRule = config.moduleExportRule ?? moduleExportRuleDefault;
+
+    this.logger = new Logger({
+      prefix: this.prefix,
+      stdout: config.stdout,
+      stderr: config.stderr,
+    });
     this.extendes = config.extendes ?? [];
-    this.consumers = {};
+    this.handlers = Object.freeze({});
   }
 
   async init() {
@@ -42,19 +59,21 @@ class Instance extends EventEmitter {
     });
 
     for (const extend of this.extendes) {
-      console.info(this.prefix, `Loading extended ${extend.name}`);
+      this.logger.info(`Loading extended ${extend.name}`);
       await extend.init?.(this);
     }
   }
 
   async build() {
-    await this.#buildModules();
+    await this.#buildContainer();
+    await this.#buildHandlers();
     await Promise.all(this.extendes.map(it => it.build?.(this)));
     this.emit(InstanceEvent.BUILD);
 
-    this.space.onChange(() => {
-      console.info(this.prefix, 'Detected changes in space at', this.path);
-      this.#buildModules();
+    this.space.onChange(async () => {
+      this.logger.info('Detected changes in space at', this.path);
+      await this.#buildContainer();
+      await this.#buildHandlers();
       this.emit(InstanceEvent.UPDATE);
     });
   }
@@ -66,26 +85,44 @@ class Instance extends EventEmitter {
     if (!Types.isFunction(runner))
       throw new InstanceError(`Consumer at path is not a function: ${path}`);
 
-    return await runner(...args);
+    return await runner.run(...args);
   }
 
-  async #buildModules() {
-    const moduleSource = this.space.get('app.module');
-    if (!moduleSource) throw new InstanceError('App module not found in space');
+  getModule(name) {
+    let moduleSource = this.space.get(name);
+    moduleSource = this.moduleExportRule(name, moduleSource);
+    if (!moduleSource) throw new InstanceError(`Module not found in space: ${name}`);
 
-    const module = Module.parse(moduleSource);
+    return Module.parse(moduleSource, { name });
+  }
 
-    for (const provider of module.providers) {
-      if (!provider.type) provider.type = 'provider';
-    }
-    for (const consumer of module.consumers) {
-      if (!consumer.type) consumer.type = 'consumer';
-    }
+  async #buildContainer() {
+    const module = this.getModule('app.module');
+
+    module.providers.filter(it => !it.type).map(it => (it.type = 'provider'));
+    module.consumers.filter(it => !it.type).map(it => (it.type = 'consumer'));
 
     this.container = await Container.create([module.providers, module.consumers].flat());
+  }
+
+  async #buildHandlers() {
     const consumersEntries = await this.container.type('consumer');
-    this.consumers = Object.fromEntries(consumersEntries);
-    Object.freeze(this.consumers);
+
+    const handlers = [];
+    for (const [name, consumer, meta] of consumersEntries) {
+      if (Types.isFunction(consumer)) {
+        this.add([name, new Handler(consumer, meta)]);
+      } else if (Types.isObject(consumer)) {
+        for (const handlerName in consumer) {
+          if (!Types.isFunction(consumer[handlerName])) continue;
+          const handler = consumer[handlerName].bind(consumer);
+          handlers.push([`${name}.${handlerName}`, new Handler(handler, meta)]);
+        }
+      }
+    }
+
+    this.handlers = Object.fromEntries(handlers);
+    Object.freeze(this.handlers);
   }
 }
 

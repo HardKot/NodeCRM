@@ -13,6 +13,14 @@ function PrivateAccess() {
   return false;
 }
 
+function AuthenticatedAccess(user) {
+  return !!user;
+}
+
+function AnonymousAccess(user) {
+  return !user;
+}
+
 function ByRoleAccess(role, user) {
   if (!user) return false;
   return user.roles && user.roles.includes(role);
@@ -27,6 +35,8 @@ function ByPermissionsAccess(permissions, user) {
 }
 
 const template = {
+  anonymous: 'anonymous',
+  authenticated: 'authenticated',
   public: 'public',
   private: 'private',
   role: 'role:',
@@ -36,6 +46,8 @@ const template = {
 function factoryAccess(accessStr) {
   if (accessStr === template.public) return PublicAccess;
   if (accessStr === template.private) return PrivateAccess;
+  if (accessStr === template.authenticated) return AuthenticatedAccess;
+  if (accessStr === template.anonymous) return AnonymousAccess;
   if (accessStr.startsWith(template.role)) {
     const role = accessStr.substring(template.role.length);
     return user => ByRoleAccess(role, user);

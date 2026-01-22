@@ -7,7 +7,6 @@ class ScalarField extends BaseField {
   constructor(name, required) {
     super(required);
     this.scalar = name;
-    Object.freeze(this);
   }
 
   check(value) {

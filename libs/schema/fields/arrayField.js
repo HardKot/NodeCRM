@@ -10,7 +10,6 @@ class ArrayField extends BaseField {
     super(required);
     this.itemField = itemField;
     this.required = required;
-    Object.freeze(this);
   }
 
   check(value) {

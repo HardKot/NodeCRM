@@ -6,9 +6,8 @@ import { AccessError, factoryAccess, PrivateAccess } from './access.js';
 
 class ConsumerError extends Error {}
 
-class Consumer {
+class Handler {
   #runner;
-
   constructor(runner, metadata) {
     if (!Types.isFunction(runner)) throw new ConsumerError(`Consumer runner must be a function`);
     this.#runner = runner;
@@ -90,4 +89,4 @@ class Consumer {
   }
 }
 
-export { Consumer, ConsumerError };
+export { Handler, ConsumerError };

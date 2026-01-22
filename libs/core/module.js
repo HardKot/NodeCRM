@@ -33,10 +33,14 @@ class Module {
 
     this.providers = new Set(
       [[instance.providers ?? []], this.imports.map(it => it.providers ?? [])].flat(2)
-    );
+    )
+      .values()
+      .toArray();
     this.consumers = new Set(
       [[instance.consumers ?? []], this.imports.map(it => it.consumers ?? [])].flat(2)
-    );
+    )
+      .values()
+      .toArray();
 
     this.selfOnModuleInit = instance.onModuleInit?.bind(instance);
     this.selfOnApplicationBootstrap = instance.onApplicationBootstrap?.bind(instance);

@@ -11,7 +11,6 @@ class EnumField extends BaseField {
   constructor(allowedValues, required) {
     super(required);
     this.#values = new Set(allowedValues);
-    Object.freeze(this);
   }
 
   get values() {
