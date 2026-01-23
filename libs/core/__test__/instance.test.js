@@ -40,7 +40,6 @@ const { Instance } = await import('../instance.js');
 
 describe('instance', () => {
   let files;
-  let watchCallback;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -76,20 +75,14 @@ describe('instance', () => {
       return Promise.resolve(files[it]);
     });
 
-    fs.watch.mockImplementation((path, options, callback) => {
-      watchCallback = callback;
-    });
+    fs.watch.mockImplementation(() => {});
 
     fsp.watch.mockImplementation(() => {
       return {
         [Symbol.asyncIterator]() {
           return {
             async next() {
-              return new Promise(resolve => {
-                watchCallback = () => {
-                  resolve({ done: false, value: [] });
-                };
-              });
+              return new Promise(() => {});
             },
           };
         },
