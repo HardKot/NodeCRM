@@ -63,6 +63,22 @@ class ObjectUtils {
     }
     return target;
   }
+
+  static getMethodNames(obj) {
+    const methods = new Set();
+    let current = obj;
+
+    while (current && current !== Object.prototype) {
+      for (const key of Object.getOwnPropertyNames(current)) {
+        if (typeof obj[key] === 'function' && key !== 'constructor') {
+          methods.add(key);
+        }
+      }
+      current = Object.getPrototypeOf(current);
+    }
+
+    return Array.from(methods);
+  }
 }
 
 export { ObjectUtils };

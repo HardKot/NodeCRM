@@ -196,4 +196,41 @@ describe('instance', () => {
     expect(result.isSuccess).toBe(true);
     expect(result.getOrElse({})).toEqual({ message: 'Hello, World' });
   });
+
+  it('run execute handler class', async () => {
+    files['/app/test.controller.js'] = `'use strict';
+      class TestController {
+        static body = { name: 'string' }; 
+        static returns = { message: 'string' };
+        static access = 'public';
+        
+        
+        get({ body, params, user }) {
+          return { message: 'Hello, ' + body.name };
+        }
+      }
+      
+      module.exports = { TestController };
+    `;
+
+    files['/app/app.module.js'] = `'use strict';
+      const { TestController } = require('./test.controller');
+      
+      module.exports = {
+        providers: [],
+        consumers: [TestController],
+        imports: [],
+      };
+    `;
+
+    const instance = await Instance.run({
+      path: '/app',
+      stdout: process.stdout,
+      stderr: process.stderr,
+    });
+
+    const result = await instance.execute('TestController.get', { name: 'World' });
+    expect(result.isSuccess).toBe(true);
+    expect(result.getOrElse({})).toEqual({ message: 'Hello, World' });
+  });
 });

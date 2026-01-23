@@ -111,8 +111,21 @@ class Instance extends EventEmitter {
       if (Types.isFunction(consumer)) {
         handlers.push([name, new Handler(consumer, meta)]);
       } else if (Types.isObject(consumer)) {
-        for (const handlerName in consumer) {
+        for (const handlerName of ObjectUtils.getMethodNames(consumer)) {
+          if (handlerName.startsWith('_')) continue;
           if (!Types.isFunction(consumer[handlerName])) continue;
+          if (
+            [
+              'isPrototypeOf',
+              'propertyIsEnumerable',
+              'toString',
+              'valueOf',
+              'toLocaleString',
+              'hasOwnProperty',
+            ].includes(handlerName)
+          )
+            continue;
+
           const handler = consumer[handlerName].bind(consumer);
           handlers.push([`${name}.${handlerName}`, new Handler(handler, meta)]);
         }
