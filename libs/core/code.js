@@ -1,6 +1,7 @@
 import path from 'node:path';
 import vm from 'node:vm';
 import module from 'node:module';
+import fs from 'node:fs';
 
 const ts = await import('typescript').catch(() => null);
 
@@ -59,8 +60,41 @@ class Code {
     return this.exports;
   }
 
-  loadESM() {
-    throw new CodeError('ESM modules are not supported');
+  async loadESM(source) {
+    if (!source) source = this.source;
+    const esmModule = new vm.SourceTextModule(source, {
+      context: this.context,
+      identifier: this.path,
+      initializeImportMeta: meta => {
+        meta.url = `file://${this.path}`;
+      },
+    });
+
+    await esmModule.link(async specifier => {
+      const imported = await this.requireDependency(specifier);
+      const exportNames = Object.keys(imported);
+
+      const syntheticModule = new vm.SyntheticModule(
+        exportNames,
+        function () {
+          exportNames.forEach(key => {
+            this.setExport(key, imported[key]);
+          });
+        },
+        {
+          context: this.context,
+        }
+      );
+
+      await syntheticModule.link(() => {});
+      await syntheticModule.evaluate();
+
+      return syntheticModule;
+    });
+
+    await esmModule.evaluate();
+    this.exports = esmModule.namespace;
+    return this.exports;
   }
 
   loadTS(source) {
@@ -97,7 +131,18 @@ class Code {
     if (ext === '.ts') return CODE_TYPE.TS;
     if (ext === '.mjs') return CODE_TYPE.ESM;
     if (ext === '.cjs') return CODE_TYPE.COMMONJS;
-    return CODE_TYPE.COMMONJS;
+
+    try {
+      const packageJsonPath = module.findPackageJSON(process.cwd());
+      if (!packageJsonPath) return CODE_TYPE.COMMONJS;
+
+      const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+      if (packageJson.type === 'module') return CODE_TYPE.ESM;
+
+      return CODE_TYPE.COMMONJS;
+    } catch (e) {
+      return CODE_TYPE.COMMONJS;
+    }
   }
 
   requireDependency(modulePath) {

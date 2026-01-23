@@ -4,25 +4,25 @@ import { ScalarField } from '../scalarField.js';
 describe('ScalarField check', () => {
   it('should validate correct type for required field', () => {
     const field = new ScalarField('number', true);
-    const result = field.check(42);
+    const result = field.validate(42);
     expect(result.isSuccess).toBe(true);
   });
 
   it('should invalidate incorrect type for required field', () => {
     const field = new ScalarField('string', true);
-    const result = field.check(42);
+    const result = field.validate(42);
     expect(result.isSuccess).toBe(false);
   });
 
   it('should allow undefined for non-required field', () => {
     const field = new ScalarField('boolean', false);
-    const result = field.check(undefined);
+    const result = field.validate(undefined);
     expect(result.isSuccess).toBe(true);
   });
 
   it('should invalidate undefined for required field', () => {
     const field = new ScalarField('number', true);
-    const result = field.check(undefined);
+    const result = field.validate(undefined);
     expect(result.isSuccess).toBe(false);
   });
 });

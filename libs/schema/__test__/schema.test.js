@@ -74,12 +74,12 @@ describe('Validation of Schema Parsing', () => {
       age: 'thirty',
     };
 
-    expect(schema.check(validData).isSuccess).toBe(true);
-    expect(schema.check(invalidDataMissingRequired).errorOrNull()?.errors).toEqual({
+    expect(schema.validate(validData).isSuccess).toBe(true);
+    expect(schema.validate(invalidDataMissingRequired).errorOrNull()?.errors).toEqual({
       password: ["Expected type 'string' but got 'boolean'"],
       user: ['Expected an object'],
     });
-    expect(schema.check(invalidDataWrongType).errorOrNull()?.errors).toEqual({
+    expect(schema.validate(invalidDataWrongType).errorOrNull()?.errors).toEqual({
       'user.age': ["Expected type 'number' but got 'string'"],
       email: ["Expected type 'string' but got 'number'"],
     });

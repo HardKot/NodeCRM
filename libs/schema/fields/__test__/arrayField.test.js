@@ -8,7 +8,7 @@ import { ValidateError } from '../fieldError.js';
 class TestField extends BaseField {
   constructor() {
     super();
-    this.check = TestField.__mockCheck;
+    this.validate = TestField.__mockCheck;
     this.transform = TestField.__mockTransform;
   }
 
@@ -24,27 +24,27 @@ describe('ArrayField check', () => {
   it('should validate array with valid items', () => {
     const field = new ArrayField(new TestField());
     TestField.__mockCheck.mockReturnValue(Result.success());
-    const result = field.check([1, 2, 3]);
+    const result = field.validate([1, 2, 3]);
     expect(result.isSuccess).toBe(true);
   });
 
   it('should invalidate array with invalid items', () => {
     const field = new ArrayField(new TestField());
     TestField.__mockCheck.mockReturnValueOnce(Result.failure(new ValidateError('Invalid item')));
-    const result = field.check([1, 2, 3]);
+    const result = field.validate([1, 2, 3]);
     expect(result.isSuccess).toBe(false);
   });
 
   it('should invalidate non-array values', () => {
     const field = new ArrayField(new TestField());
-    const result = field.check('not an array');
+    const result = field.validate('not an array');
     expect(result.isSuccess).toBe(false);
   });
 
   it('should call item field check for each item', () => {
     const field = new ArrayField(new TestField());
     TestField.__mockCheck.mockReturnValue(Result.success());
-    field.check([1, 2, 3]);
+    field.validate([1, 2, 3]);
     expect(TestField.__mockCheck).toHaveBeenCalledTimes(3);
   });
 });

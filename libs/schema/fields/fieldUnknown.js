@@ -6,7 +6,7 @@ import { Result } from '../../utils/index.js';
 import { ValidateError } from './fieldError.js';
 
 class UnknownField extends BaseField {
-  check() {
+  validate() {
     return Result.failure(new ValidateError('Unknown field type cannot be validated'));
   }
 

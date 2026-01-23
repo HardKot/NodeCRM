@@ -5,7 +5,7 @@ import { Module } from './module.js';
 import { ObjectUtils, Types, StringUtils } from '../utils/index.js';
 import EventEmitter from 'node:events';
 import path from 'node:path';
-import { Handler } from './handler.js';
+import { Command } from './command.js';
 import { Logger } from './logger.js';
 
 const InstanceEvent = Object.freeze({
@@ -46,7 +46,7 @@ class Instance extends EventEmitter {
       stderr: config.stderr,
     });
     this.extendes = config.extendes ?? [];
-    this.handlers = Object.freeze({});
+    this.commands = Object.freeze({});
   }
 
   async init() {
@@ -66,20 +66,20 @@ class Instance extends EventEmitter {
 
   async build() {
     await this.#buildContainer();
-    await this.#buildHandlers();
+    await this.#buildCommands();
     await Promise.all(this.extendes.map(it => it.build?.(this)));
     this.emit(InstanceEvent.BUILD);
 
     this.space.onChange(async () => {
       this.logger.info('Detected changes in space at', this.path);
       await this.#buildContainer();
-      await this.#buildHandlers();
+      await this.#buildCommands();
       this.emit(InstanceEvent.UPDATE);
     });
   }
 
   async execute(path, ...args) {
-    const runner = this.handlers[path];
+    const runner = this.commands[path];
     if (Types.isNull(runner) || Types.isUndefined(runner))
       throw new InstanceError(`Consumer not found at path: ${path}`);
 
@@ -103,13 +103,13 @@ class Instance extends EventEmitter {
     this.container = await Container.create([module.providers, module.consumers].flat());
   }
 
-  async #buildHandlers() {
+  async #buildCommands() {
     const consumersEntries = await this.container.type('consumer');
 
     const handlers = [];
     for (const [name, consumer, meta] of consumersEntries) {
       if (Types.isFunction(consumer)) {
-        handlers.push([name, new Handler(consumer, meta)]);
+        handlers.push([name, new Command(consumer, meta)]);
       } else if (Types.isObject(consumer)) {
         for (const handlerName of ObjectUtils.getMethodNames(consumer)) {
           if (handlerName.startsWith('_')) continue;
@@ -127,13 +127,13 @@ class Instance extends EventEmitter {
             continue;
 
           const handler = consumer[handlerName].bind(consumer);
-          handlers.push([`${name}.${handlerName}`, new Handler(handler, meta)]);
+          handlers.push([`${name}.${handlerName}`, new Command(handler, meta)]);
         }
       }
     }
 
-    this.handlers = Object.fromEntries(handlers);
-    Object.freeze(this.handlers);
+    this.commands = Object.fromEntries(handlers);
+    Object.freeze(this.commands);
   }
 }
 

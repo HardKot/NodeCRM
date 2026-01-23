@@ -12,7 +12,7 @@ class ArrayField extends BaseField {
     this.required = required;
   }
 
-  check(value) {
+  validate(value) {
     if (!this.required && value === undefined) return Result.success();
     if (!Array.isArray(value)) return Result.failure(new ValidateError('Expected an array'));
 
@@ -20,7 +20,7 @@ class ArrayField extends BaseField {
     const error = new ValidateError('');
 
     for (let i = 0; i < value.length; i++) {
-      const itemCheck = this.itemField.check(value[i]);
+      const itemCheck = this.itemField.validate(value[i]);
       if (itemCheck.isSuccess) continue;
       hasError = true;
       error.addError(itemCheck.errorOrNull(), `[${i}]`);

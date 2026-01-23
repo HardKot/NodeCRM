@@ -1,5 +1,5 @@
 import { describe, it, expect, jest } from '@jest/globals';
-import { Code, CODE_TYPE, CodeError } from '../code.js';
+import { Code, CODE_TYPE } from '../code.js';
 
 describe('Code', () => {
   it('type detection', () => {
@@ -31,7 +31,7 @@ describe('Code', () => {
     expect(code.exports.foo()).toBe('bar');
   });
 
-  it('Load ESM module', () => {
+  it('Load ESM module', async () => {
     const code = new Code(
       `
         export const value = 42;
@@ -42,7 +42,10 @@ describe('Code', () => {
       { name: 'testModule.mjs' }
     );
 
-    expect(() => code.autoLoad()).toThrow(new CodeError('ESM modules are not supported'));
+    await code.autoLoad();
+
+    expect(code.exports.value).toBe(42);
+    expect(code.exports.foo()).toBe('bar');
   });
 
   it('Load TS module', async () => {

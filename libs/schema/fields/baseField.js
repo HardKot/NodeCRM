@@ -8,7 +8,7 @@ class BaseField {
     this.required = required;
   }
 
-  check() {
+  validate() {
     return Result.failure(new ValidateError('Invalid item'));
   }
 

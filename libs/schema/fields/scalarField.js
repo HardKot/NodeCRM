@@ -9,7 +9,7 @@ class ScalarField extends BaseField {
     this.scalar = name;
   }
 
-  check(value) {
+  validate(value) {
     if (!this.required && value === undefined) return Result.success();
     if (typeof value === this.scalar) return Result.success();
     return Result.failure(

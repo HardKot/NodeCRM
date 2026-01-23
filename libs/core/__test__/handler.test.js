@@ -1,5 +1,5 @@
 import { describe, it, expect, jest } from '@jest/globals';
-import { Handler, ConsumerError } from '../handler.js';
+import { Command, CommandError } from '../command.js';
 import { AccessError } from '../access.js';
 import stream from 'node:stream';
 import streamWeb from 'node:stream/web';
@@ -7,15 +7,15 @@ import streamWeb from 'node:stream/web';
 describe('Handler', () => {
   describe('constructor', () => {
     it('should throw error if runner is not a function', () => {
-      expect(() => new Handler('not a function')).toThrow(ConsumerError);
-      expect(() => new Handler('not a function')).toThrow('Consumer runner must be a function');
+      expect(() => new Command('not a function')).toThrow(CommandError);
+      expect(() => new Command('not a function')).toThrow('Consumer runner must be a function');
     });
 
     it('should create handler with basic metadata', () => {
       const runner = jest.fn();
-      const handler = new Handler(runner);
+      const handler = new Command(runner);
 
-      expect(handler).toBeInstanceOf(Handler);
+      expect(handler).toBeInstanceOf(Command);
       expect(handler.params).toBeNull();
       expect(handler.body).toBeNull();
       expect(handler.returns).toBeNull();
@@ -23,14 +23,14 @@ describe('Handler', () => {
 
     it('should set body as stream for Readable', () => {
       const runner = jest.fn();
-      const handler = new Handler(runner, { body: stream.Readable });
+      const handler = new Command(runner, { body: stream.Readable });
 
       expect(handler.body).toBe(stream.Readable);
     });
 
     it('should set returns as stream for Writable', () => {
       const runner = jest.fn();
-      const handler = new Handler(runner, { returns: stream.Writable });
+      const handler = new Command(runner, { returns: stream.Writable });
 
       expect(handler.returns).toBe(stream.Writable);
     });
@@ -39,7 +39,7 @@ describe('Handler', () => {
   describe('run', () => {
     it('should execute runner and return success result', async () => {
       const runner = jest.fn().mockResolvedValue({ data: 'test' });
-      const handler = new Handler(runner, { access: 'public' });
+      const handler = new Command(runner, { access: 'public' });
 
       const result = await handler.run(null);
 
@@ -50,7 +50,7 @@ describe('Handler', () => {
     it('should return failure if access is denied', async () => {
       const runner = jest.fn();
       const access = jest.fn().mockResolvedValue(false);
-      const handler = new Handler(runner, { access });
+      const handler = new Command(runner, { access });
 
       const result = await handler.run(null);
 
@@ -61,7 +61,7 @@ describe('Handler', () => {
 
     it('should pass body, params and user to runner', async () => {
       const runner = jest.fn().mockResolvedValue(null);
-      const handler = new Handler(runner, {
+      const handler = new Command(runner, {
         access: 'public',
         body: { test: 'string' },
         params: { id: 'number' },
@@ -78,7 +78,7 @@ describe('Handler', () => {
     it('should catch and return errors as failure', async () => {
       const error = new Error('Test error');
       const runner = jest.fn().mockRejectedValue(error);
-      const handler = new Handler(runner, { access: 'public' });
+      const handler = new Command(runner, { access: 'public' });
 
       const result = await handler.run(null);
 
@@ -90,21 +90,21 @@ describe('Handler', () => {
   describe('bodyIsStream', () => {
     it('should return true for stream.Readable', () => {
       const runner = jest.fn();
-      const handler = new Handler(runner, { body: stream.Readable });
+      const handler = new Command(runner, { body: stream.Readable });
 
       expect(handler.bodyIsStream()).toBe(true);
     });
 
     it('should return true for streamWeb.ReadableStream', () => {
       const runner = jest.fn();
-      const handler = new Handler(runner, { body: streamWeb.ReadableStream });
+      const handler = new Command(runner, { body: streamWeb.ReadableStream });
 
       expect(handler.bodyIsStream()).toBe(true);
     });
 
     it('should return false for non-stream body', () => {
       const runner = jest.fn();
-      const handler = new Handler(runner, {});
+      const handler = new Command(runner, {});
 
       expect(handler.bodyIsStream()).toBe(false);
     });
@@ -113,21 +113,21 @@ describe('Handler', () => {
   describe('returnsIsStream', () => {
     it('should return true for stream.Writable', () => {
       const runner = jest.fn();
-      const handler = new Handler(runner, { returns: stream.Writable });
+      const handler = new Command(runner, { returns: stream.Writable });
 
       expect(handler.returnsIsStream()).toBe(true);
     });
 
     it('should return true for streamWeb.WritableStream', () => {
       const runner = jest.fn();
-      const handler = new Handler(runner, { returns: streamWeb.WritableStream });
+      const handler = new Command(runner, { returns: streamWeb.WritableStream });
 
       expect(handler.returnsIsStream()).toBe(true);
     });
 
     it('should return false for non-stream returns', () => {
       const runner = jest.fn();
-      const handler = new Handler(runner, {});
+      const handler = new Command(runner, {});
 
       expect(handler.returnsIsStream()).toBe(false);
     });

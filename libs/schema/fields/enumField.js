@@ -17,7 +17,7 @@ class EnumField extends BaseField {
     return Array.from(this.#values.values());
   }
 
-  check(value) {
+  validate(value) {
     if (!this.required && value === undefined) return Result.success();
     if (this.#values.has(value)) return Result.success();
     return Result.failure(

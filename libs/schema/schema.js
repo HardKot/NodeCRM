@@ -7,8 +7,8 @@ class Schema extends SchemaField {
     super(field.schema, field.proto);
   }
 
-  check(value) {
-    const result = super.check(value);
+  validate(value) {
+    const result = super.validate(value);
     delete result.errorOrNull()?.errors?.['*']; // Remove general error if exists
     return result;
   }

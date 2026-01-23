@@ -1,20 +1,21 @@
-import { Result, Types, Optional } from '../utils/index.js';
+import { Result, Types } from '../utils/index.js';
 import { Schema } from '../schema/index.js';
 import stream from 'node:stream';
 import streamWeb from 'node:stream/web';
 import { AccessError, factoryAccess, PrivateAccess } from './access.js';
 import { Metadata } from './metadata.js';
 
-class ConsumerError extends Error {}
+class CommandError extends Error {}
 
-class Handler {
+class Command {
   #runner;
   constructor(runner, metadata = {}) {
-    if (!Types.isFunction(runner)) throw new ConsumerError(`Consumer runner must be a function`);
+    if (!Types.isFunction(runner)) throw new CommandError(`Consumer runner must be a function`);
     if (!(metadata instanceof Metadata)) metadata = new Metadata(metadata);
     this.#runner = runner;
 
-    this.access = Optional.ofNullable(metadata.get('access'))
+    this.access = metadata
+      .get('access')
       .map(it => {
         if (Types.isFunction(it)) return it;
         if (Types.isString(it)) return factoryAccess(it);
@@ -22,11 +23,13 @@ class Handler {
       })
       .orElse(PrivateAccess);
 
-    this.params = Optional.ofNullable(metadata.get('params'))
+    this.params = metadata
+      .get('params')
       .map(it => Schema.parse(it))
       .getOrNull();
 
-    this.body = Optional.ofNullable(metadata.get('body'))
+    this.body = metadata
+      .get('body')
       .map(it => {
         if ([stream.Readable, streamWeb.ReadableStream].includes(it)) return it;
         if (Types.isObject(it)) return Schema.parse(it);
@@ -34,7 +37,8 @@ class Handler {
       })
       .getOrNull();
 
-    this.returns = Optional.ofNullable(metadata.get('returns'))
+    this.returns = metadata
+      .get('returns')
       .map(it => {
         if ([stream.Writable, streamWeb.WritableStream].includes(it)) return it;
         if (Types.isObject(it)) return Schema.parse(it);
@@ -51,16 +55,15 @@ class Handler {
       if (!hasAccess) return Result.failure(new AccessError('Access denied'));
 
       if (!this.params) params = {};
-      const validateParams = this.params?.check(params);
-      if (validateParams?.isFailure)
-        return Result.failure(validateParams.getOrElse(new ConsumerError('Invalid params')));
+      const validateParams = this.params?.validate(params);
+      if (validateParams?.isFailure) return validateParams;
 
       if (!this.body) body = null;
       if (this.bodyIsStream() && !Types.isReadableStream(body))
-        return Result.failure(new ConsumerError('Invalid body stream'));
-      const bodyValidate = this.body?.check(body);
-      if (bodyValidate?.isFailure)
-        return Result.failure(bodyValidate.getOrElse(new ConsumerError('Invalid body')));
+        return Result.failure(new CommandError('Invalid body stream'));
+
+      const bodyValidate = this.body?.validate(body);
+      if (bodyValidate?.isFailure) return bodyValidate;
 
       const result = await this.#runner({ body, params, user });
 
@@ -68,7 +71,7 @@ class Handler {
         if (Types.isWritableStream(result)) {
           return Result.success(result);
         }
-        return Result.failure(new ConsumerError('Invalid return stream'));
+        return Result.failure(new CommandError('Invalid return stream'));
       }
 
       if (this.returns) return Result.success(this.returns.transform(result));
@@ -78,7 +81,7 @@ class Handler {
         return Result.failure(e);
       }
 
-      return Result.failure(new ConsumerError(`Consumer execution failed: ${e}`));
+      return Result.failure(new CommandError(`Consumer execution failed: ${e}`));
     }
   }
 
@@ -91,4 +94,4 @@ class Handler {
   }
 }
 
-export { Handler, ConsumerError };
+export { Command, CommandError };

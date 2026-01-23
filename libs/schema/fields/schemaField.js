@@ -9,14 +9,14 @@ class SchemaField extends BaseField {
     this.proto = proto;
   }
 
-  check(value) {
+  validate(value) {
     if (!Types.isObject(value)) return Result.failure(new ValidateError('Expected an object'));
 
     let hasError = false;
     const error = new ValidateError('');
 
     for (const [key, field] of Object.entries(this.schema)) {
-      const itemCheck = field.check(value[key]);
+      const itemCheck = field.validate(value[key]);
       if (itemCheck.isSuccess) continue;
       hasError = true;
       error.addError(itemCheck.errorOrNull(), key);

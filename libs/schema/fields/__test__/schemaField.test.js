@@ -8,7 +8,7 @@ import { ValidateError } from '../fieldError.js';
 class TestField extends BaseField {
   constructor() {
     super();
-    this.check = TestField.__mockCheck;
+    this.validate = TestField.__mockCheck;
     this.transform = TestField.__mockTransform;
   }
 
@@ -27,7 +27,7 @@ describe('SchemaField check', () => {
       b: new TestField(),
     });
     TestField.__mockCheck.mockReturnValue(Result.success());
-    const result = field.check({ a: 1, b: 2 });
+    const result = field.validate({ a: 1, b: 2 });
     expect(result.isSuccess).toBe(true);
   });
 
@@ -37,7 +37,7 @@ describe('SchemaField check', () => {
       b: new TestField(),
     });
     TestField.__mockCheck.mockReturnValueOnce(Result.failure(new ValidateError('Invalid field')));
-    const result = field.check({ a: 1, b: 2 });
+    const result = field.validate({ a: 1, b: 2 });
     expect(result.isSuccess).toBe(false);
   });
 
@@ -45,7 +45,7 @@ describe('SchemaField check', () => {
     const field = new SchemaField({
       a: new TestField(),
     });
-    const result = field.check('not an object');
+    const result = field.validate('not an object');
     expect(result.isSuccess).toBe(false);
   });
 
@@ -56,7 +56,7 @@ describe('SchemaField check', () => {
       c: new TestField(),
     });
     TestField.__mockCheck.mockReturnValue(Result.success());
-    field.check({ a: 1, b: 2, c: 3 });
+    field.validate({ a: 1, b: 2, c: 3 });
     expect(TestField.__mockCheck).toHaveBeenCalledTimes(3);
   });
 });

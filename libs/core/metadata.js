@@ -1,17 +1,16 @@
-import { Types } from '../utils/index.js';
+import { Optional, Types } from '../utils/index.js';
 
 class Metadata {
   #registry = new Map();
 
   static extractFrom(obj) {
-    const keys = ['access', 'body', 'params', 'returns'].concat(
-      Object.keys(obj).filter(key => key.startsWith?.('$'))
-    );
+    const entries = ['access', 'body', 'params', 'returns']
+      .filter(it => obj[it])
+      .map(it => [it, obj[it]]);
 
-    const entries = [];
-
-    for (const key of keys) {
-      if (key in obj) entries.push([key, obj[key]]);
+    for (const key in obj) {
+      if (!key?.startsWith?.('$')) continue;
+      entries.push([key.replace('$', ''), obj[key]]);
     }
 
     return new Metadata(entries);
@@ -28,7 +27,7 @@ class Metadata {
   }
 
   get(key) {
-    return this.#registry.get(key);
+    return Optional.ofNullable(this.#registry.get(key));
   }
 
   has(key) {
