@@ -9,6 +9,7 @@ class CommandError extends Error {}
 
 class Command {
   #runner;
+
   constructor(runner, metadata = {}) {
     if (!Types.isFunction(runner)) throw new CommandError(`Consumer runner must be a function`);
     if (!(metadata instanceof Metadata)) metadata = new Metadata(metadata);
@@ -49,9 +50,9 @@ class Command {
     Object.freeze(this);
   }
 
-  async run(body, user = null, params = {}) {
+  async run(body, session = new Map(), params = {}) {
     try {
-      const hasAccess = await this.access(user);
+      const hasAccess = await this.access(session);
       if (!hasAccess) return Result.failure(new AccessError('Access denied'));
 
       if (!this.params) params = {};
@@ -65,7 +66,7 @@ class Command {
       const bodyValidate = this.body?.validate(body);
       if (bodyValidate?.isFailure) return bodyValidate;
 
-      const result = await this.#runner({ body, params, user });
+      const result = await this.#runner({ body, params, session });
 
       if (this.returnsIsStream()) {
         if (Types.isWritableStream(result)) {
@@ -77,7 +78,7 @@ class Command {
       if (this.returns) return Result.success(this.returns.transform(result));
       return Result.success();
     } catch (e) {
-      if (e instanceof Error) {
+      if (Error.isError(e)) {
         return Result.failure(e);
       }
 

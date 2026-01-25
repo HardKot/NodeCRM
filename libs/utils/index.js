@@ -1,7 +1,6 @@
 export { Types } from './types.js';
 
 export { StringUtils } from './stringUtils.js';
-export * as Functions from './functions.js';
 
 export { ObjectUtils } from './objectUtils.js';
 

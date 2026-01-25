@@ -159,7 +159,7 @@ describe('instance', () => {
 
   it('run execute handler', async () => {
     files['/app/test.controller.js'] = `'use strict';
-      function testHandler({ body, params, user }) {
+      function testHandler({ body, params, session }) {
         return { message: 'Hello, ' + body.name };
       }
       testHandler.body = { name: 'string' };
@@ -198,7 +198,7 @@ describe('instance', () => {
         static access = 'public';
         
         
-        get({ body, params, user }) {
+        get({ body, params, session }) {
           return { message: 'Hello, ' + body.name };
         }
       }
@@ -225,5 +225,41 @@ describe('instance', () => {
     const result = await instance.execute('TestController.get', { name: 'World' });
     expect(result.isSuccess).toBe(true);
     expect(result.getOrElse({})).toEqual({ message: 'Hello, World' });
+  });
+
+  it('save change session', async () => {
+    files['/app/test.controller.js'] = `'use strict';
+      function testHandler({ body, params, session }) {
+        session.set('id', 1);
+      
+        return { message: 'Hello, ' + session.get('name') };
+      }
+      testHandler.returns = { message: 'string' };
+      testHandler.access = 'public';
+      
+      module.exports = { testHandler };
+    `;
+
+    files['/app/app.module.js'] = `'use strict';
+      const { testHandler } = require('./test.controller');
+      
+      module.exports = {
+        providers: [],
+        consumers: [testHandler],
+        imports: [],
+      };
+    `;
+
+    const instance = await Instance.run({
+      path: '/app',
+      stdout: process.stdout,
+      stderr: process.stderr,
+    });
+
+    const session = new Map([['name', 'World']]);
+    const result = await instance.execute('testHandler', null, session);
+    expect(result.isSuccess).toBe(true);
+    expect(result.getOrElse({})).toEqual({ message: 'Hello, World' });
+    expect(session.get('id')).toEqual(1);
   });
 });

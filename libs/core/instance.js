@@ -2,11 +2,12 @@ import { Space } from './space.js';
 import { NODE_CONTEXT } from './code.js';
 import { Container } from './container.js';
 import { Module } from './module.js';
-import { ObjectUtils, Types, StringUtils } from '../utils/index.js';
+import { ObjectUtils, StringUtils, Types } from '../utils/index.js';
 import EventEmitter from 'node:events';
 import path from 'node:path';
 import { Command } from './command.js';
 import { Logger } from './logger.js';
+import { SecurityService } from '../security/securityService.js';
 
 const InstanceEvent = Object.freeze({
   BUILD: 'build',
@@ -78,12 +79,12 @@ class Instance extends EventEmitter {
     });
   }
 
-  async execute(path, ...args) {
+  async execute(path, body, session = new Map(), params = {}) {
     const runner = this.commands[path];
     if (Types.isNull(runner) || Types.isUndefined(runner))
       throw new InstanceError(`Consumer not found at path: ${path}`);
 
-    return await runner.run(...args);
+    return await runner.run(body, session, params);
   }
 
   getModule(name) {
@@ -97,10 +98,11 @@ class Instance extends EventEmitter {
   async #buildContainer() {
     const module = this.getModule('app.module');
 
-    module.providers.filter(it => !it.type).map(it => (it.type = 'provider'));
-    module.consumers.filter(it => !it.type).map(it => (it.type = 'consumer'));
+    const components = this.extendes.map(it => it.components);
 
-    this.container = await Container.create([module.providers, module.consumers].flat());
+    this.container = await Container.create(
+      [components, module.providers, module.consumers].flat()
+    );
   }
 
   async #buildCommands() {

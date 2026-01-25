@@ -36,11 +36,24 @@ class Module {
     )
       .values()
       .toArray();
+
+    this.providers
+      .filter(it => !it.type)
+      .forEach(it => {
+        it.type = 'provider';
+      });
+
     this.consumers = new Set(
       [[instance.consumers ?? []], this.imports.map(it => it.consumers ?? [])].flat(2)
     )
       .values()
       .toArray();
+
+    this.consumers
+      .filter(it => !it.type)
+      .forEach(it => {
+        it.type = 'consumer';
+      });
 
     this.selfOnModuleInit = instance.onModuleInit?.bind(instance);
     this.selfOnApplicationBootstrap = instance.onApplicationBootstrap?.bind(instance);

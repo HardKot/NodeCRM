@@ -22,7 +22,7 @@ class Result {
       this.isSuccess = isSuccess;
       this.isFailure = !isSuccess;
     } else {
-      this.isFailure = value instanceof Error;
+      this.isFailure = Error.isError(value);
       this.isSuccess = !this.isFailure;
     }
 

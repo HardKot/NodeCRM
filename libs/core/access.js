@@ -13,23 +13,23 @@ function PrivateAccess() {
   return false;
 }
 
-function AuthenticatedAccess(user) {
-  return !!user;
+function AuthenticatedAccess(session) {
+  return !!session;
 }
 
-function AnonymousAccess(user) {
-  return !user;
+function AnonymousAccess(session) {
+  return !session;
 }
 
-function ByRoleAccess(role, user) {
-  if (!user) return false;
-  return user.roles && user.roles.includes(role);
+function ByRoleAccess(role, session) {
+  if (!session) return false;
+  return session.roles && session.roles.includes(role);
 }
 
-function ByPermissionsAccess(permissions, user) {
-  if (!user) return false;
+function ByPermissionsAccess(permissions, session) {
+  if (!session) return false;
   for (const permission of permissions) {
-    if (!user.permissions || !user.permissions.includes(permission)) return false;
+    if (!session.permissions || !session.permissions.includes(permission)) return false;
   }
   return true;
 }

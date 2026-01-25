@@ -12,7 +12,6 @@ class Space {
     await space.#load();
     return space;
   }
-
   static async watch(config = {}) {
     const space = new Space({
       path: config.path,

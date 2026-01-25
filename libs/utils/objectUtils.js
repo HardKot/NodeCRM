@@ -79,6 +79,12 @@ class ObjectUtils {
 
     return Array.from(methods);
   }
+
+  static toBase64Url(obj) {
+    const json = JSON.stringify(obj);
+    const base64 = Buffer.from(json).toString('base64');
+    return base64.replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+  }
 }
 
 export { ObjectUtils };

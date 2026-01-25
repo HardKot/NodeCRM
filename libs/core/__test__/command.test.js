@@ -44,7 +44,7 @@ describe('Handler', () => {
       const result = await handler.run(null);
 
       expect(result.isSuccess).toBe(true);
-      expect(runner).toHaveBeenCalledWith({ body: null, params: {}, user: null });
+      expect(runner).toHaveBeenCalledWith({ body: null, params: {}, session: new Map() });
     });
 
     it('should return failure if access is denied', async () => {
@@ -68,11 +68,11 @@ describe('Handler', () => {
       });
       const body = { test: 'data' };
       const params = { id: 1 };
-      const user = { name: 'test' };
+      const session = new Map([['userId', 123]]);
 
-      await handler.run(body, user, params);
+      await handler.run(body, session, params);
 
-      expect(runner).toHaveBeenCalledWith({ body, params, user });
+      expect(runner).toHaveBeenCalledWith({ body, params, session });
     });
 
     it('should catch and return errors as failure', async () => {
