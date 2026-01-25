@@ -16,7 +16,7 @@ class Application {
     this.moduleExportRule = config.moduleExportRule;
     this.stdout = config.stdout ?? process.stdout;
     this.stderr = config.stderr ?? process.stderr;
-    this.extends = config.extends ?? [];
+    this.plugins = config.plugins ?? [];
   }
 
   async run() {
@@ -43,7 +43,7 @@ class Application {
       moduleExportRule: this.moduleExportRule,
       stdout: this.stdout,
       stderr: this.stderr,
-      extends: this.extends,
+      plugins: this.plugins,
     });
   }
 }
@@ -79,8 +79,8 @@ class ApplicationBuilder {
     this.#config.stderr = stderr;
     return this;
   }
-  extends(extendsArray) {
-    this.#config.extends = extendsArray;
+  plugins(plugins) {
+    this.#config.plugins = plugins;
     return this;
   }
 

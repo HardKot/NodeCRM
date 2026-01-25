@@ -7,7 +7,6 @@ import EventEmitter from 'node:events';
 import path from 'node:path';
 import { Command } from './command.js';
 import { Logger } from './logger.js';
-import { SecurityService } from '../security/securityService.js';
 
 const InstanceEvent = Object.freeze({
   BUILD: 'build',
@@ -46,7 +45,7 @@ class Instance extends EventEmitter {
       stdout: config.stdout,
       stderr: config.stderr,
     });
-    this.extendes = config.extendes ?? [];
+    this.plugins = config.plugins ?? [];
     this.commands = Object.freeze({});
   }
 
@@ -59,7 +58,7 @@ class Instance extends EventEmitter {
       watchTimeout: this.watchTimeout,
     });
 
-    for (const extend of this.extendes) {
+    for (const extend of this.plugins) {
       this.logger.info(`Loading extended ${extend.name}`);
       await extend.init?.(this);
     }
@@ -68,7 +67,7 @@ class Instance extends EventEmitter {
   async build() {
     await this.#buildContainer();
     await this.#buildCommands();
-    await Promise.all(this.extendes.map(it => it.build?.(this)));
+    await Promise.all(this.plugins.map(it => it.build?.(this)));
     this.emit(InstanceEvent.BUILD);
 
     this.space.onChange(async () => {
@@ -98,7 +97,7 @@ class Instance extends EventEmitter {
   async #buildContainer() {
     const module = this.getModule('app.module');
 
-    const components = this.extendes.map(it => it.components);
+    const components = this.plugins.map(it => it.components);
 
     this.container = await Container.create(
       [components, module.providers, module.consumers].flat()
@@ -109,13 +108,13 @@ class Instance extends EventEmitter {
     const consumersEntries = await this.container.type('consumer');
 
     const handlers = [];
-    for (const [name, consumer, meta] of consumersEntries) {
-      if (Types.isFunction(consumer)) {
-        handlers.push([name, new Command(consumer, meta)]);
-      } else if (Types.isObject(consumer)) {
-        for (const handlerName of ObjectUtils.getMethodNames(consumer)) {
+    for (const { name, instance, meta } of consumersEntries) {
+      if (Types.isFunction(instance)) {
+        handlers.push([name, new Command(instance, meta)]);
+      } else if (Types.isObject(instance)) {
+        for (const handlerName of ObjectUtils.getMethodNames(instance)) {
           if (handlerName.startsWith('_')) continue;
-          if (!Types.isFunction(consumer[handlerName])) continue;
+          if (!Types.isFunction(instance[handlerName])) continue;
           if (
             [
               'isPrototypeOf',
@@ -128,7 +127,7 @@ class Instance extends EventEmitter {
           )
             continue;
 
-          const handler = consumer[handlerName].bind(consumer);
+          const handler = instance[handlerName].bind(instance);
           handlers.push([`${name}.${handlerName}`, new Command(handler, meta)]);
         }
       }
@@ -139,4 +138,4 @@ class Instance extends EventEmitter {
   }
 }
 
-export { Instance };
+export { Instance, InstanceEvent, InstanceError };

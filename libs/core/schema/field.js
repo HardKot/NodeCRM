@@ -1,6 +1,6 @@
 import { BaseField } from './fields/baseField.js';
 import { fieldParser } from './fieldParser.js';
-import { ArrayField, EnumField, ScalarField, SchemaField } from './fields';
+import { ArrayField, EnumField, ScalarField, SchemaField } from './fields/index.js';
 
 class Field extends BaseField {
   static parse(source) {

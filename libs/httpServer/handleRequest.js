@@ -2,7 +2,7 @@ import * as querystring from 'node:querystring';
 import stream from 'node:stream';
 import streamWeb from 'node:stream/web';
 
-import { Field, Schema } from '../schema/index.js';
+import { Field, Schema } from '../core/schema/index.js';
 
 class HandleRequest {
   #consumer;

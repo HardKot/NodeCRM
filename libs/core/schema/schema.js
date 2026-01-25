@@ -1,4 +1,4 @@
-import { SchemaField } from './fields';
+import { SchemaField } from './fields/index.js';
 import { fieldParser } from './fieldParser.js';
 
 class SchemaError extends Error {}

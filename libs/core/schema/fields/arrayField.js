@@ -1,7 +1,7 @@
 'use strict';
 
 import { BaseField } from './baseField.js';
-import { Result, Types } from '../../utils';
+import { Result, Types } from '../../../utils/index.js';
 
 import { ValidateError } from './fieldError.js';
 

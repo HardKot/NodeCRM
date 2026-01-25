@@ -1,5 +1,5 @@
 import { Result, Types } from '../utils/index.js';
-import { Schema } from '../schema/index.js';
+import { Schema } from './schema/index.js';
 import stream from 'node:stream';
 import streamWeb from 'node:stream/web';
 import { AccessError, factoryAccess, PrivateAccess } from './access.js';
@@ -13,9 +13,10 @@ class Command {
   constructor(runner, metadata = {}) {
     if (!Types.isFunction(runner)) throw new CommandError(`Consumer runner must be a function`);
     if (!(metadata instanceof Metadata)) metadata = new Metadata(metadata);
+    this.meta = metadata;
     this.#runner = runner;
 
-    this.access = metadata
+    this.access = this.meta
       .get('access')
       .map(it => {
         if (Types.isFunction(it)) return it;
@@ -24,12 +25,12 @@ class Command {
       })
       .orElse(PrivateAccess);
 
-    this.params = metadata
+    this.params = this.meta
       .get('params')
       .map(it => Schema.parse(it))
       .getOrNull();
 
-    this.body = metadata
+    this.body = this.meta
       .get('body')
       .map(it => {
         if ([stream.Readable, streamWeb.ReadableStream].includes(it)) return it;
@@ -38,7 +39,7 @@ class Command {
       })
       .getOrNull();
 
-    this.returns = metadata
+    this.returns = this.meta
       .get('returns')
       .map(it => {
         if ([stream.Writable, streamWeb.WritableStream].includes(it)) return it;

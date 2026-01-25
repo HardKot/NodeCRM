@@ -2,7 +2,7 @@
 
 import { fieldParser } from '../fieldParser.js';
 import { BaseField } from './baseField.js';
-import { Result } from '../../utils/index.js';
+import { Result } from '../../../utils/index.js';
 import { ValidateError } from './fieldError.js';
 
 class UnknownField extends BaseField {

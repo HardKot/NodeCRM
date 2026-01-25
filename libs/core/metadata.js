@@ -22,10 +22,6 @@ class Metadata {
     Object.freeze(this);
   }
 
-  define(key, value) {
-    this.#registry.set(key, value);
-  }
-
   get(key) {
     return Optional.ofNullable(this.#registry.get(key));
   }

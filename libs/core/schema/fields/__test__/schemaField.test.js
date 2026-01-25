@@ -2,7 +2,7 @@ import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 
 import { SchemaField } from '../schemaField.js';
 import { BaseField } from '../baseField.js';
-import { Result } from '../../../utils/index.js';
+import { Result } from '../../../../utils/index.js';
 import { ValidateError } from '../fieldError.js';
 
 class TestField extends BaseField {

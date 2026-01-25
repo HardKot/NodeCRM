@@ -4,7 +4,7 @@ import events from 'node:events';
 import path from 'node:path';
 import module from 'node:module';
 
-import { Code } from './code';
+import { Code } from './code.js';
 
 class Space {
   static async load(config = {}) {

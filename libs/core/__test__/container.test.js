@@ -111,8 +111,8 @@ describe('Container test', () => {
 
     const services = await container.type('service');
     expect(services.length).toBe(2);
-    expect(services[0][1].value).toBe(1);
-    expect(services[1][1].value).toBe(2);
+    expect(services[0].instance.value).toBe(1);
+    expect(services[1].instance.value).toBe(2);
   });
 
   it('Should create transient component instances', async () => {

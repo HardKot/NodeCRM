@@ -1,4 +1,4 @@
-import { ObjectUtils, Parser, Types } from '../utils';
+import { ObjectUtils, Parser, Types } from '../utils/index.js';
 import { Metadata } from './metadata.js';
 
 const SUPPORT_SCOPES = Object.freeze({

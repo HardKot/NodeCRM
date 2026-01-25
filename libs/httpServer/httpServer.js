@@ -3,17 +3,21 @@ import http2 from 'node:http2';
 import { Request } from './request.js';
 import { Response } from './response.js';
 import { Routes } from './routes.js';
+import { InstanceEvent } from '../core/index.js';
 
-class ServerError extends Error {
+class HttpServerError extends Error {
   constructor(message, code) {
     super(message);
     this.code = code || 500;
   }
 }
 
-class Server {
-  constructor(app, options = {}) {
-    this.app = app;
+class HttpServer {
+  static factory(options) {
+    return new HttpServer(options);
+  }
+
+  constructor(options = {}) {
     this.port = options.port ?? 3000;
     this.host = options.host ?? '127.0.0.1';
     this.tls = options.tls;
@@ -32,17 +36,23 @@ class Server {
 
     this.server.setTimeout(this.requestTimeout);
     this.activeSessions = new Set();
-    this.routes = new Routes();
+    this.routes = Routes.initialize();
+    this.runCommand = () => null;
 
     this.server.on('request', this.onRequest.bind(this));
     this.server.on('session', this.onSession.bind(this));
-
-    Object.freeze(this);
   }
 
-  setConsumers(consumers) {
-    this.routes = Routes.create(consumers);
-    return this;
+  async init(instance) {
+    this.server.listen(this.port);
+    this.runCommand = instance.runCommand.bind(instance);
+
+    instance.on(InstanceEvent.BUILD, () => {
+      this.routes = Routes.byCommands(instance.commands);
+    });
+    instance.on(InstanceEvent.UPDATE, () => {
+      this.routes = Routes.byCommands(instance.commands);
+    });
   }
 
   async onRequest(req, res) {
@@ -52,7 +62,7 @@ class Server {
     try {
       const handler = this.routes.route(request.path);
       if (!handler) {
-        return this.onError(new ServerError('Not Found', 404), response);
+        return this.onError(new HttpServerError('Not Found', 404), response);
       }
 
       const body = await request.json();
@@ -77,21 +87,6 @@ class Server {
       this.activeSessions.delete(session);
     });
   }
-
-  start() {
-    if (!this.server.listening) return;
-
-    this.server.listen(this.port);
-  }
-
-  stop() {
-    return new Promise(resolve => {
-      this.server.close(() => {
-        this.app.emit('server.stopped', this);
-        resolve();
-      });
-    });
-  }
 }
 
-export { Server, ServerError };
+export { HttpServer, HttpServerError };

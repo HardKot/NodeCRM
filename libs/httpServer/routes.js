@@ -1,4 +1,30 @@
+import { Types } from '../utils/index.js';
+
 class Routes {
+  static initialize() {
+    return new Routes();
+  }
+
+  static byCommands(commands) {
+    const routes = new Routes();
+
+    for (const handlerName in commands) {
+      const handler = commands[handlerName];
+      if (!Types.isFunction(handler)) continue;
+
+      const mapping = handler.meta.get('mapping');
+      if (mapping.isEmpty()) continue;
+
+      routes.register(
+        handlerName,
+        mapping.getOrElse('index'),
+        handler.meta.get('method').getOrElse('get')
+      );
+    }
+
+    return routes;
+  }
+
   #children = [];
   #regexpKey = null;
 
@@ -28,6 +54,19 @@ class Routes {
     }
   }
 
+  route(key, method = 'get') {
+    if (key.startsWith('/')) key = key.slice(1);
+    if (key.endsWith('/')) key = key + 'index';
+
+    const [childKey, ...otherPath] = key.split('/');
+
+    if (!childKey) return this[method] ?? null;
+
+    const child = this.#children.find(it => it.#regexpKey.test(childKey));
+
+    return child?.route(otherPath.join('/'), method) ?? null;
+  }
+
   register(value, key = undefined, method = 'get') {
     if (!key) key = 'index';
     if (key.endsWith('/')) key = key + 'index';
@@ -54,29 +93,6 @@ class Routes {
     child.register(value, otherPath.join('/'), method);
 
     return this;
-  }
-
-  route(key, method = 'get') {
-    if (key.startsWith('/')) key = key.slice(1);
-    if (key.endsWith('/')) key = key + 'index';
-
-    const [childKey, ...otherPath] = key.split('/');
-
-    if (!childKey) return this[method] ?? null;
-
-    const child = this.#children.find(it => it.#regexpKey.test(childKey));
-
-    return child?.route(otherPath.join('/'), method) ?? null;
-  }
-
-  static create(consumers = []) {
-    const root = new Routes();
-
-    for (const consumer of consumers) {
-      root.register(consumer, consumer.mapping, consumer.method ?? 'get');
-    }
-
-    return root;
   }
 }
 

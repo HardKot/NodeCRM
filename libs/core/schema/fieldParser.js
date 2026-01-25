@@ -1,6 +1,6 @@
 'use strict';
 
-import { Parser } from '../utils';
+import { Parser } from '../../utils/index.js';
 import { Field } from './field.js';
 import { FieldError } from './fields/index.js';
 

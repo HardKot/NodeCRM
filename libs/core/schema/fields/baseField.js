@@ -1,6 +1,6 @@
 'use strict';
 
-import { Result } from '../../utils/index.js';
+import { Result } from '../../../utils/index.js';
 import { ValidateError } from './fieldError.js';
 
 class BaseField {

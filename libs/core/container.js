@@ -1,5 +1,5 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
-import { Table } from '../utils';
+import { Table } from '../utils/index.js';
 import { Component, SUPPORT_SCOPES } from './component.js';
 
 class ContainerError extends Error {}
@@ -83,7 +83,11 @@ class Container {
     const components = new Set(this.#bindings.values());
     for (const component of components.values()) {
       if (component.type !== type) continue;
-      instances.push([component.name, await this.get(component.name), component.meta]);
+      instances.push({
+        name: component.name,
+        instance: await this.get(component.name),
+        meta: component.meta,
+      });
     }
     return instances;
   }
