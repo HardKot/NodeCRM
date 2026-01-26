@@ -1,5 +1,18 @@
-export { ApplicationError, Application } from './application.js';
-export { InstanceError, InstanceEvent } from './instance.js';
-export { AccessError } from './access.js';
-export { CommandError } from './command.js';
-export { SchemaError, FieldError, ValidateError, Schema } from './schema/index.js';
+const { ApplicationError, Application } = require('./application.js');
+const { InstanceError, InstanceEvent } = require('./instance.js');
+const { AccessError } = require('./access.js');
+const { CommandError } = require('./command.js');
+const { SchemaError, FieldError, ValidateError, Schema } = require('./schema/index.js');
+
+module.exports = {
+  Application,
+  ApplicationError,
+  InstanceError,
+  InstanceEvent,
+  AccessError,
+  CommandError,
+  SchemaError,
+  FieldError,
+  ValidateError,
+  Schema,
+};

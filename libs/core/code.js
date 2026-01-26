@@ -1,6 +1,6 @@
 const path = require('node:path');
 const vm = require('node:vm');
-const {createRequire} = require('node:module');
+const { createRequire } = require('node:module');
 
 let ts = null;
 try {

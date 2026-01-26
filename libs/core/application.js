@@ -1,5 +1,5 @@
-import cluster from 'node:cluster';
-import { Instance } from './instance.js';
+const cluster = require('node:cluster');
+const { Instance } = require('./instance.js');
 
 class ApplicationError extends Error {}
 
@@ -100,4 +100,4 @@ class ApplicationBuilder {
   }
 }
 
-export { Application, ApplicationError };
+module.exports = { Application, ApplicationError };

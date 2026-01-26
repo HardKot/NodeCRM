@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
-    "target": "ES6",
+    "target": "ES2024",
     "module": "CommonJS",
-    "lib": ["ES2015"],
+    "lib": ["ES2024"],
     "types": ["node", "jest"],
     "allowJs": true,
     "checkJs": true,

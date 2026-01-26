@@ -1,4 +1,4 @@
-import crypto from 'node:crypto';
+const crypto = require('node:crypto');
 
 class Session extends Map {
   constructor() {
@@ -7,4 +7,4 @@ class Session extends Map {
   }
 }
 
-export { Session };
+module.exports = { Session };
