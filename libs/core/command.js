@@ -1,9 +1,10 @@
-import { Result, Types } from '../utils/index.js';
-import { Schema } from './schema/index.js';
-import stream from 'node:stream';
-import streamWeb from 'node:stream/web';
-import { AccessError, factoryAccess, PrivateAccess } from './access.js';
-import { Metadata } from './metadata.js';
+const stream = require('node:stream');
+const streamWeb = require('node:stream/web');
+
+const { Result, Types } = require('../utils');
+const { Schema } = require('./schema');
+const { AccessError, factoryAccess, PrivateAccess } = require('./access.js');
+const { Metadata } = require('./metadata.js');
 
 class CommandError extends Error {}
 
@@ -79,7 +80,7 @@ class Command {
       if (this.returns) return Result.success(this.returns.transform(result));
       return Result.success();
     } catch (e) {
-      if (Error.isError(e)) {
+      if (e instanceof Error) {
         return Result.failure(e);
       }
 
@@ -96,4 +97,4 @@ class Command {
   }
 }
 
-export { Command, CommandError };
+module.exports = { Command, CommandError };

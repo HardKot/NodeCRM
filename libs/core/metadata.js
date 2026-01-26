@@ -1,4 +1,4 @@
-import { Optional, Types } from '../utils/index.js';
+const { Optional, Types } = require('../utils');
 
 class Metadata {
   #registry = new Map();
@@ -31,4 +31,4 @@ class Metadata {
   }
 }
 
-export { Metadata };
+module.exports = { Metadata };

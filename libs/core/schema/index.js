@@ -1,3 +1,11 @@
-export { Field } from './field.js';
-export { ValidateError, FieldError } from './fields/fieldError.js';
-export { Schema, SchemaError } from './schema.js';
+const { Field } = require('./field.js');
+const { ValidateError, FieldError } = require('./fields/fieldError.js');
+const { Schema, SchemaError } = require('./schema.js');
+
+module.exports = {
+  Field,
+  ValidateError,
+  FieldError,
+  Schema,
+  SchemaError,
+};

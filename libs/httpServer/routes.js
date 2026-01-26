@@ -1,4 +1,4 @@
-import { Types } from '../utils/index.js';
+const { Types } = require('../utils/index.js');
 
 class Routes {
   static initialize() {

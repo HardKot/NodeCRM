@@ -36,7 +36,6 @@ describe('instance', () => {
       path: '/app',
       stdout: process.stdout,
       stderr: process.stderr,
-      moduleType: CODE_TYPE.COMMONJS,
     });
 
     expect(instance).toBeInstanceOf(Instance);
@@ -80,7 +79,6 @@ describe('instance', () => {
       path: '/app',
       stdout: process.stdout,
       stderr: process.stderr,
-      moduleType: CODE_TYPE.COMMONJS,
     });
 
     expect(instance).toBeInstanceOf(Instance);
@@ -106,13 +104,13 @@ describe('instance', () => {
         consumers: [testHandler],
         imports: [],
       };
-    `})
+    `,
+    });
 
     const instance = await Instance.run({
       path: '/app',
       stdout: process.stdout,
       stderr: process.stderr,
-      moduleType: CODE_TYPE.COMMONJS,
     });
 
     const result = await instance.execute('testHandler', { name: 'World' });
@@ -144,13 +142,13 @@ describe('instance', () => {
         consumers: [TestController],
         imports: [],
       };
-    `})
+    `,
+    });
 
     const instance = await Instance.run({
       path: '/app',
       stdout: process.stdout,
       stderr: process.stderr,
-      moduleType: CODE_TYPE.COMMONJS,
     });
 
     const result = await instance.execute('TestController.get', { name: 'World' });
@@ -179,13 +177,13 @@ describe('instance', () => {
         consumers: [testHandler],
         imports: [],
       };
-    `})
+    `,
+    });
 
     const instance = await Instance.run({
       path: '/app',
       stdout: process.stdout,
       stderr: process.stderr,
-      moduleType: CODE_TYPE.COMMONJS,
     });
 
     const session = new Map([['name', 'World']]);

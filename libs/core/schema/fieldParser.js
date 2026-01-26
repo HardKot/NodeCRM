@@ -15,7 +15,7 @@ const fieldParser = new Parser({
     let type = !required ? source.slice(0, -1) : source;
 
     if (type.includes('|')) {
-      return new Field.Enum(
+      return new EnumField(
         type.split('|').map(v => v.trim()),
         required
       );
@@ -23,8 +23,8 @@ const fieldParser = new Parser({
 
     type = type.toLocaleString();
 
-    if (type in Field.Scalar.supportTypes) {
-      return new Field.Scalar(type, required);
+    if (type in ScalarField.supportTypes) {
+      return new ScalarField(type, required);
     }
 
     throw new FieldError(`Unsupported field type: ${type}`);
@@ -42,8 +42,8 @@ const fieldParser = new Parser({
     const { required = false, ...options } = source;
     const type = source.type.toLowerCase();
 
-    if (Field.Scalar.supportTypes in type) {
-      return new Field.Scalar(type, required);
+    if (ScalarField.supportTypes in type) {
+      return new ScalarField(type, required);
     }
 
     throw new FieldError(`Unsupported field type: ${type}`);
@@ -65,13 +65,13 @@ const fieldParser = new Parser({
 
     for (const field in source) fieldsEntries.push([field, this.parse(source[field])]);
 
-    return new Field.Schema(Object.fromEntries(fieldsEntries), proto);
+    return new SchemaField(Object.fromEntries(fieldsEntries), proto);
   },
 
   parseArray(source) {
     const field = source[0];
 
-    return new Field.Array(this.parse(field), true);
+    return new ArrayField(this.parse(field), true);
   },
 });
 

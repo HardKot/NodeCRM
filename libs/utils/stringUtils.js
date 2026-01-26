@@ -17,4 +17,4 @@ class StringUtils {
   }
 }
 
-export { StringUtils };
+module.exports = { StringUtils };

@@ -1,4 +1,4 @@
-const { StringUtils } = require('./stringUtils.js.js');
+const { StringUtils } = require('./stringUtils');
 const { Types } = require('./types.js');
 
 class ParserError extends Error {}

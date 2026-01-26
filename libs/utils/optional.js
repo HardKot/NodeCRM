@@ -66,4 +66,4 @@ class Optional {
   }
 }
 
-export { Optional };
+module.exports = { Optional };
