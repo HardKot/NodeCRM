@@ -59,4 +59,4 @@ function factoryAccess(accessStr) {
   throw new Error(`Unknown access type: ${accessStr}`);
 }
 
-export { factoryAccess, PrivateAccess, AccessError };
+module.exports = { factoryAccess, PrivateAccess, AccessError };

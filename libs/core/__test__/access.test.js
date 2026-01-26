@@ -1,6 +1,4 @@
-import { describe, it, expect } from '@jest/globals';
-
-import { factoryAccess } from '../access.js';
+const { factoryAccess } = require('../access.js');
 
 describe('Access', () => {
   it("factoryAccess 'public'", () => {

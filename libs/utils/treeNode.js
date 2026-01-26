@@ -98,4 +98,4 @@ class TreeNode extends Set {
   }
 }
 
-export { TreeNode };
+module.exports = { TreeNode };

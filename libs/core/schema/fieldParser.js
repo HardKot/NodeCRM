@@ -1,12 +1,15 @@
 'use strict';
 
-import { Parser } from '../../utils/index.js';
-import { Field } from './field.js';
-import { FieldError } from './fields/index.js';
+const { Parser } = require('../../utils/index.js');
+const { EnumField } = require('./fields/enumField.js');
+const { ScalarField } = require('./fields/scalarField.js');
+const { FieldError } = require('./fields/fieldError.js');
+const { SchemaField } = require('./fields/schemaField.js');
+const { ArrayField } = require('./fields/arrayField.js');
 
 const cache = new WeakMap();
 
-export const fieldParser = new Parser({
+const fieldParser = new Parser({
   parseString(source) {
     const required = !source.endsWith('?');
     let type = !required ? source.slice(0, -1) : source;
@@ -71,3 +74,5 @@ export const fieldParser = new Parser({
     return new Field.Array(this.parse(field), true);
   },
 });
+
+module.exports = { fieldParser };

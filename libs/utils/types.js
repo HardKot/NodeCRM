@@ -1,5 +1,5 @@
-import stream from 'node:stream';
-import streamWeb from 'node:stream/web';
+const stream = require('node:stream');
+const streamWeb = require('node:stream/web');
 
 class TypeError extends Error {}
 
@@ -77,4 +77,4 @@ class Types {
   }
 }
 
-export { Types, TypeError };
+module.exports = { Types, TypeError };

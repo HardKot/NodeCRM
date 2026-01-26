@@ -1,6 +1,6 @@
-import { AsyncLocalStorage } from 'node:async_hooks';
-import { Table } from '../utils/index.js';
-import { Component, SUPPORT_SCOPES } from './component.js';
+const { AsyncLocalStorage } = require('node:async_hooks');
+const { Table } = require('../utils');
+const { Component, SUPPORT_SCOPES } = require('./component.js');
 
 class ContainerError extends Error {}
 
@@ -171,4 +171,4 @@ class Container {
   }
 }
 
-export { Container, ContainerError };
+module.exports = { Container, ContainerError };

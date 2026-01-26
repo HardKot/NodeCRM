@@ -1,6 +1,4 @@
-import { describe, it, expect } from '@jest/globals';
-
-import { Container, ContainerError } from '../container.js';
+const { Container, ContainerError } = require('../container.js');
 
 describe('Container test', () => {
   it('should create Container instance', () => {

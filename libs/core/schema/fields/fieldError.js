@@ -31,4 +31,4 @@ class ValidateError extends FieldError {
   }
 }
 
-export { ValidateError, FieldError };
+module.exports = { ValidateError, FieldError };

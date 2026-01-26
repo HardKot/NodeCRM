@@ -1,9 +1,10 @@
-import http2 from 'node:http2';
+const http2 = require('node:http2');
 
-import { Request } from './request.js';
-import { Response } from './response.js';
-import { Routes } from './routes.js';
-import { InstanceEvent } from '../core/index.js';
+const { Request } = require('./request.js');
+const { Response } = require('./response.js');
+const { Routes } = require('./routes.js');
+const { InstanceEvent } = require('../core/index.js');
+
 
 class HttpServerError extends Error {
   constructor(message, code) {
@@ -90,4 +91,5 @@ class HttpServer {
   }
 }
 
-export { HttpServer, HttpServerError };
+
+module.exports = { Server, ServerError };

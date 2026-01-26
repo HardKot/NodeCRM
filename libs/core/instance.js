@@ -1,12 +1,12 @@
-import { Space } from './space.js';
-import { NODE_CONTEXT } from './code.js';
-import { Container } from './container.js';
-import { Module } from './module.js';
-import { ObjectUtils, StringUtils, Types } from '../utils/index.js';
-import EventEmitter from 'node:events';
-import path from 'node:path';
-import { Command } from './command.js';
-import { Logger } from './logger.js';
+const { Space } = require('./space.js');
+const { NODE_CONTEXT } = require('./code.js');
+const { Container } = require('./container.js');
+const { Module } = require('./module.js');
+const { ObjectUtils, Types } = require('../utils/index.js');
+const EventEmitter = require('node:events');
+const path = require('node:path');
+const { Command } = require('./command.js');
+const { Logger } = require('./logger.js');
 
 const InstanceEvent = Object.freeze({
   BUILD: 'build',
@@ -135,10 +135,9 @@ class Instance extends EventEmitter {
         }
       }
     }
-
     this.commands = Object.fromEntries(handlers);
     Object.freeze(this.commands);
   }
 }
 
-export { Instance, InstanceEvent, InstanceError };
+module.exports = { Instance, InstanceEvent, InstanceError };

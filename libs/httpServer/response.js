@@ -1,5 +1,5 @@
-import http2 from 'node:http2';
-import stream from 'node:stream';
+const http2 = require('node:http2');
+const stream = require('node:stream');
 
 class Response extends http2.Http2ServerResponse {
   get isSend() {
@@ -63,4 +63,4 @@ class Response extends http2.Http2ServerResponse {
   }
 }
 
-export { Response };
+module.exports = { Response };

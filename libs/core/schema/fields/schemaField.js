@@ -1,6 +1,6 @@
-import { BaseField } from './baseField.js';
-import { Result, Types } from '../../../utils/index.js';
-import { ValidateError } from './fieldError.js';
+const { BaseField } = require('./baseField.js');
+const { Result, Types } = require('../../../utils/index.js');
+const { ValidateError } = require('./fieldError.js');
 
 class SchemaField extends BaseField {
   constructor(schema, proto = null) {
@@ -41,4 +41,4 @@ class SchemaField extends BaseField {
   }
 }
 
-export { SchemaField };
+module.exports = { SchemaField };

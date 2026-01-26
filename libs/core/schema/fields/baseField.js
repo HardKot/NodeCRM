@@ -1,7 +1,7 @@
 'use strict';
 
-import { Result } from '../../../utils/index.js';
-import { ValidateError } from './fieldError.js';
+const { Result } = require('../../../utils/index.js');
+const { ValidateError } = require('./fieldError.js');
 
 class BaseField {
   constructor(required = false) {
@@ -17,4 +17,4 @@ class BaseField {
   }
 }
 
-export { BaseField };
+module.exports = { BaseField };

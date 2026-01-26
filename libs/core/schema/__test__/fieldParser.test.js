@@ -1,7 +1,5 @@
-import { describe, it, expect, jest, beforeEach } from '@jest/globals';
-
-import { fieldParser } from '../fieldParser.js';
-import { Field } from '../field.js';
+const { fieldParser } = require('../fieldParser.js');
+const { Field } = require('../field.js');
 
 describe('Field Parser', () => {
   beforeEach(() => {

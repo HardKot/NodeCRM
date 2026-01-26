@@ -1,10 +1,10 @@
-import fs from 'node:fs';
-import fsp from 'node:fs/promises';
-import events from 'node:events';
-import path from 'node:path';
-import { createRequire } from 'node:module';
+const fs = require('node:fs');
+const fsp = require('node:fs/promises');
+const events = require('node:events');
+const path = require('node:path');
+const { createRequire } = require('node:module');
 
-import { Code } from './code.js';
+const { Code } = require('./code');
 
 class Space {
   static async load(config = {}) {
@@ -198,4 +198,4 @@ class Space {
   }
 }
 
-export { Space };
+module.exports = { Space };

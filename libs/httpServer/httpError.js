@@ -6,4 +6,4 @@ class HttpError extends Error {
   }
 }
 
-export { HttpError };
+module.exports = { HttpError };

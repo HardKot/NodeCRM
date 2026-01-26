@@ -1,6 +1,4 @@
-import { describe, it, expect, jest, beforeEach } from '@jest/globals';
-
-import { Schema, SchemaError } from '../schema.js';
+const { Schema, SchemaError } = require('../schema.js');
 
 describe('Schema', () => {
   beforeEach(() => {

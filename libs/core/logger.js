@@ -1,4 +1,4 @@
-import console from 'node:console';
+const console = require('node:console');
 
 class Logger extends console.Console {
   #config;
@@ -39,4 +39,4 @@ class Logger extends console.Console {
   }
 }
 
-export { Logger };
+module.exports = { Logger };

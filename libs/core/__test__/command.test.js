@@ -1,10 +1,9 @@
-import { describe, it, expect, jest } from '@jest/globals';
-import { Command, CommandError } from '../command.js';
-import { AccessError } from '../access.js';
-import stream from 'node:stream';
-import streamWeb from 'node:stream/web';
+const { Command, CommandError } = require('../command.js');
+const { AccessError } = require('../access.js');
+const stream = require('node:stream');
+const streamWeb = require('node:stream/web');
 
-describe('Handler', () => {
+describe('Command', () => {
   describe('constructor', () => {
     it('should throw error if runner is not a function', () => {
       expect(() => new Command('not a function')).toThrow(CommandError);

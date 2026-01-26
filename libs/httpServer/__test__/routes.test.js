@@ -1,5 +1,4 @@
-import { describe, it, expect, beforeEach } from '@jest/globals';
-import { Routes } from '../routes.js';
+const { Routes } = require('../routes.js');
 
 describe('ControllerNode', () => {
   let rootNode;

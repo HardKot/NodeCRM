@@ -96,4 +96,4 @@ class Routes {
   }
 }
 
-export { Routes };
+module.exports = { Routes };

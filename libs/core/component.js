@@ -1,5 +1,5 @@
-import { ObjectUtils, Parser, Types } from '../utils/index.js';
-import { Metadata } from './metadata.js';
+const { ObjectUtils, Parser, Types } = require('../utils');
+const { Metadata } = require('./metadata.js');
 
 const SUPPORT_SCOPES = Object.freeze({
   SINGLETON: 0,
@@ -76,4 +76,4 @@ class Component {
   }
 }
 
-export { Component, SUPPORT_SCOPES, componentParser };
+module.exports = { Component, SUPPORT_SCOPES, componentParser };

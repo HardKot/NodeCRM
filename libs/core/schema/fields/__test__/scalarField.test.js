@@ -1,5 +1,4 @@
-import { describe, it, expect } from '@jest/globals';
-import { ScalarField } from '../scalarField.js';
+const { ScalarField } = require('../scalarField.js');
 
 describe('ScalarField check', () => {
   it('should validate correct type for required field', () => {

@@ -1,5 +1,5 @@
-import { SchemaField } from './fields/index.js';
-import { fieldParser } from './fieldParser.js';
+const { SchemaField } = require('./fields');
+const { fieldParser } = require('./fieldParser.js');
 
 class SchemaError extends Error {}
 class Schema extends SchemaField {
@@ -24,4 +24,4 @@ class Schema extends SchemaField {
   }
 }
 
-export { Schema, SchemaError };
+module.exports = { Schema, SchemaError };

@@ -1,7 +1,6 @@
-export default {
+/** @returns {Promise<import('jest').Config>} */
+module.exports = async () => ({
   clearMocks: true,
-  collectCoverage: true,
-  coverageDirectory: 'coverage',
-  coveragePathIgnorePatterns: ['/node_modules/'],
-  coverageProvider: 'v8',
-};
+  setupFiles: ['./libs/__test__/jest.setup.js'],
+  testEnvironment: 'node',
+});

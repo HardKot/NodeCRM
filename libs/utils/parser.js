@@ -1,5 +1,5 @@
-import { StringUtils } from './stringUtils.js';
-import { Types } from './types.js';
+const { StringUtils } = require('./stringUtils.js.js');
+const { Types } = require('./types.js');
 
 class ParserError extends Error {}
 
@@ -30,4 +30,4 @@ class Parser {
   }
 }
 
-export { Parser };
+module.exports = { Parser };

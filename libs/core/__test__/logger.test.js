@@ -1,7 +1,6 @@
-import stream from 'node:stream';
+const stream = require('node:stream');
 
-import { beforeEach, describe, expect, it, jest } from '@jest/globals';
-import { Logger } from '../logger.js';
+const { Logger } = require('../logger.js');
 
 const timeNow = Date.parse('01.01.2025');
 jest.useFakeTimers({ now: timeNow });
