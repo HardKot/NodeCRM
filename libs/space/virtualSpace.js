@@ -6,9 +6,9 @@ const { createRequire } = require('node:module');
 
 const { Code } = require('./code');
 
-class Space {
+class VirtualSpace {
   static async load(config = {}) {
-    const space = new Space({
+    const space = new VirtualSpace({
       path: config.path,
       context: config.context,
     });
@@ -16,7 +16,7 @@ class Space {
     return space;
   }
   static async watch(config = {}) {
-    const space = new Space({
+    const space = new VirtualSpace({
       path: config.path,
       context: config.context,
       watchTimeout: config.watchTimeout,
@@ -198,4 +198,4 @@ class Space {
   }
 }
 
-module.exports = { Space };
+module.exports = { VirtualSpace: VirtualSpace };

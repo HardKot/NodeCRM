@@ -1,1 +1,3 @@
-export { HttpServer } from './httpServer.js';
+const { HttpServer, HttpServerError } = require('./httpServer');
+
+module.exports = { HttpServer, HttpServerError };

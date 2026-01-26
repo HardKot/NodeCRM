@@ -5,7 +5,6 @@ const { Response } = require('./response.js');
 const { Routes } = require('./routes.js');
 const { InstanceEvent } = require('../core/index.js');
 
-
 class HttpServerError extends Error {
   constructor(message, code) {
     super(message);
@@ -91,5 +90,4 @@ class HttpServer {
   }
 }
 
-
-module.exports = { Server, ServerError };
+module.exports = { HttpServer, HttpServerError };

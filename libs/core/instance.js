@@ -1,12 +1,9 @@
-const { Space } = require('./space.js');
-const { NODE_CONTEXT } = require('./code.js');
 const { Container } = require('./container.js');
 const { Module } = require('./module.js');
-const { ObjectUtils, Types, StringUtils } = require('../utils/index.js');
 const EventEmitter = require('node:events');
-const path = require('node:path');
 const { Command } = require('./command.js');
 const { Logger } = require('./logger.js');
+const { Result, ObjectUtils, Types } = require('../utils');
 
 const InstanceEvent = Object.freeze({
   BUILD: 'build',
@@ -14,14 +11,6 @@ const InstanceEvent = Object.freeze({
 });
 
 class InstanceError extends Error {}
-
-function moduleExportRuleDefault(name, source) {
-  const nameCamel = StringUtils.factoryCamelCase(...name.split('.'));
-
-  if (source[nameCamel]) return source[nameCamel];
-  if (source.default) return source.default;
-  return source;
-}
 
 class Instance extends EventEmitter {
   static async run(config = {}) {
@@ -34,36 +23,19 @@ class Instance extends EventEmitter {
   constructor(config = {}) {
     super();
 
-    this.context = Object.assign({}, NODE_CONTEXT, this.context);
-    this.watchTimeout = config.watchTimeout ?? 500;
-    this.path = config.path ?? process.cwd();
-    this.prefix = config.prefix ?? `Instance@${path.relative(this.path, process.cwd())}`;
-    this.moduleExportRule = config.moduleExportRule ?? moduleExportRuleDefault;
-
+    this.prefix = config.prefix ?? `Instance`;
     this.logger = new Logger({
       prefix: this.prefix,
       stdout: config.stdout,
       stderr: config.stderr,
     });
     this.plugins = config.plugins ?? [];
+    this.module = this.#extractModule(config.module);
     this.commands = Object.freeze({});
   }
 
   async init() {
     this.container = await Container.create();
-
-    if (this.watchTimeout <= 0) {
-      this.space = await Space.load({
-        context: this.context,
-        path: this.path,
-      });
-    } else {
-      this.space = await Space.watch({
-        context: this.context,
-        path: this.path,
-        watchTimeout: this.watchTimeout,
-      });
-    }
 
     for (const extend of this.plugins) {
       this.logger.info(`Loading extended '${extend.name}'`);
@@ -76,29 +48,20 @@ class Instance extends EventEmitter {
     await this.#buildCommands();
     await Promise.all(this.plugins.map(it => it.build?.(this)));
     this.emit(InstanceEvent.BUILD);
-
-    this.space.onChange(async () => {
-      this.logger.info('Detected changes in space at', this.path);
-      await this.#buildContainer();
-      await this.#buildCommands();
-      this.emit(InstanceEvent.UPDATE);
-    });
   }
 
   async execute(path, body, session = new Map(), params = {}) {
     const runner = this.commands[path];
-    if (Types.isNull(runner) || Types.isUndefined(runner))
-      throw new InstanceError(`Consumer not found at path: ${path}`);
+    if (Types.isNull(runner) || Types.isUndefined(runner)) {
+      return Result.failure(new InstanceError(`Consumer not found at path: ${path}`));
+    }
 
     return await runner.run(body, session, params);
   }
 
   async #buildContainer() {
-    let moduleSource = this.space.get('app.module');
-    moduleSource = this.moduleExportRule('app.module', moduleSource);
-    if (!moduleSource) throw new InstanceError(`Module not found in space: 'app.module'`);
-
-    const module = Module.parse(moduleSource, { name: 'app.module' });
+    if (!this.module) throw new InstanceError(`Module not found`);
+    const module = Module.parse(this.module, { name: 'app.module' });
 
     const components = this.plugins.map(it => it.components ?? []).flat();
 
@@ -137,6 +100,23 @@ class Instance extends EventEmitter {
     }
     this.commands = Object.fromEntries(handlers);
     Object.freeze(this.commands);
+  }
+
+  #extractModule(source) {
+    if (Types.isObject(source) && Types.isFunction(source.onChange)) {
+      source.onChange(async () => {
+        this.module = source;
+        await this.#buildContainer();
+        await this.#buildCommands();
+        this.emit(InstanceEvent.UPDATE);
+      });
+      return source;
+    }
+    if (Types.isObject(source) || Types.isFunction(source) || Types.isClass(source)) return source;
+
+    throw new InstanceError(
+      `Invalid module configuration, supported types are: object, function, object with onChange method`
+    );
   }
 }
 

@@ -1,5 +1,6 @@
 const cluster = require('node:cluster');
 const { Instance } = require('./instance.js');
+const { dirname } = require('node:path');
 
 class ApplicationError extends Error {}
 
@@ -9,27 +10,23 @@ class Application {
   }
 
   constructor(config = {}) {
-    this.path = config.path ?? process.cwd();
     this.clusterCount = config.clusterCount ?? 0;
-    this.context = config.context ?? {};
-    this.watchTimeout = config.watchTimeout ?? 500;
-    this.moduleExportRule = config.moduleExportRule;
     this.stdout = config.stdout ?? process.stdout;
     this.stderr = config.stderr ?? process.stderr;
     this.plugins = config.plugins ?? [];
-    this.moduleType = config.moduleType;
-    this.appModule = config.appModule;
+    this.module = config.module;
+    this.prefix = `Instance@${dirname(process.cwd())}`;
+    if (cluster.isWorker) this.prefix = `Worker#${cluster.worker?.id}`;
   }
 
   async run() {
     if (this.clusterCount && cluster.isPrimary) return this.master();
-    if (cluster.isWorker) return this.worker(`Worker#${cluster.worker?.id}`);
     return this.worker();
   }
 
   async master() {
-    if (!cluster.isPrimary) throw ApplicationError('Not a master process');
-    if (!this.clusterCount) throw ApplicationError('Not a cluster count');
+    if (!cluster.isPrimary) throw new ApplicationError('Not a master process');
+    if (!this.clusterCount) throw new ApplicationError('Not a cluster count');
     const workers = new Array(this.clusterCount);
 
     for (let i = 0; i < this.clusterCount; i += 1) {
@@ -37,30 +34,16 @@ class Application {
     }
   }
 
-  async worker(prefix = null) {
-    return await Instance.run({
-      context: this.context,
-      path: this.path,
-      prefix: prefix,
-      watchTimeout: this.watchTimeout,
-      moduleExportRule: this.moduleExportRule,
-      stdout: this.stdout,
-      stderr: this.stderr,
-      plugins: this.plugins,
-      module: this.appModule,
-    });
+  async worker() {
+    return await Instance.run(this);
   }
 }
 
 class ApplicationBuilder {
   #config = {};
 
-  path(path) {
-    this.#config.path = path;
-    return this;
-  }
-  appModule(module) {
-    this.#config.appModule = module;
+  module(module) {
+    this.#config.module = module;
     return this;
   }
 
@@ -68,14 +51,7 @@ class ApplicationBuilder {
     this.#config.clusterCount = count;
     return this;
   }
-  context(context) {
-    this.#config.context = context;
-    return this;
-  }
-  watchTimeout(timeout) {
-    this.#config.watchTimeout = timeout;
-    return this;
-  }
+
   exportModuleRule(rule) {
     this.#config.exortModuleRule = rule;
     return this;

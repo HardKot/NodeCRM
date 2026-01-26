@@ -4,10 +4,9 @@ jest.mock('node:fs');
 jest.mock('node:fs/promises', () => jest.requireMock('node:fs').promise);
 
 const fs = require('node:fs');
-const fsp = require('node:fs/promises');
-const { Space } = require('../space.js');
+const { VirtualSpace } = require('../virtualSpace.js');
 
-describe('Space', () => {
+describe('VirtualSpace', () => {
   let files;
   let watchCallback;
 
@@ -20,7 +19,7 @@ describe('Space', () => {
       '/app/app.module.js': 'module.exports = class RootModule {};',
     });
 
-    const space = await Space.load({ path: '/app' });
+    const space = await VirtualSpace.load({ path: '/app' });
 
     const module = space.get('app.module');
 
@@ -62,7 +61,7 @@ describe('Space', () => {
       `,
     });
 
-    const space = await Space.load({ path: '/app' });
+    const space = await VirtualSpace.load({ path: '/app' });
     const module = space.get('app');
 
     const service = new module.services[0]();
@@ -86,7 +85,7 @@ describe('Space', () => {
       `,
     });
 
-    const space = await Space.load({ path: '/app' });
+    const space = await VirtualSpace.load({ path: '/app' });
 
     expect(space.get('app').name).toBe('AppModule');
     expect(space.get('beta').name).toBe('BetaModule');
@@ -111,7 +110,7 @@ describe('Space', () => {
     `,
     });
 
-    const space = await Space.watch({ path: '/app' });
+    const space = await VirtualSpace.watch({ path: '/app' });
     let service = space.get('app').services[0];
     expect(service.name).toBe('AppService');
 

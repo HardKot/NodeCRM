@@ -75,6 +75,10 @@ class Types {
     if (v instanceof streamWeb.ReadableStream) return true;
     return false;
   }
+
+  static isAsyncIterator(v) {
+    return !!v && Symbol.asyncIterator in v;
+  }
 }
 
 module.exports = { Types, TypeError };

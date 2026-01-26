@@ -1,14 +1,20 @@
 {
   "compilerOptions": {
-    "target": "ES2024",
-    "module": "CommonJS",
-    "lib": ["ES2024"],
-    "types": ["node", "jest"],
+    "baseUrl": ".",
+    "target": "ESNext",
+    "moduleResolution": "node",
+    "strict": true,
+    "skipLibCheck": true,
+    "preserveWatchOutput": true,
+    "module": "commonjs",
+    "types": [
+      "node",
+      "jest"
+    ],
     "allowJs": true,
     "checkJs": true,
-    "maxNodeModuleJsDepth": 1,
-    "moduleResolution": "node"
-  },
-  "include": ["libs/**/*"],
-  "exclude": ["node_modules"]
+    "maxNodeModuleJsDepth": 1
+  }
+  "include": ["*.d.ts", "*.ts"],
+    "exclude": ["node_modules"]
 }
