@@ -39,10 +39,10 @@ const fieldParser = new Parser({
       return this.parseSchema(source);
     }
 
-    const { required = false, ...options } = source;
+    const { required = false } = source;
     const type = source.type.toLowerCase();
 
-    if (ScalarField.supportTypes in type) {
+    if (type in ScalarField.supportTypes) {
       return new ScalarField(type, required);
     }
 
