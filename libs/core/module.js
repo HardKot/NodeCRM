@@ -29,7 +29,7 @@ class Module {
     this.name = name;
 
     const instance = factory();
-    this.imports = imports.map(it => Module.parse(it));
+    this.imports = imports?.map(it => Module.parse(it)) ?? [];
 
     this.providers = new Set(
       [[instance.providers ?? []], this.imports.map(it => it.providers ?? [])].flat(2)

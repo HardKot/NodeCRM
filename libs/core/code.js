@@ -1,7 +1,6 @@
 import path from 'node:path';
 import vm from 'node:vm';
-import module from 'node:module';
-import fs from 'node:fs';
+import { createRequire } from 'node:module';
 
 const ts = await import('typescript').catch(() => null);
 
@@ -22,7 +21,7 @@ class Code {
     });
     this.context = vm.createContext(options.context ?? EMPTY_CONTEXT);
 
-    this.require = module.createRequire(this.path);
+    this.require = createRequire(this.path);
     if (options.createRequire) {
       this.require = options.createRequire(this.path);
     }
@@ -132,17 +131,7 @@ class Code {
     if (ext === '.mjs') return CODE_TYPE.ESM;
     if (ext === '.cjs') return CODE_TYPE.COMMONJS;
 
-    try {
-      const packageJsonPath = module.findPackageJSON(process.cwd());
-      if (!packageJsonPath) return CODE_TYPE.COMMONJS;
-
-      const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
-      if (packageJson.type === 'module') return CODE_TYPE.ESM;
-
-      return CODE_TYPE.COMMONJS;
-    } catch (e) {
-      return CODE_TYPE.COMMONJS;
-    }
+    return CODE_TYPE.COMMONJS;
   }
 
   requireDependency(modulePath) {

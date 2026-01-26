@@ -18,6 +18,7 @@ class HttpServer {
   }
 
   constructor(options = {}) {
+    this.name = 'HttpServer';
     this.port = options.port ?? 3000;
     this.host = options.host ?? '127.0.0.1';
     this.tls = options.tls;
@@ -45,7 +46,7 @@ class HttpServer {
 
   async init(instance) {
     this.server.listen(this.port);
-    this.runCommand = instance.runCommand.bind(instance);
+    this.runCommand = instance.execute.bind(instance);
 
     instance.on(InstanceEvent.BUILD, () => {
       this.routes = Routes.byCommands(instance.commands);

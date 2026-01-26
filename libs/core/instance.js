@@ -52,14 +52,21 @@ class Instance extends EventEmitter {
   async init() {
     this.container = await Container.create();
 
-    this.space = await Space.watch({
-      context: this.context,
-      path: this.path,
-      watchTimeout: this.watchTimeout,
-    });
+    if (this.watchTimeout <= 0) {
+      this.space = await Space.load({
+        context: this.context,
+        path: this.path,
+      });
+    } else {
+      this.space = await Space.watch({
+        context: this.context,
+        path: this.path,
+        watchTimeout: this.watchTimeout,
+      });
+    }
 
     for (const extend of this.plugins) {
-      this.logger.info(`Loading extended ${extend.name}`);
+      this.logger.info(`Loading extended '${extend.name}'`);
       await extend.init?.(this);
     }
   }
@@ -86,18 +93,14 @@ class Instance extends EventEmitter {
     return await runner.run(body, session, params);
   }
 
-  getModule(name) {
-    let moduleSource = this.space.get(name);
-    moduleSource = this.moduleExportRule(name, moduleSource);
-    if (!moduleSource) throw new InstanceError(`Module not found in space: ${name}`);
-
-    return Module.parse(moduleSource, { name });
-  }
-
   async #buildContainer() {
-    const module = this.getModule('app.module');
+    let moduleSource = this.space.get('app.module');
+    moduleSource = this.moduleExportRule('app.module', moduleSource);
+    if (!moduleSource) throw new InstanceError(`Module not found in space: 'app.module'`);
 
-    const components = this.plugins.map(it => it.components);
+    const module = Module.parse(moduleSource, { name: 'app.module' });
+
+    const components = this.plugins.map(it => it.components ?? []).flat();
 
     this.container = await Container.create(
       [components, module.providers, module.consumers].flat()

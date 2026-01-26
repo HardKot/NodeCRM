@@ -1,5 +1,6 @@
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 import path from 'node:path';
+import { CODE_TYPE } from '../code.js';
 
 const fsMock = {
   readdirSync: jest.fn(),
@@ -88,7 +89,7 @@ describe('Space', () => {
   it('loads one module', async () => {
     files['/app/app.module.js'] = 'module.exports = class RootModule {};';
 
-    const space = await Space.load({ path: '/app' });
+    const space = await Space.load({ path: '/app', moduleType: CODE_TYPE.COMMONJS });
 
     const module = space.get('app.module');
 
@@ -128,7 +129,7 @@ describe('Space', () => {
       };
       `;
 
-    const space = await Space.load({ path: '/app' });
+    const space = await Space.load({ path: '/app', moduleType: CODE_TYPE.COMMONJS });
     const module = space.get('app');
 
     const service = new module.services[0]();
@@ -150,7 +151,7 @@ describe('Space', () => {
       };
       `;
 
-    const space = await Space.load({ path: '/app' });
+    const space = await Space.load({ path: '/app', moduleType: CODE_TYPE.COMMONJS });
 
     expect(space.get('app').name).toBe('AppModule');
     expect(space.get('beta').name).toBe('BetaModule');
@@ -173,7 +174,7 @@ describe('Space', () => {
       }
     `;
 
-    const space = await Space.watch({ path: '/app' });
+    const space = await Space.watch({ path: '/app', moduleType: CODE_TYPE.COMMONJS });
     let service = space.get('app').services[0];
     expect(service.name).toBe('AppService');
 

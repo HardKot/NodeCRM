@@ -2,13 +2,16 @@ import fs from 'node:fs';
 import fsp from 'node:fs/promises';
 import events from 'node:events';
 import path from 'node:path';
-import module from 'node:module';
+import { createRequire } from 'node:module';
 
 import { Code } from './code.js';
 
 class Space {
   static async load(config = {}) {
-    const space = new Space({ path: config.path, context: config.context });
+    const space = new Space({
+      path: config.path,
+      context: config.context,
+    });
     await space.#load();
     return space;
   }
@@ -162,7 +165,7 @@ class Space {
   }
 
   #createRequire(relativePath) {
-    const originRequire = module.createRequire(relativePath);
+    const originRequire = createRequire(relativePath);
     const self = this;
 
     function require(modulePath) {

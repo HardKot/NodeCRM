@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 
 import path from 'node:path';
+import { CODE_TYPE } from '../code.js';
 
 jest.unstable_mockModule('node:fs', () => {
   const fsMock = {
@@ -111,6 +112,7 @@ describe('instance', () => {
       path: '/app',
       stdout: process.stdout,
       stderr: process.stderr,
+      moduleType: CODE_TYPE.COMMONJS,
     });
 
     expect(instance).toBeInstanceOf(Instance);
@@ -152,6 +154,7 @@ describe('instance', () => {
       path: '/app',
       stdout: process.stdout,
       stderr: process.stderr,
+      moduleType: CODE_TYPE.COMMONJS,
     });
 
     expect(instance).toBeInstanceOf(Instance);
@@ -183,6 +186,7 @@ describe('instance', () => {
       path: '/app',
       stdout: process.stdout,
       stderr: process.stderr,
+      moduleType: CODE_TYPE.COMMONJS,
     });
 
     const result = await instance.execute('testHandler', { name: 'World' });
@@ -220,6 +224,7 @@ describe('instance', () => {
       path: '/app',
       stdout: process.stdout,
       stderr: process.stderr,
+      moduleType: CODE_TYPE.COMMONJS,
     });
 
     const result = await instance.execute('TestController.get', { name: 'World' });
@@ -254,6 +259,7 @@ describe('instance', () => {
       path: '/app',
       stdout: process.stdout,
       stderr: process.stderr,
+      moduleType: CODE_TYPE.COMMONJS,
     });
 
     const session = new Map([['name', 'World']]);

@@ -17,11 +17,14 @@ class Application {
     this.stdout = config.stdout ?? process.stdout;
     this.stderr = config.stderr ?? process.stderr;
     this.plugins = config.plugins ?? [];
+    this.moduleType = config.moduleType;
+    this.appModule = config.appModule;
   }
 
   async run() {
     if (this.clusterCount && cluster.isPrimary) return this.master();
-    return this.worker(cluster.worker?.id);
+    if (cluster.isWorker) return this.worker(`Worker#${cluster.worker?.id}`);
+    return this.worker();
   }
 
   async master() {
@@ -34,16 +37,17 @@ class Application {
     }
   }
 
-  async worker(id = null) {
+  async worker(prefix = null) {
     return await Instance.run({
       context: this.context,
       path: this.path,
-      prefix: `Worker#${id}`,
+      prefix: prefix,
       watchTimeout: this.watchTimeout,
       moduleExportRule: this.moduleExportRule,
       stdout: this.stdout,
       stderr: this.stderr,
       plugins: this.plugins,
+      module: this.appModule,
     });
   }
 }
@@ -55,6 +59,11 @@ class ApplicationBuilder {
     this.#config.path = path;
     return this;
   }
+  appModule(module) {
+    this.#config.appModule = module;
+    return this;
+  }
+
   clusterCount(count) {
     this.#config.clusterCount = count;
     return this;
@@ -71,6 +80,7 @@ class ApplicationBuilder {
     this.#config.exortModuleRule = rule;
     return this;
   }
+
   stdout(stdout) {
     this.#config.stdout = stdout;
     return this;
@@ -86,8 +96,7 @@ class ApplicationBuilder {
 
   run() {
     const app = new Application(this.#config);
-    if (cluster.isWorker) return app.worker();
-    return app.master();
+    return app.run();
   }
 }
 
