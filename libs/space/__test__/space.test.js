@@ -19,7 +19,7 @@ describe('VirtualSpace', () => {
       '/app/app.module.js': 'module.exports = class RootModule {};',
     });
 
-    const space = await VirtualSpace.load({ path: '/app' });
+    const space = await VirtualSpace.factory({ path: '/app' });
 
     const module = space.get('app.module');
 
@@ -61,7 +61,7 @@ describe('VirtualSpace', () => {
       `,
     });
 
-    const space = await VirtualSpace.load({ path: '/app' });
+    const space = await VirtualSpace.factory({ path: '/app' });
     const module = space.get('app');
 
     const service = new module.services[0]();
@@ -85,7 +85,7 @@ describe('VirtualSpace', () => {
       `,
     });
 
-    const space = await VirtualSpace.load({ path: '/app' });
+    const space = await VirtualSpace.factory({ path: '/app' });
 
     expect(space.get('app').name).toBe('AppModule');
     expect(space.get('beta').name).toBe('BetaModule');
@@ -110,7 +110,7 @@ describe('VirtualSpace', () => {
     `,
     });
 
-    const space = await VirtualSpace.watch({ path: '/app' });
+    const space = await VirtualSpace.factory({ path: '/app' });
     let service = space.get('app').services[0];
     expect(service.name).toBe('AppService');
 

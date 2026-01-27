@@ -163,9 +163,11 @@ describe('instance', () => {
     testHandler1.access = 'public';
 
     const appModule = {
-      providers: [],
-      consumers: [testHandler1],
-      imports: [],
+      current: {
+        providers: [],
+        consumers: [testHandler1],
+        imports: [],
+      },
       onChange: cb => (callback = cb),
     };
 
@@ -193,7 +195,7 @@ describe('instance', () => {
     testHandler3.returns = { message: 'string' };
     testHandler3.access = 'public';
 
-    appModule.consumers = [testHandler2, testHandler3];
+    appModule.current.consumers = [testHandler2, testHandler3];
 
     await callback?.();
 

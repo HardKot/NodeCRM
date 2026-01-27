@@ -63,11 +63,10 @@ class Instance extends EventEmitter {
     if (!this.module) throw new InstanceError(`Module not found`);
     const module = Module.parse(this.module, { name: 'app.module' });
 
-    const components = this.plugins.map(it => it.components ?? []).flat();
-
-    this.container = await Container.create(
-      [components, module.providers, module.consumers].flat()
-    );
+    const pluginComponents = this.plugins.map(it => it.components ?? []).flat();
+    const components = [pluginComponents, module.providers, module.consumers].flat();
+    this.logger.info(`Building container with ${components.length} components...`);
+    this.container = await Container.create(components);
   }
 
   async #buildCommands() {
@@ -99,18 +98,20 @@ class Instance extends EventEmitter {
       }
     }
     this.commands = Object.fromEntries(handlers);
+    this.logger.info(`Building commands with ${handlers.length} handlers...`);
     Object.freeze(this.commands);
   }
 
   #extractModule(source) {
-    if (Types.isObject(source) && Types.isFunction(source.onChange)) {
+    if (Types.isObject(source) && Types.isFunction(source.onChange) && 'current' in source) {
       source.onChange(async () => {
-        this.module = source;
+        this.logger.info('Module source changed, rebuilding instance...');
+        this.module = source.current;
         await this.#buildContainer();
         await this.#buildCommands();
         this.emit(InstanceEvent.UPDATE);
       });
-      return source;
+      return source.current;
     }
     if (Types.isObject(source) || Types.isFunction(source) || Types.isClass(source)) return source;
 

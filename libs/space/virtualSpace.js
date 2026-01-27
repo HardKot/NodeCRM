@@ -5,24 +5,23 @@ const path = require('node:path');
 const { createRequire } = require('node:module');
 
 const { Code } = require('./code');
+const { StringUtils } = require('../utils');
+
+class VirtualSpaceError extends Error {}
 
 class VirtualSpace {
-  static async load(config = {}) {
-    const space = new VirtualSpace({
-      path: config.path,
-      context: config.context,
-    });
-    await space.#load();
-    return space;
-  }
-  static async watch(config = {}) {
+  static async factory(config = {}) {
     const space = new VirtualSpace({
       path: config.path,
       context: config.context,
       watchTimeout: config.watchTimeout,
+      rootModuleName: config.rootModuleName,
+      rootExtractor: config.rootExtractor,
     });
+
     await space.#load();
     space.#watch();
+
     return space;
   }
 
@@ -43,7 +42,15 @@ class VirtualSpace {
     this.watchTimeout = config.watchTimeout ?? 500;
     this.codeContext = config.context ?? {};
 
+    this.rootName = config.rootModuleName ?? 'app.module';
+    this.rootExtractor = config.rootExtractor ?? this.#defaultRootExtractor.bind(this);
+
     Object.freeze(this);
+  }
+
+  get current() {
+    const module = this.get(this.rootName);
+    return this.rootExtractor(module);
   }
 
   getAll() {
@@ -55,24 +62,8 @@ class VirtualSpace {
     return this.#modules.get(name);
   }
 
-  stop() {
-    this.#abortController.abort();
-  }
-
   onChange(listener) {
     return this.#eventEmitter.on('update', listener);
-  }
-  onDelete(listener) {
-    return this.#eventEmitter.on('delete', listener);
-  }
-  onError(error) {
-    return this.#eventEmitter.on('error', error);
-  }
-  onAfter(listener) {
-    return this.#eventEmitter.on('postLoad', listener);
-  }
-  onBefore(listener) {
-    return this.#eventEmitter.on('preLoad', listener);
   }
 
   async #load() {
@@ -196,6 +187,25 @@ class VirtualSpace {
     moduleName = moduleName.replace(path.parse(moduleName).ext, '');
     return moduleName;
   }
+
+  #defaultRootExtractor(module) {
+    if (module?.default) return module.default;
+    const keyWithoutExt = this.rootName.replace(/\.module$/, '');
+    const keyWithExt = `${keyWithoutExt}.module`;
+
+    const keys = [
+      StringUtils.factoryPascalCase(...keyWithoutExt.split('.')),
+      StringUtils.factoryPascalCase(...keyWithExt.split('.')),
+
+      StringUtils.factoryCamelCase(...keyWithoutExt.split('.')),
+      StringUtils.factoryCamelCase(...keyWithExt.split('.')),
+    ];
+    for (const key of keys) {
+      if (module?.[key]) return module?.[key];
+    }
+
+    return module;
+  }
 }
 
-module.exports = { VirtualSpace: VirtualSpace };
+module.exports = { VirtualSpace, VirtualSpaceError };

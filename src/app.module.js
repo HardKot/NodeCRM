@@ -1,4 +1,4 @@
-import { helloWorld } from './controllers/helloWorld.js';
+const { helloWorld } = require('./controllers/helloWorld.js');
 
 class AppModule {
   constructor() {
@@ -7,4 +7,4 @@ class AppModule {
   }
 }
 
-export { AppModule };
+module.exports = { AppModule };

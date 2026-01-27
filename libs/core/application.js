@@ -35,6 +35,9 @@ class Application {
   }
 
   async worker() {
+    if (this.module instanceof Promise) {
+      this.module = await this.module;
+    }
     return await Instance.run(this);
   }
 }
@@ -49,11 +52,6 @@ class ApplicationBuilder {
 
   clusterCount(count) {
     this.#config.clusterCount = count;
-    return this;
-  }
-
-  exportModuleRule(rule) {
-    this.#config.exortModuleRule = rule;
     return this;
   }
 

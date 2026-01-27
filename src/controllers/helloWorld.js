@@ -7,4 +7,4 @@ helloWorld.$returns = { message: 'string' };
 helloWorld.$access = 'public';
 helloWorld.$mapping = '/hello';
 
-export { helloWorld };
+module.exports = { helloWorld };
