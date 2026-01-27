@@ -1,14 +1,14 @@
-const { Types } = require('./types.js');
+const { Types } = require('./src/types.js');
 
-const { StringUtils } = require('./stringUtils.js');
+const { StringUtils } = require('./src/stringUtils.js');
 
-const { ObjectUtils } = require('./objectUtils.js');
-const { Optional } = require('./optional.js');
+const { ObjectUtils } = require('./src/objectUtils.js');
+const { Optional } = require('./src/optional.js');
 
-const { Parser } = require('./parser.js');
-const { Table } = require('./table.js');
-const { TreeNode } = require('./treeNode.js');
-const { Result } = require('./result.js');
+const { Parser } = require('./src/parser.js');
+const { Table } = require('./src/table.js');
+const { TreeNode } = require('./src/treeNode.js');
+const { Result } = require('./src/result.js');
 
 module.exports = {
   Types,

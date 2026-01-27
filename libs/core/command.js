@@ -1,7 +1,7 @@
 const stream = require('node:stream');
 const streamWeb = require('node:stream/web');
 
-const { Result, Types } = require('../utils');
+const { Result, Types } = require('../utils/types/objectUtils');
 const { Schema } = require('./schema');
 const { AccessError, factoryAccess, PrivateAccess } = require('./access.js');
 const { Metadata } = require('./metadata.js');

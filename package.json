@@ -1,5 +1,5 @@
 {
-  "name": "@spacejs",
+  "name": "@space-js/platform",
   "version": "1.0.0",
   "description": "Framework for building multi-tenant SaaS applications",
   "scripts": {

@@ -5,7 +5,7 @@ const path = require('node:path');
 const { createRequire } = require('node:module');
 
 const { Code } = require('./code');
-const { StringUtils } = require('../utils');
+const { StringUtils } = require('../utils/types/objectUtils');
 
 class VirtualSpaceError extends Error {}
 

@@ -1,4 +1,4 @@
-const { ObjectUtils, Parser, Types } = require('../utils');
+const { ObjectUtils, Parser, Types } = require('../utils/types/objectUtils');
 const { Metadata } = require('./metadata.js');
 
 const SUPPORT_SCOPES = Object.freeze({

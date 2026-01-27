@@ -1,6 +1,6 @@
 const { ArrayField } = require('../arrayField.js');
 const { BaseField } = require('../baseField.js');
-const { Result } = require('../../../../utils');
+const { Result } = require('../../../../utils/types/objectUtils');
 const { ValidateError } = require('../fieldError.js');
 
 class TestField extends BaseField {

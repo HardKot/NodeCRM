@@ -1,6 +1,8 @@
 class Optional {
+  #value;
+
   constructor(value) {
-    this._value = value;
+    this.#value = value;
   }
 
   static of(value) {
@@ -19,7 +21,7 @@ class Optional {
   }
 
   isPresent() {
-    return this._value !== null && this._value !== undefined;
+    return this.#value !== null && this.#value !== undefined;
   }
 
   isEmpty() {
@@ -30,31 +32,31 @@ class Optional {
     if (!this.isPresent()) {
       throw new Error('No value present');
     }
-    return this._value;
+    return this.#value;
   }
 
   orElse(other) {
-    return this.isPresent() ? this._value : other;
+    return this.isPresent() ? this.#value : other;
   }
 
   orElseGet(supplier) {
-    return this.isPresent() ? this._value : supplier();
+    return this.isPresent() ? this.#value : supplier();
   }
 
   getOrNull() {
-    return this.isPresent() ? this._value : null;
+    return this.isPresent() ? this.#value : null;
   }
 
   orElseThrow(errorSupplier) {
     if (!this.isPresent()) {
       throw errorSupplier ? errorSupplier() : new Error('No value present');
     }
-    return this._value;
+    return this.#value;
   }
 
   ifPresent(consumer) {
     if (this.isPresent()) {
-      consumer(this._value);
+      consumer(this.#value);
     }
   }
 
@@ -62,7 +64,7 @@ class Optional {
     if (!this.isPresent()) {
       return Optional.empty();
     }
-    return Optional.ofNullable(mapper(this._value));
+    return Optional.ofNullable(mapper(this.#value));
   }
 }
 
