@@ -1,7 +1,7 @@
 'use strict';
 
 const { BaseField } = require('./baseField.js');
-const { Result, Types } = require('../../../utils/types/objectUtils');
+const { Result, Types } = require('../../../utils');
 
 const { ValidateError } = require('./fieldError.js');
 

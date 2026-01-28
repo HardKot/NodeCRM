@@ -7,10 +7,10 @@ describe('Field Parser', () => {
   });
 
   it('should parse scalar field from string', () => {
-    const stringField = fieldParser.parse('string');
-    const booleanField = fieldParser.parse('boolean');
-    const numberField = fieldParser.parse('number');
-    const enumField = fieldParser.parse('enum|enum2|enum3');
+    const stringField = fieldParser('string');
+    const booleanField = fieldParser('boolean');
+    const numberField = fieldParser('number');
+    const enumField = fieldParser('enum|enum2|enum3');
 
     expect(stringField).toBeInstanceOf(Field.Scalar);
     expect(stringField.scalar).toBe('string');
@@ -29,7 +29,7 @@ describe('Field Parser', () => {
   });
 
   it('should parse optional scalar field from string', () => {
-    const optionalStringField = fieldParser.parse('string?');
+    const optionalStringField = fieldParser('string?');
 
     expect(optionalStringField).toBeInstanceOf(Field.Scalar);
     expect(optionalStringField.scalar).toBe('string');
@@ -43,7 +43,7 @@ describe('Field Parser', () => {
       isActive: 'boolean',
     };
 
-    const schemaField = fieldParser.parse(schema);
+    const schemaField = fieldParser(schema);
 
     expect(schemaField).toBeInstanceOf(Field.Schema);
     expect(schemaField.schema).toHaveProperty('name');
@@ -67,7 +67,7 @@ describe('Field Parser', () => {
       age: 'number',
     };
 
-    const schemaField = fieldParser.parse(schema);
+    const schemaField = fieldParser(schema);
 
     expect(schemaField).toBeInstanceOf(Field.Schema);
     const transformed = schemaField.transform({ name: 'John', age: 30 });
@@ -87,7 +87,7 @@ describe('Field Parser', () => {
       age: 'number',
     };
 
-    const schemaField = fieldParser.parse(schema);
+    const schemaField = fieldParser(schema);
 
     expect(schemaField).toBeInstanceOf(Field.Schema);
     const transformed = schemaField.transform({ name: 'John', age: 30 });
@@ -95,13 +95,11 @@ describe('Field Parser', () => {
   });
 
   it('should throw error for unsupported field type in string', () => {
-    expect(() => fieldParser.parse('unsupportedType')).toThrow(
-      'Unsupported field type: unsupportedType'
-    );
+    expect(() => fieldParser('unsupportedType')).toThrow('Unsupported field type: unsupportedType');
   });
 
   it('should parse field', () => {
-    const arrayField = fieldParser.parse(['string']);
+    const arrayField = fieldParser(['string']);
 
     expect(arrayField).toBeInstanceOf(Field.Array);
     expect(arrayField.itemField).toBeInstanceOf(Field.Scalar);

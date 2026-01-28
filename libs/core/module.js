@@ -1,6 +1,6 @@
 const { ObjectUtils, Parser } = require('../utils/index.js');
 
-const moduleParser = new Parser({
+const moduleParser = Parser.of({
   parseObject: function (source, options) {
     return new Module(
       ObjectUtils.firstNotNullValue('name', source, options),
@@ -91,9 +91,7 @@ class Module {
     }
   }
 
-  static parse(source, options = {}) {
-    return moduleParser.parse(source, options);
-  }
+  static parse = moduleParser;
 }
 
-module.exports = { Module, moduleParser };
+module.exports = { Module };

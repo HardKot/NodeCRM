@@ -14,7 +14,7 @@
     "allowJs": true,
     "checkJs": true,
     "maxNodeModuleJsDepth": 1
-  }
-  "include": ["*.d.ts", "*.ts"],
-    "exclude": ["node_modules"]
+  },
+  "include": ["**/*.d.ts", "**/*.ts"],
+  "exclude": ["node_modules", "dist"]
 }

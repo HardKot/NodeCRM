@@ -1,6 +1,6 @@
 'use strict';
 
-const { Parser } = require('../../utils/index.js');
+const { Parser } = require('../../utils');
 const { EnumField } = require('./fields/enumField.js');
 const { ScalarField } = require('./fields/scalarField.js');
 const { FieldError } = require('./fields/fieldError.js');
@@ -9,7 +9,7 @@ const { ArrayField } = require('./fields/arrayField.js');
 
 const cache = new WeakMap();
 
-const fieldParser = new Parser({
+const fieldParser = Parser.of({
   parseString(source) {
     const required = !source.endsWith('?');
     let type = !required ? source.slice(0, -1) : source;

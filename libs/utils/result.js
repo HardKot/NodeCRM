@@ -64,7 +64,7 @@ class Result {
         return new Result(error);
       }
     }
-    return this;
+    return new Result(null, false, this.#value);
   }
 }
 

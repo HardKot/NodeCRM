@@ -41,6 +41,8 @@ type DeepReadonly<T> = T extends Primitive | BrowserNativeObject
             };
 
 export abstract class ObjectUtils {
+  private constructor();
+
   static firstNotNullValue<
     TFieldValues extends FieldValues = FieldValues,
     TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,

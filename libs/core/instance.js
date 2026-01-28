@@ -3,7 +3,7 @@ const { Module } = require('./module.js');
 const EventEmitter = require('node:events');
 const { Command } = require('./command.js');
 const { Logger } = require('./logger.js');
-const { Result, ObjectUtils, Types } = require('../utils/types/objectUtils');
+const { Result, ObjectUtils, Types } = require('../utils');
 
 const InstanceEvent = Object.freeze({
   BUILD: 'build',

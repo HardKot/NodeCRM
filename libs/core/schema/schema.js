@@ -17,7 +17,7 @@ class Schema extends SchemaField {
     if (typeof schemaDefinition !== 'object' || schemaDefinition === null) {
       throw new SchemaError('Schema definition must be a non-null object');
     }
-    const schema = fieldParser.parse(schemaDefinition);
+    const schema = fieldParser(schemaDefinition);
     if (schema instanceof SchemaField) Object.setPrototypeOf(schema, Schema.prototype);
 
     return schema;

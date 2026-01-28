@@ -1,4 +1,4 @@
-const { ObjectUtils, Parser, Types } = require('../utils/types/objectUtils');
+const { ObjectUtils, Parser, Types } = require('../utils');
 const { Metadata } = require('./metadata.js');
 
 const SUPPORT_SCOPES = Object.freeze({
@@ -7,7 +7,7 @@ const SUPPORT_SCOPES = Object.freeze({
   SCOPED: 2,
 });
 
-const componentParser = new Parser({
+const componentParser = Parser.of({
   parseObject: function (source, options) {
     let scope = ObjectUtils.firstNotNullValue('scope', source, options);
     if (Types.isString(scope)) scope = SUPPORT_SCOPES[scope.toUpperCase()];
@@ -71,9 +71,7 @@ class Component {
     Object.freeze(this);
   }
 
-  static parse(source, options = {}) {
-    return componentParser.parse(source, options);
-  }
+  static parse = componentParser;
 }
 
-module.exports = { Component, SUPPORT_SCOPES, componentParser };
+module.exports = { Component, SUPPORT_SCOPES };

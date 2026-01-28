@@ -1,6 +1,6 @@
 const { BaseField } = require('./fields/baseField.js');
 const { fieldParser } = require('./fieldParser.js');
-const { ArrayField, EnumField, ScalarField, SchemaField } = require('./fields/index.js');
+const { ArrayField, EnumField, ScalarField, SchemaField } = require('./fields');
 
 class Field extends BaseField {
   static parse(source) {

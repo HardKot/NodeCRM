@@ -53,7 +53,10 @@ function factoryAccess(accessStr) {
     return user => ByRoleAccess(role, user);
   }
   if (accessStr.startsWith(template.permissions)) {
-    const permissions = accessStr.substring(template.permissions.length).split(',');
+    const permissions = accessStr
+      .substring(template.permissions.length)
+      .replaceAll(' ', '')
+      .split(',');
     return user => ByPermissionsAccess(permissions, user);
   }
   throw new Error(`Unknown access type: ${accessStr}`);

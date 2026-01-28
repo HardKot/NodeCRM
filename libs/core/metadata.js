@@ -1,4 +1,4 @@
-const { Optional, Types } = require('../utils/types/objectUtils');
+const { Optional, Types } = require('../utils');
 
 class Metadata {
   #registry = new Map();

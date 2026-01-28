@@ -1,5 +1,5 @@
 const { AsyncLocalStorage } = require('node:async_hooks');
-const { Table } = require('../utils/types/objectUtils');
+const { Table } = require('../utils');
 const { Component, SUPPORT_SCOPES } = require('./component.js');
 
 class ContainerError extends Error {}
