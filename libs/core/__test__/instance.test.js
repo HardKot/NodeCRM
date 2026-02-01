@@ -1,4 +1,4 @@
-const { Instance } = require('../instance.js');
+const { Instance } = require('../application/instance.js');
 
 describe('instance', () => {
   beforeEach(() => {

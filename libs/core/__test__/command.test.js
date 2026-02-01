@@ -1,5 +1,5 @@
-const { Command, CommandError } = require('../command.js');
-const { AccessError } = require('../access.js');
+const { Command, CommandError } = require('../application/command.js');
+const { AccessError } = require('../application/access.ts');
 const stream = require('node:stream');
 const streamWeb = require('node:stream/web');
 

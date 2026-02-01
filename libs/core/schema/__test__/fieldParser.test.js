@@ -1,4 +1,4 @@
-const { fieldParser } = require('../fieldParser.js');
+const { fieldParser } = require('../sourceFieldParser.ts');
 const { Field } = require('../field.js');
 
 describe('Field Parser', () => {

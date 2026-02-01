@@ -1,4 +1,4 @@
-const { factoryAccess } = require('../access.js');
+const { factoryAccess } = require('../application/access.ts');
 
 describe('Access', () => {
   it("factoryAccess 'public'", () => {

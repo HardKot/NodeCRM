@@ -1,4 +1,4 @@
-const { Container, ContainerError } = require('../container.js');
+const { Container, ContainerError } = require('../application/container.js');
 
 describe('Container test', () => {
   it('should create Container instance', () => {

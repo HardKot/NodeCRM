@@ -1,5 +1,5 @@
 const cluster = require('node:cluster');
-const { Instance } = require('./instance.js');
+const { Instance } = require('./application/instance.js');
 const { dirname } = require('node:path');
 
 class ApplicationError extends Error {}
