@@ -2,7 +2,7 @@ import { Container } from './container';
 import { Module } from '../module';
 import { EventEmitter } from 'node:events';
 import { Command } from './command';
-import { Logger } from '../logger';
+import { Logger } from './logger';
 import { Result, Types } from '../../utils';
 import { Plugins } from './plugins';
 import { Session } from './session';
@@ -11,11 +11,11 @@ import { ComponentType } from '../component';
 import { SchemaRegistry } from '../schema';
 
 interface InstanceConfig {
-  stdout?: NodeJS.ReadWriteStream;
-  stderr?: NodeJS.ReadWriteStream;
+  stdout?: NodeJS.WriteStream;
+  stderr?: NodeJS.WriteStream;
 }
 
-type InstanceModule = Module | AsyncIterable<Module>;
+export type InstanceModule = Module | AsyncIterable<Module>;
 
 const InstanceEvent = Object.freeze({
   BUILD: 'build',
@@ -25,31 +25,16 @@ const InstanceEvent = Object.freeze({
 class InstanceError extends Error {}
 
 class Instance extends EventEmitter {
-  // static async run(config = {}) {
-  //   const instance = new Instance(config);
-  //   await instance.init();
-  //   await instance.build();
-  //   return instance;
-  // }
-
-  private logger: Logger;
   private module: Module | null = null;
   private container: Container = new Container();
   private commands: Record<string, Command<any>> = {};
 
   constructor(
     moduleSource: InstanceModule,
-    public readonly prefix: string = 'Instance',
-    public readonly plugins: Plugins[] = [],
-    config: Partial<InstanceConfig> = {}
+    private readonly logger: Logger,
+    public readonly plugins: Plugins[]
   ) {
     super();
-
-    this.logger = new Logger({
-      prefix: this.prefix,
-      stdout: config.stdout,
-      stderr: config.stderr,
-    });
 
     const module = this.linkModule(moduleSource);
     if (!module) this.module = module;
