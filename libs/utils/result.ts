@@ -1,4 +1,4 @@
-import { Types } from './types.js';
+import { Types } from './types';
 
 export class Result<T, E = Error> {
   private readonly value: T | E;

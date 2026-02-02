@@ -1,5 +1,5 @@
-import { StringUtils } from './stringUtils.js';
-import { Types } from './types.js';
+import { StringUtils } from './stringUtils';
+import { Types } from './types';
 
 class SourceParserError extends Error {}
 

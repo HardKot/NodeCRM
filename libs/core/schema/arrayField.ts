@@ -1,18 +1,18 @@
-import { BaseField, ValidateResult } from './baseField';
-import { Result, Types } from '../../../utils';
+import { BaseField, TestFunction, ValidateResult } from './baseField';
+import { Result, Types } from '../../utils';
 
 import { ValidateError } from './fieldError';
 
 class ArrayField extends BaseField {
   constructor(
-    private itemField: BaseField,
-    required: boolean = false
+    public itemField: BaseField,
+    required: boolean = false,
+    tests: TestFunction[] = []
   ) {
-    super(required);
+    super(required, tests);
   }
 
-  override validate(value: any): ValidateResult {
-    if (!this.required && value === undefined) return Result.success(null);
+  override typeValidate(value: any): ValidateResult {
     if (!Array.isArray(value)) return Result.failure(new ValidateError('Expected an array'));
 
     let hasError = false;
@@ -35,10 +35,14 @@ class ArrayField extends BaseField {
 
   override transform(value: any) {
     if (!value) return undefined;
-    if (Types.isString(value)) value = JSON.parse(value) as any[];
-    if (!Array.isArray(value)) return value;
+    try {
+      if (Types.isString(value)) value = JSON.parse(value) as any[];
+    } catch (e) {
+      return undefined;
+    }
 
-    return value.map(item => this.itemField.transform(item));
+    if (!Array.isArray(value)) return undefined;
+    return value.map(item => this.itemField.transform(item)).filter(item => item !== undefined);
   }
 }
 

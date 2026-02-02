@@ -1,5 +1,5 @@
-import { BaseField } from './fields';
 import { Optional } from '../../utils';
+import { BaseField } from './baseField';
 
 class SchemaRegistry {
   private registry: Map<symbol | string, BaseField> = new Map();

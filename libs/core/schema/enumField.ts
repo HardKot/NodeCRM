@@ -1,5 +1,5 @@
 import { BaseField, ValidateResult } from './baseField';
-import { Result } from '../../../utils';
+import { Result } from '../../utils';
 
 import { ValidateError } from './fieldError';
 
@@ -8,12 +8,11 @@ class EnumField extends BaseField {
     public readonly values: string[],
     required: boolean = false
   ) {
-    super(required);
+    super(required, []);
     this.values = new Set(values).values().toArray();
   }
 
-  override validate(value: any): ValidateResult {
-    if (!this.required && value === undefined) return Result.success(null);
+  override typeValidate(value: any): ValidateResult {
     if (this.values.includes(value)) return Result.success(null);
     return Result.failure(
       new ValidateError(`Value "${value}" is not in enum [${this.values.join(', ')}]`)
