@@ -10,6 +10,10 @@ class Metadata {
   }
 
   set<T>(key: MetadataKey, value: T): void {}
+
+  getSubcomponent<T>(subKey: Function) {
+    return new Metadata();
+  }
 }
 
 export { Metadata, MetadataKey };

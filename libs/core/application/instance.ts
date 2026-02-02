@@ -3,8 +3,12 @@ import { Module } from '../module';
 import { EventEmitter } from 'node:events';
 import { Command } from './command';
 import { Logger } from '../logger';
-import { Result, ObjectUtils, Types } from '../../utils';
+import { Result, Types } from '../../utils';
 import { Plugins } from './plugins';
+import { Session } from './session';
+import { Metadata } from '../metadata';
+import { ComponentType } from '../component';
+import { SchemaRegistry } from '../schema';
 
 interface InstanceConfig {
   stdout?: NodeJS.ReadWriteStream;
@@ -29,11 +33,12 @@ class Instance extends EventEmitter {
   // }
 
   private logger: Logger;
+  private module: Module | null = null;
   private container: Container = new Container();
   private commands: Record<string, Command<any>> = {};
 
   constructor(
-    public readonly module: InstanceModule,
+    moduleSource: InstanceModule,
     public readonly prefix: string = 'Instance',
     public readonly plugins: Plugins[] = [],
     config: Partial<InstanceConfig> = {}
@@ -46,24 +51,18 @@ class Instance extends EventEmitter {
       stderr: config.stderr,
     });
 
-    this.linkModule(this.module);
-  }
-
-  async init() {
-    for (const extend of this.plugins) {
-      this.logger.info(`Loading extended '${extend.name}'`);
-      await extend.init?.(this);
-    }
+    const module = this.linkModule(moduleSource);
+    if (!module) this.module = module;
   }
 
   async build() {
-    await this.#buildContainer();
-    await this.#buildCommands();
-    await Promise.all(this.plugins.map(it => it.build?.(this)));
+    await this.buildContainer();
+    await this.buildCommands();
+    await this.buildPlugins();
     this.emit(InstanceEvent.BUILD);
   }
 
-  async execute(path, body, session = new Map(), params = {}) {
+  async execute(path: string, body: any, session = new Session(), params = {}) {
     const runner = this.commands[path];
     if (Types.isNull(runner) || Types.isUndefined(runner)) {
       return Result.failure(new InstanceError(`Consumer not found at path: ${path}`));
@@ -72,79 +71,65 @@ class Instance extends EventEmitter {
     return await runner.run(body, session, params);
   }
 
+  private async subscribeToModuleChanges(source: AsyncIterable<Module>) {
+    for await (const module of source) {
+      this.module = this.linkModule(module);
+    }
+  }
   private linkModule(source: InstanceModule) {
-    if (Types.isAsyncIterator(source)) return;
+    if (Types.isAsyncIterator(source)) {
+      this.subscribeToModuleChanges(source).catch((err: Error) => this.logger.error(err));
+      return null;
+    }
+    return this.module;
+  }
+  private combineComponents(module: Module, plugins: Plugins[]) {
+    const pluginComponents = plugins.map(it => it.components ?? []).flat();
 
-    const components = [
-      source.consumers,
-      source.providers,
-      ...this.plugins.map(it => it.components ?? []),
-    ].flat(1);
-
-    this.logger.info(`Building container with ${components.length} components...`);
-    this.container = Container.create(components);
+    return [pluginComponents, module.providers, module.consumers].flat();
   }
 
-  async #buildContainer() {
-    if (!this.module) throw new InstanceError(`Module not found`);
-    const module = Module.parse(this.module, { name: 'app.module' });
+  private async buildContainer() {
+    if (Types.isNull(this.module))
+      return this.logger.warn('Module is null, skipping container build...');
+    const components = this.combineComponents(this.module, this.plugins);
 
-    const pluginComponents = this.plugins.map(it => it.components ?? []).flat();
-    const components = [pluginComponents, module.providers, module.consumers].flat();
     this.logger.info(`Building container with ${components.length} components...`);
     this.container = await Container.create(components);
   }
+  private async buildCommands() {
+    const consumersEntries = await this.container.type(ComponentType.CONSUMER);
 
-  async #buildCommands() {
-    const consumersEntries = await this.container.type('consumer');
-
-    const handlers = [];
-    for (const { name, instance, meta } of consumersEntries) {
-      if (Types.isFunction(instance)) {
-        handlers.push([name, new Command(instance, meta)]);
-      } else if (Types.isObject(instance)) {
-        for (const handlerName of ObjectUtils.getMethodNames(instance)) {
-          if (handlerName.startsWith('_')) continue;
-          if (!Types.isFunction(instance[handlerName])) continue;
-          if (
-            [
-              'isPrototypeOf',
-              'propertyIsEnumerable',
-              'toString',
-              'valueOf',
-              'toLocaleString',
-              'hasOwnProperty',
-            ].includes(handlerName)
-          )
-            continue;
-
-          const handler = instance[handlerName].bind(instance);
-          handlers.push([`${name}.${handlerName}`, new Command(handler, meta)]);
-        }
+    let handlers: [string | symbol, Command<any>][] = [];
+    for (const consumer of consumersEntries) {
+      if (Types.isFunction(consumer.instance)) {
+        handlers.push([
+          consumer.name,
+          Command.createFromFunction(
+            consumer.instance,
+            consumer.metadata ?? new Metadata(),
+            new SchemaRegistry()
+          ),
+        ]);
+      }
+      if (Types.isObject(consumer.instance)) {
+        handlers = handlers.concat(
+          Command.createFromObject(
+            consumer.instance,
+            consumer.metadata ?? new Metadata(),
+            new SchemaRegistry()
+          ).map(it => [`${consumer.name.toString()}.${it[0]}`, it[1]])
+        );
       }
     }
     this.commands = Object.fromEntries(handlers);
     this.logger.info(`Building commands with ${handlers.length} handlers...`);
+
     Object.freeze(this.commands);
   }
-
-  #extractModule(source) {
-    if (Types.isObject(source) && Types.isFunction(source.onChange) && 'current' in source) {
-      source.onChange(async () => {
-        this.logger.info('Module source changed, rebuilding instance...');
-        this.module = source.current;
-        await this.#buildContainer();
-        await this.#buildCommands();
-        this.emit(InstanceEvent.UPDATE);
-      });
-      return source.current;
-    }
-    if (Types.isObject(source) || Types.isFunction(source) || Types.isClass(source)) return source;
-
-    throw new InstanceError(
-      `Invalid module configuration, supported types are: object, function, object with onChange method`
-    );
+  private async buildPlugins() {
+    await Promise.all(this.plugins.map(it => it.build?.(this)));
   }
 }
 
-module.exports = { Instance, InstanceEvent, InstanceError };
+export { Instance, InstanceEvent, InstanceError };

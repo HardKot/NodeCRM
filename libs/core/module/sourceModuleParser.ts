@@ -2,6 +2,7 @@ import { SourceParser, SourceParserError, Types } from '../../utils';
 import { Module, ModuleHooks } from './module';
 import { Component, SourceComponentParser, SourceComponentType } from '../component';
 import { MetadataRegistry } from '../metadata';
+import { SchemaRegistry } from '../schema';
 
 type LinkMetadata = (
   componentSource: SourceComponentType,
@@ -74,6 +75,9 @@ class SourceModuleParser extends SourceParser<Module> {
   }
   private extractImports(source: ModuleSource): Module[] {
     return source.imports?.map(it => this.parse(it)) ?? [];
+  }
+  private extractSchemaRegistry() {
+    const registry = new SchemaRegistry();
   }
 
   private modulePreprocess(name: string | symbol, source: ModuleSource, factory?: () => any) {

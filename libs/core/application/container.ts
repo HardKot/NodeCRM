@@ -13,7 +13,7 @@ type ComponentBindingsMap = Map<ComponentInjectType, Component<ComponentInstance
 class ContainerError extends Error {}
 
 class Container {
-  static async create(components: Component<ComponentInstance>[]) {
+  static async create(components: Component<any>[]) {
     const container = new Container(components);
     await container.build();
 
@@ -34,7 +34,7 @@ class Container {
     this.scope = new AsyncLocalStorage<ComponentInstanceMap>({ defaultValue: this.instances });
   }
 
-  async runScope(callback: () => Promise<void>) {
+  public async runScope(callback: () => Promise<void>) {
     const instances = new Map();
 
     try {
@@ -46,7 +46,7 @@ class Container {
     }
   }
 
-  async get(binding: ComponentInjectType) {
+  public async get(binding: ComponentInjectType) {
     const component = this.bindings.get(binding);
 
     if (!component) return null;
@@ -60,6 +60,26 @@ class Container {
       return await this.initTransientComponent(component);
     }
     return await this.initComponent(component);
+  }
+
+  public async type(type: ComponentType) {
+    const instances = [];
+    const components = new Set(this.bindings.values());
+    for (const component of components.values()) {
+      if (component.type !== type) continue;
+      instances.push({
+        name: component.name,
+        instance: await this.get(component.name),
+        metadata: component.metadata,
+      });
+    }
+    return instances;
+  }
+
+  public async build() {
+    if (this.detectedMissing()) return;
+    if (this.detectedCircular()) return;
+    await this.initEagerSingletons();
   }
 
   private async initSingletonComponent(component: Component<ComponentInstance>) {
@@ -92,26 +112,6 @@ class Container {
     return instance;
   }
 
-  async type(type: ComponentType) {
-    const instances = [];
-    const components = new Set(this.bindings.values());
-    for (const component of components.values()) {
-      if (component.type !== type) continue;
-      instances.push({
-        name: component.name,
-        instance: await this.get(component.name),
-        mataData: component.metadata,
-      });
-    }
-    return instances;
-  }
-
-  async build() {
-    if (this.detectedMissing()) return;
-    if (this.detectedCircular()) return;
-    await this.initEagerSingletons();
-  }
-
   private async initEagerSingletons() {
     for (const component of this.bindings.values()) {
       if (component.eager && component.scope === Scoped.SINGLETON) await this.get(component.name);
@@ -131,7 +131,7 @@ class Container {
     return false;
   }
 
-  detectedCircular() {
+  private detectedCircular() {
     const visited = new Set();
     const recStack = new Set();
 
