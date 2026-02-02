@@ -1,3 +1,11 @@
+type DeepPartial<T> = {
+  [P in keyof T]?: T[P] extends object
+    ? T[P] extends Array<infer U>
+      ? Array<DeepPartial<U>>
+      : DeepPartial<T[P]>
+    : T[P];
+};
+
 export class ObjectUtils {
   constructor() {
     throw new Error('ObjectUtils is a static class and cannot be instantiated');
@@ -43,7 +51,7 @@ export class ObjectUtils {
     return object;
   }
 
-  static deepAssign<T extends object>(target: T, ...sources: Partial<T>[]): T {
+  static deepAssign<T extends Record<string, any>>(target: T, ...sources: DeepPartial<T>[]): T {
     for (const source of sources) {
       for (const key in source) {
         if (

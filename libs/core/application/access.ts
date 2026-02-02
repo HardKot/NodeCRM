@@ -59,9 +59,10 @@ function parserAccess(source: string): AccessFunction {
   if (source === AccessHandle.Private) return PrivateAccess;
   if (source === AccessHandle.Authenticated) return AuthenticatedAccess;
   if (source === AccessHandle.Anonymous) return AnonymousAccess;
-  if (source.startsWith(AccessHandle.ByRole)) return FunctionUtils.curry(ByRoleAccess, source);
+  if (source.startsWith(AccessHandle.ByRole))
+    return FunctionUtils.curry(ByRoleAccess, source as `role: ${string}`);
   if (source.startsWith(AccessHandle.ByPermissions))
-    return FunctionUtils.curry(ByPermissionsAccess, source);
+    return FunctionUtils.curry(ByPermissionsAccess, source as `permissions: ${string}`);
   return PrivateAccess;
 }
 

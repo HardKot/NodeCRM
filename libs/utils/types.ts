@@ -9,7 +9,7 @@ export class Types {
   }
 
   static isObject(v: any): v is Object {
-    return typeof v === 'object' && !Array.isArray(v);
+    return v !== null && typeof v === 'object' && !Array.isArray(v);
   }
 
   static isRecord<K extends string | number | symbol, V>(v: any): v is Record<K, V> {
