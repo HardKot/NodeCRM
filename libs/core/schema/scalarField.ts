@@ -3,16 +3,16 @@ import { BaseField, TestFunction, ValidateResult } from './baseField';
 import { ValidateError } from './fieldError';
 import { Result } from '../../utils';
 
-enum ScalarType {
-  String,
-  Number,
-  Boolean,
-  Int,
-}
+const ScalarType = Object.freeze({
+  String: 0,
+  Number: 1,
+  Boolean: 2,
+  Int: 3,
+});
 
 class ScalarField extends BaseField {
   constructor(
-    public readonly scalar: ScalarType,
+    public readonly scalar: number,
     required: boolean = false,
     tests: TestFunction[] = []
   ) {

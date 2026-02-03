@@ -32,10 +32,13 @@ function AnonymousAccess(session: Session) {
 
 function ByRoleAccess(roleStr: `role: ${string}`, session: Session) {
   if (!session) return false;
-  const roles = roleStr.replaceAll(' ', '').substring(AccessHandle.ByRole.length).split(',');
+  const roles = roleStr
+    .substring(AccessHandle.ByRole.length)
+    .split(',')
+    .map(it => it.trim());
 
   for (const role of roles) {
-    if (session.roles && session.roles.includes(role)) return true;
+    if (session.roles.includes(role)) return true;
   }
 
   return false;
@@ -44,12 +47,12 @@ function ByRoleAccess(roleStr: `role: ${string}`, session: Session) {
 function ByPermissionsAccess(permissionsStr: `permissions: ${string}`, session: Session) {
   if (!session) return false;
   const permissions = permissionsStr
-    .replaceAll(' ', '')
     .substring(AccessHandle.ByPermissions.length)
-    .split(',');
+    .split(',')
+    .map(it => it.trim());
 
   for (const permission of permissions) {
-    if (!session.permissions || !session.permissions.includes(permission)) return false;
+    if (!session.permissions.includes(permission)) return false;
   }
   return true;
 }
@@ -66,4 +69,14 @@ function parserAccess(source: string): AccessFunction {
   return PrivateAccess;
 }
 
-export { parserAccess, PrivateAccess, AccessFunction };
+function wrapAccessFunction(func: Function): AccessFunction {
+  return (session: Session) => {
+    try {
+      return func(session);
+    } catch (e) {
+      return false;
+    }
+  };
+}
+
+export { parserAccess, wrapAccessFunction, PrivateAccess, AccessFunction };

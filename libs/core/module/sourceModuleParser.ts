@@ -1,6 +1,6 @@
 import { SourceParser, SourceParserError, Types } from '../../utils';
 import { Module, ModuleHooks } from './module';
-import { Component, SourceComponentParser, SourceComponentType } from '../component';
+import { SourceComponentParser, SourceComponentType } from '../component';
 import { MetadataRegistry } from '../metadata';
 import { SchemaRegistry } from '../schema';
 

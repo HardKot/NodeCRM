@@ -34,8 +34,8 @@ class Application {
     public readonly clusterCount: number,
     public readonly plugins: Plugins[],
 
-    public readonly stdout: NodeJS.WriteStream,
-    public readonly stderr: NodeJS.WriteStream
+    public readonly stdout: NodeJS.WritableStream,
+    public readonly stderr: NodeJS.WritableStream
   ) {
     this.prefix = `Instance@${dirname(process.cwd())}`;
     if (cluster.isWorker) this.prefix = `Worker#${cluster.worker?.id}`;

@@ -3,8 +3,8 @@ import * as console from 'node:console';
 class Logger extends console.Console {
   constructor(
     public readonly prefix: string,
-    private readonly stdout: NodeJS.WriteStream,
-    private readonly stderr?: NodeJS.WriteStream
+    private readonly stdout: NodeJS.WritableStream,
+    private readonly stderr?: NodeJS.WritableStream
   ) {
     super(stdout, stderr);
   }

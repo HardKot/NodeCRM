@@ -3,7 +3,7 @@ import { ReadableStream, WritableStream } from 'node:stream/web';
 
 import { ObjectUtils, Result, Types } from '../../utils';
 import { BaseField, SchemaRegistry } from '../schema';
-import { parserAccess, PrivateAccess, AccessFunction } from './access';
+import { AccessFunction, parserAccess, PrivateAccess, wrapAccessFunction } from './access';
 import { Metadata } from '../metadata';
 import { Session } from './session';
 
@@ -13,17 +13,26 @@ class AccessError extends CommandError {}
 type CommandBody = typeof Readable | typeof ReadableStream | BaseField;
 type CommandReturns = typeof Writable | typeof WritableStream | BaseField;
 
-class Command<T extends Function> {
-  static ParamsSymbol = Symbol('command:params');
-  static BodySymbol = Symbol('command:body');
-  static ReturnsSymbol = Symbol('command:returns');
+const CommandMetadata = Object.freeze({
+  ParamsSymbol: 'params',
+  BodySymbol: 'body',
+  ReturnsSymbol: 'returns',
+  AccessSymbol: 'access',
+});
 
+class Command<T extends Function> {
   public static createFromFunction<T extends Function = any>(
     runner: T,
     metadata: Metadata,
     schemas: SchemaRegistry
   ) {
-    return new Command<T>(runner, metadata, schemas);
+    return new Command<T>(
+      runner,
+      metadata,
+      this.extractSchemaCommand(CommandMetadata.ParamsSymbol, metadata, schemas),
+      this.extractSchemaCommand(CommandMetadata.BodySymbol, metadata, schemas),
+      this.extractSchemaCommand(CommandMetadata.ReturnsSymbol, metadata, schemas)
+    );
   }
 
   public static createFromObject<T extends Object>(
@@ -32,65 +41,58 @@ class Command<T extends Function> {
     schemas: SchemaRegistry
   ) {
     const commands: [string, Command<any>][] = [];
-    let runnerNames = metadata.get<string[]>('runners').orElse([]);
-
-    if (!runnerNames.length) runnerNames = ObjectUtils.getMethodNames(obj);
-    const systemMethods = [
-      'isPrototypeOf',
-      'propertyIsEnumerable',
-      'toString',
-      'valueOf',
-      'toLocaleString',
-      'hasOwnProperty',
-    ];
+    let runnerNames = metadata.get<string[]>('runners').orElse(['execute', 'run']);
 
     for (const runnerName of runnerNames) {
-      if (runnerName.startsWith('_')) continue;
       const runner = obj[runnerName as keyof T];
       if (!Types.isFunction(runner)) continue;
-      if (systemMethods.includes(runnerName)) continue;
       commands.push([
         runnerName,
-        new Command<any>(runner, metadata.getSubcomponent(runner), schemas),
+        new Command<any>(
+          runner,
+          metadata.getSubcomponent(runner),
+          this.extractSchemaCommand(CommandMetadata.ParamsSymbol, metadata, schemas),
+          this.extractSchemaCommand(CommandMetadata.BodySymbol, metadata, schemas),
+          this.extractSchemaCommand(CommandMetadata.ReturnsSymbol, metadata, schemas)
+        ),
       ]);
     }
 
     return commands;
   }
 
+  private static extractSchemaCommand(key: string, metadata: Metadata, schemas: SchemaRegistry) {
+    const source = metadata.get<any>(key).orElse(null);
+    if (!source) return null;
+
+    if ([Readable, ReadableStream, Writable, WritableStream].includes(source)) return source;
+    if (source instanceof BaseField) return source;
+
+    return schemas.generateFromSource(source);
+  }
+
   public readonly access: AccessFunction;
-  public readonly params: BaseField | null;
-  public readonly body: CommandBody | null;
-  public readonly returns: CommandReturns | null;
 
   constructor(
     private runner: T,
-    private metadata: Metadata,
-    private schemas: SchemaRegistry
+    public metadata: Metadata,
+    public readonly params: BaseField | null,
+    public readonly body: CommandBody | null,
+    public readonly returns: CommandReturns | null
   ) {
     this.access = metadata
-      .get<AccessFunction>('access')
+      .get<AccessFunction | Function>(CommandMetadata.AccessSymbol)
       .map(it => {
-        if (Types.isFunction(it)) return it;
+        if (Types.isFunction(it)) return wrapAccessFunction(it);
         if (Types.isString(it)) return parserAccess(it);
         return PrivateAccess;
       })
       .orElse(PrivateAccess);
 
-    const extractFromSchema = (key: symbol) => {
-      const schema = this.schemas.get(key).getOrNull();
-      if (schema) return schema;
-      return this.metadata.get<BaseField>(key).getOrNull();
-    };
-
-    this.params = extractFromSchema(Command.ParamsSymbol);
-    this.body = extractFromSchema(Command.BodySymbol);
-    this.returns = extractFromSchema(Command.ReturnsSymbol);
-
     Object.freeze(this);
   }
 
-  async run(bodySource: any, session = new Session(), paramsSource: any = null) {
+  async run(bodySource: any, session = new Session(), paramsSource = {}) {
     try {
       const hasAccess = await this.access(session);
       const paramsResult = this.extractValidateParams(paramsSource);
@@ -145,4 +147,4 @@ class Command<T extends Function> {
   }
 }
 
-export { Command, CommandError };
+export { Command, CommandError, AccessError, CommandMetadata };

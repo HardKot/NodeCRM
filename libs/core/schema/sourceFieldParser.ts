@@ -88,7 +88,7 @@ class SourceFieldParser extends SourceParser<BaseField> {
     const firstKey = Object.keys(source).at(0);
     return firstKey !== 'type';
   }
-  private extractScalarType(type: string): ScalarType | undefined {
+  private extractScalarType(type: string): number | undefined {
     const keys = Object.keys(ScalarType).map(it => it.toLowerCase());
     const index = keys.indexOf(type.toLowerCase());
     if (index === -1) return undefined;
