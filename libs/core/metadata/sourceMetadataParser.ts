@@ -23,7 +23,11 @@ type MetadataSource = ObjectWithMetadata | FunctionWithMetadata | ClassWithMetad
 
 class SourceMetadataParser extends SourceParser {
   override parseObject(source: ObjectWithMetadata) {
-    return new Metadata(Object.entries(source).filter(([key]) => key.startsWith('$')));
+    return new Metadata(
+      Object.entries(source)
+        .filter(([key]) => key.startsWith('$'))
+        .map(([key, value]) => [key.slice(1), value])
+    );
   }
   override parseFunction(source: FunctionWithMetadata) {
     if (source.metadata) return new Metadata(Object.entries(source.metadata));

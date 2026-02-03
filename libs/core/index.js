@@ -1,4 +1,4 @@
-const { ApplicationError, Application } = require('./application.js');
+const { ApplicationError, Application } = require('./application/application.js');
 const { InstanceError, InstanceEvent } = require('./application/instance.js');
 const { AccessError } = require('./application/access.ts');
 const { CommandError } = require('./application/command.js');

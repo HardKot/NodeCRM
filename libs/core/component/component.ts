@@ -1,13 +1,26 @@
-import { ComponentType } from './componentType';
-import { Scoped } from './scoped';
 import { Metadata } from '../metadata';
 
 type ComponentInjectType = string | symbol;
 
+const ComponentType = Object.freeze({
+  CONSUMER: 0,
+  PROVIDER: 1,
+});
+
+type ComponentTypeValue = keyof typeof ComponentType;
+
+const Scoped = Object.freeze({
+  SINGLETON: 0,
+  TRANSIENT: 1,
+  SCOPED: 2,
+});
+
+type ScopedValue = keyof typeof Scoped;
+
 class Component<T = unknown, D = Record<ComponentInjectType, unknown>> {
   public readonly inject: ComponentInjectType[];
-  public readonly type: ComponentType;
-  public readonly scope: Scoped;
+  public readonly type: number;
+  public readonly scope: number;
   public readonly eager: boolean;
   public readonly binding: ComponentInjectType[];
 
@@ -19,8 +32,8 @@ class Component<T = unknown, D = Record<ComponentInjectType, unknown>> {
     public readonly metadata: Metadata
   ) {
     this.inject = metadata.get<ComponentInjectType[]>('inject').orElse([]);
-    this.type = metadata.get<ComponentType>('type').orElse(ComponentType.PROVIDER);
-    this.scope = metadata.get<Scoped>('scope').orElse(Scoped.SINGLETON);
+    this.type = metadata.get<number>('type').orElse(ComponentType.PROVIDER);
+    this.scope = metadata.get<number>('scope').orElse(Scoped.SINGLETON);
     this.eager = metadata.get<boolean>('eager').orElse(false);
     this.binding = metadata.get<ComponentInjectType[]>('binding').orElse([this.name]);
 
@@ -37,4 +50,4 @@ class Component<T = unknown, D = Record<ComponentInjectType, unknown>> {
   }
 }
 
-export { Component, ComponentInjectType };
+export { Component, ComponentInjectType, ComponentType, Scoped, ComponentTypeValue, ScopedValue };

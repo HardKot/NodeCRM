@@ -1,5 +1,14 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
-import { Component, ComponentInjectType, Scoped, ComponentType } from '../component';
+import {
+  Component,
+  ComponentInjectType,
+  ComponentType,
+  ComponentTypeValue,
+  Scoped,
+  SourceComponentParser,
+} from '../component';
+import { Types } from '../../utils';
+import { SourceMetadataParser } from '../metadata';
 
 type ObjectInstance = Object & {
   postConstructor?: () => Promise<void>;
@@ -13,7 +22,7 @@ type ComponentBindingsMap = Map<ComponentInjectType, Component<ComponentInstance
 class ContainerError extends Error {}
 
 class Container {
-  static async create(components: Component<any>[]) {
+  static async create(components: any[]) {
     const container = new Container(components);
     await container.build();
 
@@ -46,25 +55,27 @@ class Container {
     }
   }
 
-  public async get(binding: ComponentInjectType) {
+  public async get<T extends ComponentInstance>(binding: ComponentInjectType): Promise<T | null> {
     const component = this.bindings.get(binding);
 
     if (!component) return null;
     if (component.scope === Scoped.SINGLETON) {
-      return await this.initSingletonComponent(component);
+      return (await this.initSingletonComponent(component)) as T;
     }
     if (component.scope === Scoped.SCOPED) {
-      return await this.initScopedComponent(component);
+      return (await this.initScopedComponent(component)) as T;
     }
     if (component.scope === Scoped.TRANSIENT) {
-      return await this.initTransientComponent(component);
+      return (await this.initTransientComponent(component)) as T;
     }
-    return await this.initComponent(component);
+    return (await this.initComponent(component)) as T;
   }
 
-  public async type(type: ComponentType) {
+  public async type(type: ComponentTypeValue | number) {
     const instances = [];
     const components = new Set(this.bindings.values());
+    if (Types.isString(type)) type = ComponentType[type];
+
     for (const component of components.values()) {
       if (component.type !== type) continue;
       instances.push({

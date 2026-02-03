@@ -845,11 +845,12 @@ new SchemaField(schema: Record<string, BaseField>, required: boolean)
 ```
 
 **Пример**:
+
 ```javascript
-const addressField = new SchemaField({
-  city: new ScalarField('string', true),
-  street: new ScalarField('string', true),
-  zip: new ScalarField('string', false)
+const addressField = new Schema({
+    city: new ScalarField('string', true),
+    street: new ScalarField('string', true),
+    zip: new ScalarField('string', false)
 }, true);
 ```
 
