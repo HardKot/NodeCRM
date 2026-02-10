@@ -213,7 +213,7 @@ NodeCRM/
 │   │
 │   ├── space/                # Virtual Space
 │   │   ├── virtualSpace.ts   # Управление модулями
-│   │   └── code.js           # Выполнение кода
+│   │   └── code.ts           # Выполнение кода
 │   │
 │   ├── security/             # Безопасность
 │   │   ├── jwtService.js     # JWT-токены

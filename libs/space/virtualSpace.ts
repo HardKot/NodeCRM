@@ -1,112 +1,108 @@
 import * as fs from 'node:fs';
 import * as fsp from 'node:fs/promises';
-import * as events from 'node:events';
 import * as path from 'node:path';
+import * as module from 'node:module';
+import * as events from 'node:events';
 
 import { Code } from './code';
-import { StringUtils } from '../utils';
+import { ISpace } from './ISpace';
+import { defaultModuleExtractor, ModuleExtractor } from './moduleExtractor';
+import { Module, RootModule } from '../core';
 
-class VirtualSpaceError extends Error {}
+interface VirtualSpaceConfig {
+  path?: string;
+  context?: Record<string, any>;
+  watchTimeout?: number;
+  rootModuleName?: string;
+  rootExtractor?: ModuleExtractor;
+  preprocessor?: (code: string) => string;
+}
 
-class VirtualSpace {
-  static async factory(config = {}) {
-    const space = new VirtualSpace({
-      path: config.path,
-      context: config.context,
-      watchTimeout: config.watchTimeout,
-      rootModuleName: config.rootModuleName,
-      rootExtractor: config.rootExtractor,
-    });
+class VirtualSpace extends events.EventEmitter implements ISpace {
+  static async factory(config: VirtualSpaceConfig = {}) {
+    const space = new VirtualSpace(
+      config.path,
+      config.context,
+      config.watchTimeout,
+      config.rootModuleName,
+      config.rootExtractor,
+      config.preprocessor
+    );
 
-    await space.#load();
-    space.#watch();
+    await space.load();
+    space.watch();
 
     return space;
   }
 
-  #eventEmitter = new events.EventEmitter();
-  #abortController = new AbortController();
-  #codes = new Map();
-  #modules = new Map();
+  private codes = new Map();
+  private modules = new Map();
+  public current: Module = RootModule.Instance;
 
-  constructor(config = {}) {
-    if (!config.path) {
-      this.path = process.cwd();
-    } else if (path.isAbsolute(config.path)) {
-      this.path = config.path;
-    } else {
-      this.path = path.join(process.cwd(), config.path);
-    }
-
-    this.watchTimeout = config.watchTimeout ?? 500;
-    this.codeContext = config.context ?? {};
-
-    this.rootName = config.rootModuleName ?? 'app.module';
-    this.rootExtractor = config.rootExtractor ?? this.#defaultRootExtractor.bind(this);
-
+  constructor(
+    readonly path: string = process.cwd(),
+    readonly codeContext = {},
+    readonly watchTimeout = 500,
+    readonly rootName = 'app.module',
+    readonly extractor: ModuleExtractor = defaultModuleExtractor,
+    readonly preprocessor?: (code: string) => string
+  ) {
+    super();
     Object.freeze(this);
   }
 
-  get current() {
-    const module = this.get(this.rootName);
-    return this.rootExtractor(module);
-  }
-
-  getAll() {
-    return this.#modules.values().toArray();
-  }
-
-  get(name) {
-    if (!name.endsWith('.module')) name += '.module';
-    return this.#modules.get(name);
-  }
-
-  onChange(listener) {
-    return this.#eventEmitter.on('update', listener);
-  }
-
-  async #load() {
-    this.#eventEmitter.emit('preLoad');
-
-    const files = await this.#loadFiles();
+  async load() {
+    this.modules.clear();
+    const files = await this.loadFiles();
 
     for (const file of files) {
-      const moduleName = this.#getModuleName(file);
+      const moduleName = this.getModuleName(file);
       if (!moduleName.endsWith('.module')) continue;
 
-      const module = this.#loadCode(file);
-      this.#modules.set(moduleName, await module.exports);
-    }
-
-    this.#eventEmitter.emit('postLoad');
-  }
-
-  async #watch() {
-    let timeoutId = null;
-
-    const watcher = fsp.watch(this.path, {
-      recursive: true,
-      signal: this.#abortController.signal,
-      encoding: 'utf-8',
-      persistent: false,
-    });
-
-    for await (const _ of watcher) {
-      clearTimeout(timeoutId);
-
-      timeoutId = setTimeout(async () => {
-        try {
-          this.#codes.clear();
-          await this.#load();
-          this.#eventEmitter.emit('update', this);
-        } catch (e) {
-          this.#eventEmitter.emit('error', e);
-        }
-      }, timeoutId);
+      const module = this.loadCode(file);
+      this.modules.set(moduleName, await module.exports);
     }
   }
 
-  async #loadFiles() {
+  watch() {
+    let timeoutId: NodeJS.Timeout | null = null;
+
+    fs.watch(
+      this.path,
+      {
+        recursive: true,
+        encoding: 'utf-8',
+        persistent: false,
+      },
+      () => {
+        if (timeoutId !== null) clearTimeout(timeoutId);
+
+        timeoutId = setTimeout(this.load.bind(this), this.watchTimeout);
+      }
+    );
+  }
+
+  onUpdate(listener: (module: Module) => void) {
+    const EVENT_NAME = 'update';
+    this.on(EVENT_NAME, listener);
+    return () => this.off(EVENT_NAME, listener);
+  }
+
+  [Symbol.asyncIterator]() {
+    let resolver: { (value: Module): void };
+
+    this.onUpdate(module => resolver?.(module));
+
+    return {
+      next() {
+        return new Promise(resolve => {
+          resolver = resolve;
+        });
+      },
+    };
+  }
+
+  private async loadFiles() {
     const results = [];
     const dirs = [this.path];
 
@@ -129,16 +125,14 @@ class VirtualSpace {
     return results;
   }
 
-  #loadCode(absolutePath) {
-    const moduleName = this.#getModuleName(absolutePath);
+  private loadCode(absolutePath: string) {
+    const moduleName = this.getModuleName(absolutePath);
 
-    if (this.#codes.has(moduleName)) {
-      return this.#codes.get(moduleName);
-    }
-    if (!fs.existsSync(absolutePath)) {
-      return null;
-    }
-    const source = fs.readFileSync(absolutePath, 'utf-8');
+    if (this.codes.has(moduleName)) return this.codes.get(moduleName)!;
+    if (!fs.existsSync(absolutePath)) return null;
+
+    let source = fs.readFileSync(absolutePath, 'utf-8');
+    if (this.preprocessor) source = this.preprocessor(source);
     let name = path.basename(absolutePath);
 
     if (name === 'index') name = path.dirname(absolutePath);
@@ -146,29 +140,29 @@ class VirtualSpace {
     const code = new Code(source, {
       name: name,
       dirname: path.dirname(absolutePath),
-      createRequire: this.#createRequire.bind(this),
+      createRequire: this.createRequire.bind(this),
       context: this.codeContext,
     });
-    code.autoLoad();
-    this.#codes.set(moduleName, code);
+    code.load();
+    this.codes.set(moduleName, code);
     return code;
   }
 
-  #createRequire(relativePath) {
-    const originRequire = createRequire(relativePath);
+  private createRequire(relativePath: string) {
+    const originRequire = module.createRequire(relativePath);
     const self = this;
 
-    function require(modulePath) {
+    function require(modulePath: string) {
       if (path.isAbsolute(modulePath)) {
         if (path.relative(self.path, modulePath).startsWith('..')) {
           return originRequire(modulePath);
         }
 
         if (Code.supportExtension.includes(path.extname(modulePath)))
-          return self.#loadCode(modulePath)?.exports;
+          return self.loadCode(modulePath)?.exports;
 
         for (const ext of Code.supportExtension) {
-          const module = self.#loadCode(`${modulePath}${ext}`)?.exports;
+          const module = self.loadCode(`${modulePath}${ext}`)?.exports;
           if (module) return module;
         }
 
@@ -181,30 +175,11 @@ class VirtualSpace {
     return require;
   }
 
-  #getModuleName(absolutePath) {
+  private getModuleName(absolutePath: string) {
     let moduleName = path.relative(this.path, absolutePath);
     moduleName = moduleName.replace(path.parse(moduleName).ext, '');
     return moduleName;
   }
-
-  #defaultRootExtractor(module) {
-    if (module?.default) return module.default;
-    const keyWithoutExt = this.rootName.replace(/\.module$/, '');
-    const keyWithExt = `${keyWithoutExt}.module`;
-
-    const keys = [
-      StringUtils.factoryPascalCase(...keyWithoutExt.split('.')),
-      StringUtils.factoryPascalCase(...keyWithExt.split('.')),
-
-      StringUtils.factoryCamelCase(...keyWithoutExt.split('.')),
-      StringUtils.factoryCamelCase(...keyWithExt.split('.')),
-    ];
-    for (const key of keys) {
-      if (module?.[key]) return module?.[key];
-    }
-
-    return module;
-  }
 }
 
-module.exports = { VirtualSpace, VirtualSpaceError };
+export { VirtualSpace };

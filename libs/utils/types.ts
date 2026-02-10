@@ -40,6 +40,10 @@ export class Types {
     return ['number', 'bigint', 'boolean', 'string', 'undefined', 'symbol'].includes(typeof v);
   }
 
+  static isPromise(v: any): v is Promise<any> {
+    return v instanceof Promise;
+  }
+
   static isNull(v: any): v is null {
     return v === null;
   }

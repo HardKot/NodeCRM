@@ -24,10 +24,13 @@ class InstanceError extends Error {}
 
 class Instance extends EventEmitter {
   public static async create(
-    moduleSource: InstanceModule,
+    moduleSource: InstanceModule | Promise<InstanceModule>,
     logger: Logger,
     plugins: Plugins[] = []
   ) {
+    if (Types.isPromise(moduleSource)) {
+      moduleSource = await moduleSource;
+    }
     const instance = new Instance(moduleSource, logger, plugins);
     await instance.build();
     return instance;
