@@ -440,7 +440,7 @@ handler.$body = {
 ### Сложные схемы с использованием классов
 
 ```javascript
-const { ScalarField, SchemaField, ArrayField, EnumField } = require('../libs/core/schema/fields');
+const {ScalarField, SchemaField, ArrayField, EnumField} = require('../libs/schema/fields');
 
 // Enum
 const statusField = new EnumField(['active', 'inactive', 'pending'], true);
@@ -464,7 +464,7 @@ handler.$body = userSchema;
 ### Кастомная валидация
 
 ```javascript
-const { BaseField, Result, ValidateError } = require('../libs/core/schema/fields');
+const {BaseField, Result, ValidateError} = require('../libs/schema/fields');
 
 class EmailField extends BaseField {
   validate(value) {
@@ -474,7 +474,7 @@ class EmailField extends BaseField {
     }
     return Result.success(null);
   }
-  
+
   transform(value) {
     return value?.toLowerCase().trim();
   }

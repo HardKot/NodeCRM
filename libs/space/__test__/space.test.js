@@ -1,8 +1,5 @@
 const path = require('node:path');
 
-jest.mock('node:fs');
-jest.mock('node:fs/promises', () => jest.requireMock('node:fs').promise);
-
 const fs = require('node:fs');
 const { VirtualSpace } = require('../virtualSpace.js');
 

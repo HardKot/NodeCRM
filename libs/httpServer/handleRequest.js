@@ -2,7 +2,7 @@ const querystring = require('node:querystring');
 const stream = require('node:stream');
 const streamWeb = require('node:stream/web');
 
-const { Field, Schema } = require('../core/schema/index.js');
+const { Field, Schema } = require('../schema/index.js');
 
 class HandleRequest {
   #consumer;

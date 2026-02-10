@@ -1,0 +1,3 @@
+class MockProviders {}
+
+exports = { MockProviders };

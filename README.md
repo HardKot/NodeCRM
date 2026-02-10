@@ -212,7 +212,7 @@ NodeCRM/
 │   │   └── httpError.js      # Обработка ошибок
 │   │
 │   ├── space/                # Virtual Space
-│   │   ├── virtualSpace.js   # Управление модулями
+│   │   ├── virtualSpace.ts   # Управление модулями
 │   │   └── code.js           # Выполнение кода
 │   │
 │   ├── security/             # Безопасность

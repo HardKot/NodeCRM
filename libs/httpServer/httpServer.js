@@ -3,7 +3,7 @@ const http2 = require('node:http2');
 const { Request } = require('./request.js');
 const { Response } = require('./response.js');
 const { Routes } = require('./routes.js');
-const { InstanceEvent } = require('../core/index.js');
+const { InstanceEvent } = require('../application/index.js');
 
 class HttpServerError extends Error {
   constructor(message, code) {
