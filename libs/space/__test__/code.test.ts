@@ -116,8 +116,8 @@ describe('Code', () => {
 
     const code = new Code(
       `
-        import fs from 'fs';
-        import path from 'path'; 
+        import * as fs from 'fs';
+        import * as path from 'path'; 
        
         export  { fs, path };
       `,

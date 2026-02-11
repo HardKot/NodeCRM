@@ -212,7 +212,7 @@ NodeCRM/
 │   │   └── httpError.js      # Обработка ошибок
 │   │
 │   ├── space/                # Virtual Space
-│   │   ├── virtualSpace.ts   # Управление модулями
+│   │   ├── space.ts   # Управление модулями
 │   │   └── code.ts           # Выполнение кода
 │   │
 │   ├── security/             # Безопасность
@@ -357,10 +357,10 @@ endpoint.$access = async (session) => {
 Virtual Space - это изолированная среда для загрузки и выполнения модулей с поддержкой hot reload.
 
 ```javascript
-VirtualSpace.factory({
-  path: path.join(process.cwd(), 'src'),  // Путь к модулям
-  watchTimeout: 500,                       // Задержка перед перезагрузкой
-  rootModuleName: 'app.module'            // Имя корневого модуля
+Space.factory({
+    path: path.join(process.cwd(), 'src'),  // Путь к модулям
+    watchTimeout: 500,                       // Задержка перед перезагрузкой
+    rootModuleName: 'app.module'            // Имя корневого модуля
 })
 ```
 
@@ -624,16 +624,16 @@ await container.runScope(async () => {
 });
 ```
 
-### VirtualSpace
+### Space
 
 Управление модулями с hot reload.
 
 ```javascript
-const space = await VirtualSpace.factory({
-  path: './src',                   // Путь к модулям
-  watchTimeout: 500,               // Задержка hot reload
-  rootModuleName: 'app.module',   // Корневой модуль
-  context: { env: 'development' }  // Контекст выполнения
+const space = await Space.factory({
+    path: './src',                   // Путь к модулям
+    watchTimeout: 500,               // Задержка hot reload
+    rootModuleName: 'app.module',   // Корневой модуль
+    context: {env: 'development'}  // Контекст выполнения
 });
 
 // Получить текущий модуль
@@ -644,7 +644,7 @@ const userModule = space.get('user.module');
 
 // Подписаться на изменения
 space.onChange((space) => {
-  console.log('Modules reloaded');
+    console.log('Modules reloaded');
 });
 ```
 
@@ -771,26 +771,27 @@ pnpm precommit
 ### Конфигурация для разработки
 
 **main.js** (разработка)
+
 ```javascript
 Application.build()
-  .clusterCount(1)  // Один процесс для отладки
-  .module(
-    VirtualSpace.factory({
-      path: path.join(process.cwd(), 'src'),
-      watchTimeout: 100  // Быстрый reload для разработки
-    })
-  )
-  .plugins([
-    HttpServer.factory({
-      port: 3000,
-      host: 'localhost',
-      tls: {
-        key: fs.readFileSync('./certs/server.key'),
-        cert: fs.readFileSync('./certs/server.crt')
-      }
-    })
-  ])
-  .run();
+    .clusterCount(1)  // Один процесс для отладки
+    .module(
+        Space.factory({
+            path: path.join(process.cwd(), 'src'),
+            watchTimeout: 100  // Быстрый reload для разработки
+        })
+    )
+    .plugins([
+        HttpServer.factory({
+            port: 3000,
+            host: 'localhost',
+            tls: {
+                key: fs.readFileSync('./certs/server.key'),
+                cert: fs.readFileSync('./certs/server.crt')
+            }
+        })
+    ])
+    .run();
 ```
 
 ### Отладка

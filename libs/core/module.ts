@@ -11,16 +11,17 @@ interface ModuleHook {
 export type Namespace = string | symbol;
 
 class Module {
+  public components: Component<any, any>[] = [];
   constructor(
     public readonly name: string | symbol,
-    public readonly components: Component<any, any>[] = [],
+    components: Component<any, any>[] = [],
     private readonly hooks: ModuleHook = {},
     private readonly imports: Module[] = [],
     public readonly schemaRegistry: SchemaRegistry = new SchemaRegistry()
   ) {
-    this.components.forEach(component => {
-      component.module = this;
-    });
+    this.components = this.components
+      .concat(this.imports.map(it => it.components).flat())
+      .concat(components);
     Object.freeze(this);
   }
 

@@ -22,12 +22,12 @@ const path = require('node:path');
 const fs = require('node:fs');
 const { Application } = require('./libs/core');
 const { HttpServer } = require('./libs/httpServer');
-const { VirtualSpace } = require('./libs/space');
+const { Space } = require('./libs/space');
 
 Application.build()
   .clusterCount(1)
   .module(
-    VirtualSpace.factory({
+    Space.factory({
       path: path.join(process.cwd(), 'src')
     })
   )

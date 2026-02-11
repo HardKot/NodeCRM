@@ -1,3 +1,0 @@
-class MockProviders {}
-
-exports = { MockProviders };

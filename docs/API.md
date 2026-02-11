@@ -51,9 +51,10 @@ Application.build()
 **Возвращает**: `ApplicationBuilder`
 
 **Пример**:
+
 ```javascript
 Application.build()
-  .module(VirtualSpace.factory({ path: './src' }))
+    .module(Space.factory({path: './src'}))
 ```
 
 ---
@@ -316,13 +317,13 @@ if (result.isSuccess) {
 
 ---
 
-### VirtualSpace
+### Space
 
 Управляет загрузкой и hot reload модулей.
 
 #### Методы
 
-##### `VirtualSpace.factory(config): Promise<VirtualSpace>`
+##### `Space.factory(config): Promise<Space>`
 
 Создает и инициализирует Virtual Space.
 
@@ -333,15 +334,16 @@ if (result.isSuccess) {
 - `config.context?: object` - контекст выполнения кода
 - `config.rootExtractor?: Function` - функция извлечения корневого модуля
 
-**Возвращает**: `Promise<VirtualSpace>`
+**Возвращает**: `Promise<Space>`
 
 **Пример**:
+
 ```javascript
-const space = await VirtualSpace.factory({
-  path: path.join(process.cwd(), 'src'),
-  watchTimeout: 500,
-  rootModuleName: 'app.module',
-  context: { env: process.env.NODE_ENV }
+const space = await Space.factory({
+    path: path.join(process.cwd(), 'src'),
+    watchTimeout: 500,
+    rootModuleName: 'app.module',
+    context: {env: process.env.NODE_ENV}
 });
 ```
 
@@ -983,7 +985,7 @@ instance.on('UPDATE', () => {
 });
 ```
 
-### VirtualSpace Events
+### Space Events
 
 ```javascript
 space.on('preLoad', () => {

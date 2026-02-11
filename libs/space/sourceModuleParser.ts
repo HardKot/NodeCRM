@@ -27,6 +27,7 @@ interface ModuleSourceClass extends ModuleSource {
 }
 
 class SourceModuleParser extends SourceParser<Module> {
+  private moduleStore: Map<ModuleSource, Module> = new Map();
   constructor(private componentParser: SourceComponentParser) {
     super();
   }
@@ -94,13 +95,19 @@ class SourceModuleParser extends SourceParser<Module> {
   }
 
   private modulePreprocess(name: string | symbol, source: ModuleSource) {
-    const metadataRegistry = this.extractMetadata(source);
+    if (this.moduleStore.has(source)) {
+      return this.moduleStore.get(source)!;
+    }
+    // const metadataRegistry = this.extractMetadata(source);
     const hooks = this.extractHooks(source);
     const imports = this.extractImports(source);
     const components = this.extractComponents(source);
 
-    return new Module(name || Symbol(), components, hooks, imports);
+    const module = new Module(name || Symbol(), components, hooks, imports);
+    this.moduleStore.set(source, module);
+
+    return module;
   }
 }
 
-export { SourceModuleParser };
+export { SourceModuleParser, ModuleSource };

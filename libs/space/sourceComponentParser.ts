@@ -1,5 +1,5 @@
 import { SourceParser } from '../utils';
-import { Component, Metadata } from '../core';
+import { Component, Metadata, Module } from '../core';
 import {
   ClassWithMetadata,
   FunctionWithMetadata,
@@ -10,6 +10,7 @@ import {
 interface ComponentParserOptions {
   name?: symbol;
   metadata?: Metadata;
+  module?: Module;
 }
 
 interface ObjectComponent extends ObjectWithMetadata {
@@ -30,6 +31,7 @@ class SourceComponentParser extends SourceParser<Component, ComponentParserOptio
       source.name ?? options?.name ?? Symbol(),
       source.factory ?? (() => source),
       options?.metadata ?? this.metadataParser.parseObject(source),
+      options.module,
       source
     );
   }
@@ -38,6 +40,7 @@ class SourceComponentParser extends SourceParser<Component, ComponentParserOptio
       source.name ?? options?.name ?? Symbol(),
       deps => source.bind(deps),
       options?.metadata ?? this.metadataParser.parseFunction(source),
+      options.module,
       source
     );
   }
@@ -46,6 +49,7 @@ class SourceComponentParser extends SourceParser<Component, ComponentParserOptio
       source.name ?? options?.name ?? Symbol(),
       deps => new source(...Object.values(deps)),
       options?.metadata ?? this.metadataParser.parseClass(source),
+      options.module,
       source
     );
   }

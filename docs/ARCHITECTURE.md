@@ -296,8 +296,8 @@ Application.build()
 **Применение**: Создание компонентов и плагинов
 
 ```javascript
-VirtualSpace.factory({ path: './src' });
-HttpServer.factory({ port: 3000 });
+Space.factory({path: './src'});
+HttpServer.factory({port: 3000});
 ```
 
 ### 4. Observer Pattern

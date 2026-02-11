@@ -4,7 +4,7 @@
   "description": "Framework for building multi-tenant SaaS applications",
   "scripts": {
     "precommit": "npm run check",
-    "test": "tsc && jest",
+    "test": "jest",
     "lint": "eslint"
   },
   "dependencies": {

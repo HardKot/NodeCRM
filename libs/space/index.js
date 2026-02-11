@@ -1,3 +1,3 @@
-const { VirtualSpace, VirtualSpaceError } = require('./virtualSpace');
+const { VirtualSpace, VirtualSpaceError } = require('./space');
 
 module.exports = { VirtualSpace, VirtualSpaceError };

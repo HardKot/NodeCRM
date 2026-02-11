@@ -40,7 +40,7 @@ class Code<T = Object> {
     public relative = '.',
     pathTo = path.join(dirname, relative, name),
 
-    context: Record<string, any> = EMPTY_CONTEXT,
+    context: Record<string, any> = DEFAULT_CONTEXT,
     private runOptions: vm.RunningScriptOptions = { timeout: 1000 }
   ) {
     if (Types.isString(type)) {
@@ -82,7 +82,7 @@ class Code<T = Object> {
       lineOffset: useStrict ? -2 : -1,
     });
 
-    const closure = script.runInContext(Object.freeze(this.context), this.runOptions);
+    const closure = script.runInContext(this.context, this.runOptions);
     this.exports = this.exportCommon(closure);
 
     return this.exports;
@@ -100,6 +100,7 @@ class Code<T = Object> {
 
   private async loadESM(source?: string) {
     if (!source) source = this.source;
+
     const esmModule = new vm.SourceTextModule(source, {
       context: this.context,
       identifier: this.path,
@@ -122,6 +123,9 @@ class Code<T = Object> {
       sourceUrl: this.path,
     });
 
+    if (this.detectESMSyntax(source)) {
+      return this.loadESM(source);
+    }
     return this.loadCommonJS(source);
   }
 
@@ -131,7 +135,25 @@ class Code<T = Object> {
     if (ext === '.mjs') return 'ESM';
     if (ext === '.cjs') return 'COMMONJS';
 
+    if (ext === '.js') {
+      const hasESMSyntax = this.detectESMSyntax(this.source);
+      if (hasESMSyntax) return 'ESM';
+    }
+
     return 'COMMONJS';
+  }
+
+  private detectESMSyntax(source: string): boolean {
+    const withoutComments = source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*/g, '');
+
+    const esmPatterns = [
+      /^\s*import\s+/m,
+      /^\s*export\s+/m,
+      /^\s*export\s+default\s+/m,
+      /^\s*import\s*\(/m,
+    ];
+
+    return esmPatterns.some(pattern => pattern.test(withoutComments));
   }
 
   private requireDependency(modulePath: string, extra?: Object) {
@@ -141,8 +163,30 @@ class Code<T = Object> {
     if (!extra) return this.require(modulePath);
     return this.require(modulePath, extra);
   }
+
+  private async requireDependencyAsync(modulePath: string, extra?: Object): Promise<any> {
+    try {
+      if (!modulePath.startsWith('.') && !path.isAbsolute(modulePath)) {
+        return await this.require(modulePath);
+      }
+
+      if (path.isAbsolute(modulePath) || modulePath.startsWith('.')) {
+        modulePath = path.resolve(path.dirname(this.path), modulePath);
+      }
+
+      const result = extra ? this.require(modulePath, extra) : this.require(modulePath);
+
+      if (Types.isPromise(result)) return await result;
+      return result;
+    } catch (error) {
+      throw new CodeError(
+        `Failed to import module "${modulePath}": ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
+  }
+
   private async esmLinker(specifier: string, _: vm.Module, extra?: Object) {
-    const imported = await this.requireDependency(specifier, extra);
+    const imported = await this.requireDependencyAsync(specifier, extra);
     const exportNames = Object.keys(imported);
 
     const syntheticModule = new vm.SyntheticModule(
@@ -166,8 +210,8 @@ class Code<T = Object> {
   static supportExtension = Object.freeze(['.js', '.cjs', '.mjs', '.ts']);
 }
 
-const EMPTY_CONTEXT = Object.freeze({});
-const DEFAULT_CONTEXT = Object.freeze({
+const EMPTY_CONTEXT = {};
+const DEFAULT_CONTEXT = {
   AbortController,
   AbortSignal,
   Event,
@@ -201,13 +245,13 @@ const DEFAULT_CONTEXT = Object.freeze({
   DecompressionStream,
   CountQueuingStrategy,
   fetch,
-});
-const NODE_CONTEXT = Object.freeze({
+};
+const NODE_CONTEXT = {
   ...DEFAULT_CONTEXT,
   global,
   process,
   console,
-});
+};
 
 const CodeType = Object.freeze({
   COMMONJS: 0,

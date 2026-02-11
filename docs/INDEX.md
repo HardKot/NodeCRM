@@ -26,6 +26,16 @@
    - Работа с БД
    - Готовые решения
 
+### Специализированные темы
+
+- **[Поддержка ESM (ESM_SUPPORT.md)](./ESM_SUPPORT.md)**
+  - ECMAScript Modules
+  - Определение типов модулей
+  - Загрузка ESM модулей
+  - TypeScript ESM
+  - Миграция с CommonJS на ESM
+  - Лучшие практики
+
 ### Для продвинутых
 
 4. **[Архитектура (ARCHITECTURE.md)](./ARCHITECTURE.md)**
@@ -111,7 +121,7 @@
 ### ARCHITECTURE.md - Архитектура
 - Обзор архитектуры
 - Уровни приложения
-- Ключевые компоненты (Application, Instance, Container, Module, Component, Command, VirtualSpace, Schema)
+- Ключевые компоненты (Application, Instance, Container, Module, Component, Command, Space, Schema)
 - Паттерны проектирования
 - Потоки данных (HTTP request, module loading, dependency resolution)
 - Расширяемость (custom components, plugins, schemas)
@@ -120,7 +130,7 @@
 - Мониторинг и отладка
 
 ### API.md - Справочник API
-- Core API (Application, Container, Module, Component, Command, VirtualSpace, Session)
+- Core API (Application, Container, Module, Component, Command, Space, Session)
 - Utility API (Result, Optional, Types, ObjectUtils, StringUtils)
 - Schema API (BaseField, ScalarField, ArrayField, SchemaField, EnumField)
 - Plugin API (HttpServer, Logger)
@@ -203,7 +213,7 @@
 - **Module** → [API.md](./API.md#module), [ARCHITECTURE.md](./ARCHITECTURE.md#4-module)
 - **Component** → [API.md](./API.md#component), [ARCHITECTURE.md](./ARCHITECTURE.md#5-component)
 - **Command** → [API.md](./API.md#command), [ARCHITECTURE.md](./ARCHITECTURE.md#6-command)
-- **VirtualSpace** → [API.md](./API.md#virtualspace), [ARCHITECTURE.md](./ARCHITECTURE.md#7-virtual-space)
+- **Space** → [API.md](./API.md#virtualspace), [ARCHITECTURE.md](./ARCHITECTURE.md#7-virtual-space)
 - **Schema** → [API.md](./API.md#schema-api), [ARCHITECTURE.md](./ARCHITECTURE.md#8-schema-system)
 - **HttpServer** → [API.md](./API.md#httpserver)
 - **Session** → [API.md](./API.md#session)
