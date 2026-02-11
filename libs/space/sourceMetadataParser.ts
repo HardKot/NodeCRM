@@ -21,7 +21,7 @@ interface ClassWithMetadata {
 
 type MetadataSource = ObjectWithMetadata | FunctionWithMetadata | ClassWithMetadata;
 
-class SourceMetadataParser extends SourceParser {
+class SourceMetadataParser extends SourceParser<Metadata> {
   override parseObject(source: ObjectWithMetadata) {
     return new Metadata(
       Object.entries(source)

@@ -82,7 +82,7 @@ class Instance extends EventEmitter {
   private combineComponents(module: Module, plugins: Plugins[]) {
     const pluginComponents = plugins.map(it => it.components ?? []).flat();
 
-    return [pluginComponents, module.components].flat();
+    return module.components.concat(pluginComponents);
   }
 
   private async buildContainer() {

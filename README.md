@@ -358,9 +358,9 @@ Virtual Space - это изолированная среда для загруз
 
 ```javascript
 Space.factory({
-    path: path.join(process.cwd(), 'src'),  // Путь к модулям
-    watchTimeout: 500,                       // Задержка перед перезагрузкой
-    rootModuleName: 'app.module'            // Имя корневого модуля
+  path: path.join(process.cwd(), 'src'),  // Путь к модулям
+  watchTimeout: 500,                       // Задержка перед перезагрузкой
+  rootModule: 'app.module'            // Имя корневого модуля
 })
 ```
 
@@ -630,10 +630,10 @@ await container.runScope(async () => {
 
 ```javascript
 const space = await Space.factory({
-    path: './src',                   // Путь к модулям
-    watchTimeout: 500,               // Задержка hot reload
-    rootModuleName: 'app.module',   // Корневой модуль
-    context: {env: 'development'}  // Контекст выполнения
+  path: './src',                   // Путь к модулям
+  watchTimeout: 500,               // Задержка hot reload
+  rootModule: 'app.module',   // Корневой модуль
+  context: {env: 'development'}  // Контекст выполнения
 });
 
 // Получить текущий модуль
@@ -644,7 +644,7 @@ const userModule = space.get('user.module');
 
 // Подписаться на изменения
 space.onChange((space) => {
-    console.log('Modules reloaded');
+  console.log('Modules reloaded');
 });
 ```
 

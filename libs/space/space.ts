@@ -4,21 +4,45 @@ import * as path from 'node:path';
 import { Code } from './code';
 import { ISpace } from './ISpace';
 import { defaultModuleExtractor, ModuleExtractor } from './moduleExtractor';
-import { Module, RootModule } from '../core';
+import { ComponentTypeValue, Module, RootModule } from '../core';
 import { SourceMetadataParser } from './sourceMetadataParser';
 import { SourceComponentParser } from './sourceComponentParser';
 import { SourceModuleParser } from './sourceModuleParser';
+import { StringUtils } from '../utils';
+
+interface ComponentAssociated {
+  [key: string]: ComponentTypeValue;
+  service: 'PROVIDER';
+  controller: 'CONSUMER';
+}
 
 interface VirtualSpaceConfig {
   path?: string;
-  rootModuleName?: string;
+  rootModule?: string;
   moduleExtractor?: ModuleExtractor;
   watchTimeout?: number;
+  associated?: ComponentAssociated;
 }
+interface ModuleGroup {
+  files: string[];
+  modules: string[];
+}
+
+const ROOT_MODULE_KEY = 'root_module';
+
+const DEFAULT_ASSOCIATED: ComponentAssociated = {
+  service: 'PROVIDER',
+  controller: 'CONSUMER',
+};
 
 class Space implements ISpace {
   static async factory(config: VirtualSpaceConfig = {}) {
-    const space = new Space(config.path, config.rootModuleName, config.moduleExtractor);
+    const space = new Space(
+      config.path,
+      config.rootModule,
+      config.moduleExtractor,
+      config.associated
+    );
 
     await space.load();
 
@@ -27,31 +51,30 @@ class Space implements ISpace {
 
   public current: Module = RootModule.Instance;
   private modules: Map<string | symbol, Module> = new Map();
+  private moduleGraph: Map<string, ModuleGroup> = new Map();
+
   private metadataParser = new SourceMetadataParser();
   private componentParser = new SourceComponentParser(this.metadataParser);
   private moduleParser = new SourceModuleParser(this.componentParser);
 
   constructor(
     readonly path: string = process.cwd(),
-    readonly rootName = 'AppModule',
-    readonly extractor: ModuleExtractor = defaultModuleExtractor
+    readonly rootName = ROOT_MODULE_KEY,
+    readonly extractor: ModuleExtractor = defaultModuleExtractor,
+    readonly associated: ComponentAssociated = DEFAULT_ASSOCIATED
   ) {}
 
   async load() {
     const spaceFiles = await this.loadSpaceFiles();
 
-    const modulesCodes = await Promise.all(spaceFiles.map(it => this.loadCode(it)));
-    const modulesEntries = modulesCodes
-      .map(it => this.getModuleFromCode(it))
-      .map(it => [it.name, it] as [string, Module]);
+    this.moduleGraph = this.groupFilesByModule(spaceFiles);
 
-    this.modules = new Map<string, Module>(modulesEntries);
-
-    this.current = RootModule.Instance;
-
-    if (this.modules.has(this.rootName)) {
-      this.current = this.modules.get(this.rootName)!;
+    for (const modulePath of this.moduleGraph.keys()) {
+      await this.linkModuleFromPath(modulePath);
     }
+
+    this.moduleGraph.clear();
+    this.current = this.modules.get(this.rootName) ?? RootModule.Instance;
   }
 
   private async loadSpaceFiles() {
@@ -85,14 +108,20 @@ class Space implements ISpace {
     return (await import(absolutePath)) as T;
   }
 
-  private getModuleFromCode(code: unknown) {
-    const moduleSource = this.extractor(code);
+  private async moduleFromPath(modulePath: string) {
+    let module: Module = RootModule.Instance;
+    if (modulePath === ROOT_MODULE_KEY) return module;
 
+    const code = await this.loadCode(modulePath);
+    const moduleSource = this.extractor(code, modulePath);
     return this.moduleParser.parse(moduleSource);
   }
 
-  private groupFilesByModule(files: string[]): Map<string, string[]> {
-    const groups = new Map<string, string[]>();
+  private groupFilesByModule(files: string[]): Map<string, ModuleGroup> {
+    const groups = new Map<string, ModuleGroup>();
+    groups.set(ROOT_MODULE_KEY, { files: [], modules: [] });
+    let currentModule: string | null = null;
+    let currentModuleDir: string | null = null;
 
     const sortedFiles = files
       .map(it => ({
@@ -110,8 +139,78 @@ class Space implements ISpace {
         return a.path.localeCompare(b.path);
       });
 
+    for (const file of sortedFiles) {
+      if (file.parsed.name.endsWith('.module')) {
+        if (currentModule && currentModuleDir && file.dir.startsWith(currentModuleDir + path.sep)) {
+          groups.get(currentModule)!.modules.push(file.path);
+        }
+
+        currentModule = file.path;
+        currentModuleDir = file.dir;
+
+        if (!groups.has(file.path)) {
+          groups.set(file.path, { files: [], modules: [] });
+        }
+      } else {
+        if (currentModule && currentModuleDir && file.dir.startsWith(currentModuleDir)) {
+          groups.get(currentModule)!.files.push(file.path);
+        } else {
+          groups.get(ROOT_MODULE_KEY)!.files.push(file.path);
+        }
+      }
+    }
+
     return groups;
+  }
+
+  private async linkModuleFromPath(modulePath: string) {
+    const moduleName = this.getModuleNameByPath(modulePath);
+    if (this.modules.has(moduleName)) return this.modules.get(moduleName)!;
+    const group = this.moduleGraph.get(modulePath);
+    if (!group) throw new Error('Module group not found for path: ' + modulePath);
+
+    const module = await this.moduleFromPath(modulePath);
+
+    for (const file of group.files) {
+      const code = await this.loadCode(file);
+      const componentSource = this.extractor(code, file);
+      const componentType = this.getComponentTypeByPath(file);
+
+      const metadata = this.metadataParser.parse(componentSource);
+      if (componentType) metadata.set('type', componentType);
+      metadata.set('sourcePath', file);
+      metadata.set('modulePath', modulePath);
+      metadata.set('relativePath', path.relative(this.path, file));
+
+      this.componentParser.parse(componentSource, {
+        metadata: metadata,
+        module: module,
+      });
+    }
+
+    for (const subModulePath of group.modules) {
+      let subModule: Module = await this.linkModuleFromPath(subModulePath);
+      module.linkModule(subModule);
+    }
+
+    this.modules.set(moduleName, module);
+    return module;
+  }
+
+  private getComponentTypeByPath(filePath: string): ComponentTypeValue | null {
+    const parsed = path.parse(filePath);
+    const extType = parsed.name.split('.').at(-1) ?? '';
+    return this.associated[extType] ?? null;
+  }
+
+  private getModuleNameByPath(modulePath: string): string {
+    if (modulePath === ROOT_MODULE_KEY) return ROOT_MODULE_KEY;
+    const relativePath = path.relative(this.path, modulePath);
+    const parsed = path.parse(relativePath);
+    const name = StringUtils.factoryPascalCase.apply(StringUtils, parsed.name.split('.'));
+    if (!parsed.dir) return name;
+    return `${parsed.dir}/${name}`;
   }
 }
 
-export { Space };
+export { Space, DEFAULT_ASSOCIATED };

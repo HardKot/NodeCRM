@@ -340,10 +340,10 @@ if (result.isSuccess) {
 
 ```javascript
 const space = await Space.factory({
-    path: path.join(process.cwd(), 'src'),
-    watchTimeout: 500,
-    rootModuleName: 'app.module',
-    context: {env: process.env.NODE_ENV}
+  path: path.join(process.cwd(), 'src'),
+  watchTimeout: 500,
+  rootModule: 'app.module',
+  context: {env: process.env.NODE_ENV}
 });
 ```
 

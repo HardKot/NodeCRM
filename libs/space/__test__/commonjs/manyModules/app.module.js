@@ -1,8 +1,3 @@
-const { TestModule } = require('./test.module');
-
-class AppModule {
-  static providers = [];
-  static imports = [TestModule];
-}
+class AppModule {}
 
 exports.AppModule = AppModule;
