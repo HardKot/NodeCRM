@@ -1,32 +1,47 @@
 import { Container } from './container';
-import { Module, Component, ComponentType } from '../core';
+import { Module, Component, ComponentType, Metadata } from '../core';
 import { EventEmitter } from 'node:events';
-import { Command } from './command';
+import { Command, CommandBodyType, CommandReturnsType } from './command';
 import { Logger } from './logger';
 import { Result, Types } from '../utils';
-import { Plugins } from './plugins';
+import { Plugin } from './plugin';
 import { Session } from './session';
 import { SchemaRegistry } from '../schema';
-
-interface InstanceConfig {
-  stdout?: NodeJS.WriteStream;
-  stderr?: NodeJS.WriteStream;
-}
-
-export type InstanceModule = Module | AsyncIterable<Module>;
 
 const InstanceEvent = Object.freeze({
   BUILD: 'build',
   UPDATE: 'update',
 });
 
+export type InstanceModule = Module | AsyncIterable<Module>;
+
+export type ExecCommand = (path: string, body: any, session?: Session, params?: Record<string, any> | null) => Promise<Result<any>>;
+type InstanceEventType = (typeof InstanceEvent)[keyof typeof InstanceEvent];
+
+export interface IInstance {
+  execute: ExecCommand;
+  commandsList: Readonly<Array<CommandInfo>>;
+  on(event: InstanceEventType, listener: () => void): void;
+}
+
+
+export interface CommandInfo {
+  name: string;
+  body: CommandBodyType | null;
+  returns: CommandReturnsType | null;
+  params: Record<string, any> | null;
+  metadata: Metadata;
+
+  description?: string;
+}
+
 class InstanceError extends Error {}
 
-class Instance extends EventEmitter {
+class Instance extends EventEmitter implements IInstance {
   public static async create(
     moduleSource: InstanceModule | Promise<InstanceModule>,
     logger: Logger,
-    plugins: Plugins[] = []
+    plugins: Plugin[] = []
   ) {
     if (Types.isPromise(moduleSource)) {
       moduleSource = await moduleSource;
@@ -38,12 +53,13 @@ class Instance extends EventEmitter {
 
   private module: Module | null = null;
   private container: Container = new Container();
-  private commands: Record<string, Command<any>> = {};
+  private commands: Readonly<Record<string, Command<any>>> = {};
+  public commandsList: Readonly<Array<CommandInfo>> = [];
 
   constructor(
     moduleSource: InstanceModule,
     private readonly logger: Logger,
-    public readonly plugins: Plugins[]
+    public readonly plugins: Plugin[]
   ) {
     super();
 
@@ -57,13 +73,13 @@ class Instance extends EventEmitter {
     this.emit(InstanceEvent.BUILD);
   }
 
-  async execute(path: string, body: any, session = new Session(), params = {}) {
-    const runner = this.commands[path];
+  async execute(name: string, body: any, session = new Session(), params: null | undefined | object) {
+    const runner = this.commands[name];
     if (Types.isNull(runner) || Types.isUndefined(runner)) {
-      return Result.failure(new InstanceError(`Consumer not found at path: ${path}`));
+      return Result.failure(new InstanceError(`Consumer not found: ${name}`));
     }
 
-    return await runner.run(body, session, params);
+    return await runner.run(body, session, params ?? {});
   }
 
   private async subscribeToModuleChanges(source: AsyncIterable<Module>) {
@@ -79,7 +95,7 @@ class Instance extends EventEmitter {
       return source;
     }
   }
-  private combineComponents(module: Module, plugins: Plugins[]) {
+  private combineComponents(module: Module, plugins: Plugin[]) {
     const pluginComponents = plugins.map(it => it.components ?? []).flat();
 
     return module.components.concat(pluginComponents);
@@ -128,6 +144,29 @@ class Instance extends EventEmitter {
 
   private async buildPlugins() {
     await Promise.all(this.plugins.map(it => it.build?.(this)));
+  }
+
+  private generateCommandsList() {
+    const commandsEntries = Object.entries(this.commands);
+    const commandsList: CommandInfo[] = new Array<CommandInfo>(commandsEntries.length,);
+
+    for (let i = 0; i < commandsEntries.length; i++) {
+      const commandEntire = commandsEntries[i];
+      const command = commandEntire[1];
+
+      commandsList[i] = ({
+        name: commandEntire[0],
+        body: command.body,
+        returns: command.returns,
+        params: command.params,
+        description: command.description,
+        metadata: command.metadata,
+      });
+    }
+
+    Object.freeze(commandsList);
+
+    return commandsList;
   }
 }
 

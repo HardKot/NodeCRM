@@ -30,6 +30,13 @@ interface ModuleGroup {
 
 const ROOT_MODULE_KEY = 'root_module';
 
+const SpaceMetadataKey = Object.freeze({
+  SOURCE_PATH: 'sourcePath',
+  MODULE_PATH: 'modulePath',
+  RELATIVE_PATH: 'relativePath',
+  TYPE: 'type',
+})
+
 const DEFAULT_ASSOCIATED: ComponentAssociated = {
   service: 'PROVIDER',
   controller: 'CONSUMER',
@@ -46,7 +53,7 @@ class Space implements ISpace {
 
     await space.load();
 
-    return space;
+    return space.current;
   }
 
   public current: Module = RootModule.Instance;
@@ -177,10 +184,10 @@ class Space implements ISpace {
       const componentType = this.getComponentTypeByPath(file);
 
       const metadata = this.metadataParser.parse(componentSource);
-      if (componentType) metadata.set('type', componentType);
-      metadata.set('sourcePath', file);
-      metadata.set('modulePath', modulePath);
-      metadata.set('relativePath', path.relative(this.path, file));
+      if (componentType) metadata.set(SpaceMetadataKey.TYPE, componentType);
+      metadata.set(SpaceMetadataKey.SOURCE_PATH, file);
+      metadata.set(SpaceMetadataKey.MODULE_PATH, modulePath);
+      metadata.set(SpaceMetadataKey.RELATIVE_PATH, path.relative(this.path, file));
 
       this.componentParser.parse(componentSource, {
         metadata: metadata,
@@ -213,4 +220,4 @@ class Space implements ISpace {
   }
 }
 
-export { Space, DEFAULT_ASSOCIATED };
+export { Space, DEFAULT_ASSOCIATED, SpaceMetadataKey };

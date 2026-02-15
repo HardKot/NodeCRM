@@ -1,3 +1,5 @@
+import { Types } from './types';
+
 export class TreeNode<T = any> extends Set<TreeNode<T>> {
   public value: T | null;
   public parent: TreeNode<T> | null;
@@ -53,9 +55,7 @@ export class TreeNode<T = any> extends Set<TreeNode<T>> {
   }
 
   add(node: TreeNode<T> | T): this {
-    if (!(node instanceof TreeNode)) {
-      node = new TreeNode(node);
-    }
+    if (!(node instanceof TreeNode)) node = new TreeNode(node);
     node.parent = this;
     super.add(node);
     return this;
@@ -79,7 +79,12 @@ export class TreeNode<T = any> extends Set<TreeNode<T>> {
     return false;
   }
 
-  find(value: T): TreeNode<T> | null {
+  find(value: T | {(value: T): boolean }): TreeNode<T> | null {
+   if (Types.isFunction(value)) return this.findFn(value);
+   return this.findNode(value);
+  }
+
+  private findNode(value: T): TreeNode<T> | null {
     if (this.value === value) {
       return this;
     }
@@ -88,6 +93,15 @@ export class TreeNode<T = any> extends Set<TreeNode<T>> {
       if (result) {
         return result;
       }
+    }
+    return null;
+  }
+
+  private findFn(fn: {(value: T): boolean }): TreeNode<T> | null {
+    if (fn(this.value as T)) return this;
+    for (const child of this.children) {
+      const result = child.findFn(fn);
+      if (result) return result;
     }
     return null;
   }

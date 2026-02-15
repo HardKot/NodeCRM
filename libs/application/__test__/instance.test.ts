@@ -50,7 +50,7 @@ describe('instance', () => {
     );
 
     const instance = await Instance.create(RootModule.Instance, new TestLogger());
-    const result = await instance.execute('TestHandler', 'World');
+    const result = await instance.execute('TestHandler', 'World', new Session(), null);
 
     expect(result.isSuccess).toBeTruthy();
     expect(result.getOrElse({})).toEqual({ message: 'Hello, World!' });
@@ -65,7 +65,7 @@ describe('instance', () => {
     );
 
     const instance = await Instance.create(RootModule.Instance, new TestLogger());
-    const result = await instance.execute('TestHandler', null);
+    const result = await instance.execute('TestHandler', null, new Session(), null);
 
     expect(result.isFailure).toBeTruthy();
     expect(result.errorOrNull()?.message).toBe('Access denied');
@@ -85,7 +85,7 @@ describe('instance', () => {
     );
 
     const instance = await Instance.create(RootModule.Instance, new TestLogger());
-    const result = await instance.execute('TestHandler', null, session);
+    const result = await instance.execute('TestHandler', null, session, null);
 
     expect(result.isSuccess).toBeTruthy();
     expect(session.get('message')).toEqual('Hello, world!');

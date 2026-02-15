@@ -84,6 +84,10 @@ export class Types {
     return false;
   }
 
+  static isBinary(v: any): v is Buffer | Blob {
+    return Buffer.isBuffer(v) || v instanceof Blob;
+  }
+
   static isAsyncIterator(v: any): v is AsyncIterable<any> {
     return !!v && Symbol.asyncIterator in v;
   }

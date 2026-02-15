@@ -1,10 +1,10 @@
-import { Component } from '../core/component';
+import { Component } from '../core';
 
-interface Plugins {
+interface Plugin {
   name: string;
   components?: Component[];
   init?(instance: any): Promise<void>;
   build?(instance: any): Promise<void>;
 }
 
-export { Plugins };
+export { Plugin };

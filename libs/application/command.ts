@@ -1,17 +1,26 @@
 import { Readable, Writable } from 'node:stream';
 import { ReadableStream, WritableStream } from 'node:stream/web';
+import * as buffer from 'node:buffer';
 
 import { Result, Types } from '../utils';
 import { BaseField, SchemaRegistry } from '../schema';
 import { AccessFunction, parserAccess, PrivateAccess, wrapAccessFunction } from './access';
-import { Metadata } from '../core/metadata';
+import { Metadata } from '../core';
 import { Session } from './session';
 
 class CommandError extends Error {}
 class AccessError extends CommandError {}
 
-type CommandBody = typeof Readable | typeof ReadableStream | BaseField;
-type CommandReturns = typeof Writable | typeof WritableStream | BaseField;
+export type CommandBodyType = typeof Readable | typeof ReadableStream | BaseField | typeof Buffer | typeof buffer.Blob;
+export type CommandReturnsType =
+  | typeof Writable
+  | typeof WritableStream
+  | BaseField
+  | typeof Buffer
+  | typeof buffer.Blob;
+
+type CommandBody = Readable | ReadableStream | Buffer | buffer.Blob | any;
+type CommandReturns = Writable | WritableStream | Buffer | buffer.Blob | any;
 
 const CommandMetadata = Object.freeze({
   ParamsSymbol: 'params',
@@ -66,19 +75,21 @@ class Command<T extends Function> {
     if (!source) return null;
 
     if ([Readable, ReadableStream, Writable, WritableStream].includes(source)) return source;
+    if (source === Buffer || source === buffer.Blob) return source;
     if (source instanceof BaseField) return source;
 
     return schemas.generateFromSource(source);
   }
 
   public readonly access: AccessFunction;
+  public readonly description?: string;
 
   constructor(
     private runner: T,
     public metadata: Metadata,
     public readonly params: BaseField | null,
-    public readonly body: CommandBody | null,
-    public readonly returns: CommandReturns | null
+    public readonly body: CommandBodyType | null,
+    public readonly returns: CommandReturnsType | null
   ) {
     this.access = metadata
       .get<AccessFunction | Function>(CommandMetadata.AccessSymbol)
@@ -88,6 +99,8 @@ class Command<T extends Function> {
         return PrivateAccess;
       })
       .orElse(PrivateAccess);
+
+    this.description = metadata.get<string>('description').orElse('No description');
 
     Object.freeze(this);
   }
@@ -154,4 +167,4 @@ class Command<T extends Function> {
   }
 }
 
-export { Command, CommandError, AccessError, CommandMetadata };
+export { Command, CommandError, AccessError, CommandMetadata, CommandBody, CommandReturns };

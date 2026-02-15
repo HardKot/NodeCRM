@@ -1,23 +1,23 @@
 import * as cluster from 'node:cluster';
 import { Instance, InstanceModule } from './instance';
 import { dirname } from 'node:path';
-import { Plugins } from './plugins';
+import { Plugin } from './plugin';
 import { Logger } from './logger';
 
 interface ApplicationConfig {
   clusterCount?: number;
   stdout?: NodeJS.WriteStream;
   stderr?: NodeJS.WriteStream;
-  plugins?: Plugins[];
-  module: InstanceModule;
+  plugins?: Plugin[];
+  module: InstanceModule | Promise<InstanceModule>;
 }
 
 class ApplicationError extends Error {}
 
 class Application {
-  static run(config: ApplicationConfig) {
+  static async run(config: ApplicationConfig) {
     const application = new Application(
-      config.module,
+      await config.module,
       config.clusterCount ?? 0,
       config.plugins ?? [],
       config.stdout ?? process.stdout,
@@ -32,7 +32,7 @@ class Application {
   constructor(
     public readonly module: InstanceModule,
     public readonly clusterCount: number,
-    public readonly plugins: Plugins[],
+    public readonly plugins: Plugin[],
 
     public readonly stdout: NodeJS.WritableStream,
     public readonly stderr: NodeJS.WritableStream

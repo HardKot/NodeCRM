@@ -13,7 +13,7 @@ describe('Space', () => {
       rootModule: 'AppModule',
     });
 
-    expect(space.current.name).toBe('AppModule');
+    expect(space.name).toBe('AppModule');
   });
 
   it('loads module with dependency', async () => {
@@ -22,8 +22,8 @@ describe('Space', () => {
       rootModule: 'AppModule',
     });
 
-    expect(space.current.name).toBe('AppModule');
-    const component = space.current.components[0];
+    expect(space.name).toBe('AppModule');
+    const component = space.components[0];
     expect(component.name).toBe('AppService');
     expect(component.type).toBe(ComponentType.PROVIDER);
     expect(component.metadata.get('sourcePath').orElse('')).toBe(
@@ -39,7 +39,7 @@ describe('Space', () => {
       rootModule: 'AppModule',
     });
 
-    expect(space.current.name).toBe('AppModule');
-    expect(space.current.components[0].name).toBe('AppService');
+    expect(space.name).toBe('AppModule');
+    expect(space.components[0].name).toBe('AppService');
   });
 });

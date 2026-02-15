@@ -205,10 +205,10 @@ NodeCRM/
 │   │       └── metadataRegistry.ts
 │   │
 │   ├── httpServer/           # HTTP/2 сервер
-│   │   ├── httpServer.js     # Основной сервер
+│   │   ├── httpServer.ts     # Основной сервер
 │   │   ├── request.js        # Обработка запросов
 │   │   ├── response.js       # Обработка ответов
-│   │   ├── routes.js         # Маршрутизация
+│   │   ├── routes.ts         # Маршрутизация
 │   │   └── httpError.js      # Обработка ошибок
 │   │
 │   ├── space/                # Virtual Space

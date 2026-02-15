@@ -47,6 +47,10 @@ export class Optional<T> {
     return this.isPresent() ? (this.value as T) : null;
   }
 
+  getOrUndefined(): T | undefined {
+    return this.isPresent() ? (this.value as T) : undefined;
+  }
+
   orElseThrow(errorSupplier?: () => Error): T {
     if (!this.isPresent()) {
       throw errorSupplier ? errorSupplier() : new Error('No value present');
@@ -65,5 +69,12 @@ export class Optional<T> {
       return Optional.empty<U>();
     }
     return Optional.ofNullable(mapper(this.value as T));
+  }
+
+  filter(predicate: (value: T) => boolean): Optional<T> {
+    if (!this.isPresent() || !predicate(this.value as T)) {
+      return Optional.empty<T>();
+    }
+    return this;
   }
 }
