@@ -1,5 +1,6 @@
 import { Routes } from '../routes';
-import { HandleRequest, RESTMethod } from '../handleRequest';
+import { HandleRequest } from '../handleRequest';
+import { RESTMethod } from '../httpUtils';
 
 describe('ControllerNode', () => {
   let wrapperHandler = (name: string, path: string, method: RESTMethod) => {
@@ -14,8 +15,8 @@ describe('ControllerNode', () => {
     ]);
 
 
-    expect(rootNode('/')?.name).toBe('root-value');
-    expect(rootNode('/home/statistic')?.name).toBe('home-statistic-value');
+    expect(rootNode('/', 'get')?.name).toBe('root-value');
+    expect(rootNode('/home/statistic', 'get')?.name).toBe('home-statistic-value');
 
   });
 
@@ -26,7 +27,7 @@ describe('ControllerNode', () => {
 
     ]);
 
-    expect(rootNode('/non/existing/path')).toBeNull();
+    expect(rootNode('/non/existing/path', 'get')).toBeNull();
   });
 
   it('should handle dynamic segments in the path', () => {
@@ -37,8 +38,8 @@ describe('ControllerNode', () => {
     ]);
 
 
-    expect(rootNode('/user/123')?.name).toBe('user-123-value');
-    expect(rootNode('/user/456')?.name).toBe('user-123-value');
-    expect(rootNode('/post/777')?.name).toBe('post-123-value');
+    expect(rootNode('/user/123', 'get')?.name).toBe('user-123-value');
+    expect(rootNode('/user/456', 'get')?.name).toBe('user-123-value');
+    expect(rootNode('/post/777', 'get')?.name).toBe('post-123-value');
   });
 });

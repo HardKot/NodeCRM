@@ -6,8 +6,8 @@ import * as path from 'node:path';
 
 import { CommandBody, CommandInfo, CommandReturns } from '../application';
 import { SpaceMetadataKey } from '../space';
+import { RESTMethod } from './httpUtils';
 
-type RESTMethod = 'get' | 'post' | 'put' | 'delete';
 
 const RequestMetadataKey = Object.freeze({
   MAPPING: 'mapping',
@@ -104,4 +104,4 @@ class HandleRequest {
 
 
 
-export { HandleRequest, RESTMethod };
+export { HandleRequest };

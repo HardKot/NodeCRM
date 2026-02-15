@@ -42,3 +42,6 @@ Thumbs.db
 # Покрытие тестов
 coverage/
 .nyc_output/
+
+
+dist/

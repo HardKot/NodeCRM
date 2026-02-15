@@ -3,13 +3,16 @@ import { Instance, InstanceModule } from './instance';
 import { dirname } from 'node:path';
 import { Plugin } from './plugin';
 import { Logger } from './logger';
+import { Types } from '../utils';
+
+type InjectModule = InstanceModule | Promise<InstanceModule> | (() => InstanceModule | Promise<InstanceModule>);
 
 interface ApplicationConfig {
   clusterCount?: number;
   stdout?: NodeJS.WriteStream;
   stderr?: NodeJS.WriteStream;
   plugins?: Plugin[];
-  module: InstanceModule | Promise<InstanceModule>;
+  module: InjectModule;
 }
 
 class ApplicationError extends Error {}
@@ -30,7 +33,7 @@ class Application {
   public readonly logger: Logger;
 
   constructor(
-    public readonly module: InstanceModule,
+    public readonly module: InjectModule,
     public readonly clusterCount: number,
     public readonly plugins: Plugin[],
 
@@ -59,8 +62,14 @@ class Application {
   }
 
   async worker() {
-    const instance = new Instance(this.module, this.logger, this.plugins);
-    await instance.build();
+    let module: InstanceModule;
+    if (Types.isFunction(this.module)) {
+      module = await this.module();
+    } else {
+      module = await this.module;
+    }
+
+    await Instance.create(module, this.logger, this.plugins);
   }
 }
 

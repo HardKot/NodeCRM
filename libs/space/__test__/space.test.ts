@@ -8,7 +8,7 @@ describe('Space', () => {
   });
 
   it('loads one module', async () => {
-    const space = await Space.factory({
+    const space = await Space.create({
       path: path.join(__dirname, 'commonjs', 'appModule'),
       rootModule: 'AppModule',
     });
@@ -17,7 +17,7 @@ describe('Space', () => {
   });
 
   it('loads module with dependency', async () => {
-    const space = await Space.factory({
+    const space = await Space.create({
       path: path.join(__dirname, 'commonjs', 'moduleWithDependency'),
       rootModule: 'AppModule',
     });
@@ -34,7 +34,7 @@ describe('Space', () => {
   });
 
   it('loads many modules', async () => {
-    const space = await Space.factory({
+    const space = await Space.create({
       path: path.join(__dirname, 'commonjs', 'manyModules'),
       rootModule: 'AppModule',
     });

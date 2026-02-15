@@ -1,6 +1,6 @@
 import * as http2 from'node:http2';
 
-import { Routes } from './routes';
+import { Routes, Routing } from './routes';
 import { ExecCommand, IInstance, Plugin } from '../application';
 import { ContentType, ParserContent } from './parserContent';
 import { HandleRequest } from './handleRequest';
@@ -8,7 +8,7 @@ import { Session } from '../application/session';
 import { Result, Types } from '../utils';
 import * as stream from 'node:stream';
 import * as streamWeb from 'node:stream/web';
-import { CommandBodyType } from '../application/command';
+import { HttpUtils, RESTMethod } from './httpUtils';
 
 class HttpServerError extends Error {
   constructor(message: string, public readonly code: number = 500) {
@@ -28,16 +28,17 @@ interface HttpServerOptions {
   timeout?: number;
   maxSessions?: number;
   bodyLimit?: number;
-  contentType?: ContentType;
+  contentType?: ContentType | ContentType[];
 }
 
 type OctetStream = typeof Buffer | typeof Blob | typeof stream.Writable | typeof streamWeb.WritableStream | typeof stream.Readable | typeof streamWeb.ReadableStream;
 type RequestParams = {
   contentType?: string;
-  acceptType?: string;
+  acceptType?: string[];
   path: string;
   handler: HandleRequest | null;
 };
+
 
 const ApplicationOctetStream = 'application/octet-stream';
 
@@ -50,16 +51,19 @@ class HttpServer implements Plugin {
       options.timeout,
       options.maxSessions,
       options.bodyLimit,
-      options.contentType
+      Array.isArray(options.contentType)
+        ? options.contentType
+        : [options.contentType ?? 'application/json']
     );
   }
 
   public readonly name = 'HttpServer';
   private activeSessions: Set<http2.ServerHttp2Session>;
-  private routes: Routes = Routes.initialize();
+  private routing: Routing = Routes.initialize();
   private runCommand: ExecCommand | null = null;
   private handlers: HandleRequest[] = [];
   private server: http2.Http2SecureServer;
+  public readonly primaryContentTyp: ContentType;
 
   constructor(
     public readonly tls: TLSOptions,
@@ -68,8 +72,10 @@ class HttpServer implements Plugin {
     public readonly requestTimeout: number = 60_000,
     public readonly maxSessions: number = 1024,
     public readonly bodyLimit: number = 1024,
-    public readonly contentType: ContentType = 'application/json'
+    public readonly contentType: ContentType[] = ['application/json']
   ) {
+    this.primaryContentTyp = contentType[0] ?? 'application/json';
+
     this.server = http2.createSecureServer({
       allowHTTP1: true,
       key: this.tls.key,
@@ -78,7 +84,7 @@ class HttpServer implements Plugin {
 
     this.server.setTimeout(this.requestTimeout);
     this.activeSessions = new Set();
-    this.routes = Routes.initialize();
+    this.routing = Routes.initialize();
 
     this.server.on('request', this.onRequest.bind(this));
     this.server.on('session', this.onSession.bind(this));
@@ -89,6 +95,7 @@ class HttpServer implements Plugin {
     this.handlers = instance.commandsList
       .map(cmd => HandleRequest.fromCommand(cmd))
       .filter(it => !!it);
+    this.routing = Routes.byHandlers(this.handlers);
     Object.freeze(this.handlers);
     this.server.listen(this.port);
   }
@@ -130,12 +137,17 @@ class HttpServer implements Plugin {
       if (Types.isBinary(data)) return this.sendBufferContent(response, data);
       if (Types.isWritableStream(data)) return this.sendStreamContent(response, data);
 
-      let acceptType = this.contentType;
-      if (!!requestParams.acceptType && this.isSupportedContentType(requestParams.acceptType))
-        acceptType = requestParams.acceptType;
+      let acceptType = this.primaryContentTyp;
+      if (!!requestParams.acceptType && this.isSupportedContentType(requestParams.acceptType)) {
+        for (const type of requestParams.acceptType) {
+          if (this.contentType.includes(type)) {
+            acceptType = type;
+            break;
+          }
+        }
+      }
 
       await this.sendDataContent(response, data, acceptType);
-
     } catch (e) {
       let error: Error;
       if (Error.isError(e)) {
@@ -155,7 +167,7 @@ class HttpServer implements Plugin {
     await this.sendDataContent(
       response,
       { error: error?.message ?? 'Internal Server Error' },
-      this.contentType
+      this.primaryContentTyp
     );
   }
 
@@ -179,6 +191,7 @@ class HttpServer implements Plugin {
           return rej(new HttpServerError(`Unsupported content type: ${contentType}`, 415));
 
         try {
+          if (contentBuffer.length === 0) return res(undefined);
           res(await parser(contentBuffer.toString()));
         } catch (e) {
           rej(new HttpServerError('Invalid content format', 400));
@@ -225,10 +238,16 @@ class HttpServer implements Plugin {
     return data.split(';')[0].trim();
   }
   private extractRequestParams(request: http2.Http2ServerRequest): RequestParams {
-    const contentType = this.getContentType(request.headers['content-type']);
-    const acceptType = this.getContentType(request.headers['accept']);
+    const contentType = this.getContentType(request.headers['content-type']) ?? this.primaryContentTyp;
+    const acceptType = this.getContentType(request.headers['accept'])
+      ?.split(',')
+      .map(it => it.trim());
     const path = this.getPath(request);
-    const handler = this.routes.route(path);
+
+    let method: RESTMethod = 'get';
+    if (HttpUtils.isRestMethod(request.method)) method = request.method.toLowerCase() as RESTMethod;
+
+    const handler = this.routing(path, method);
 
     return {
       contentType,
@@ -238,9 +257,17 @@ class HttpServer implements Plugin {
     };
   }
 
-  private isSupportedContentType(contentType: string): contentType is ContentType {
+
+  private isSupportedContentType(contentType: string[]): contentType is ContentType[];
+  private isSupportedContentType(contentType: string): contentType is ContentType;
+  private isSupportedContentType(contentType: string | string[]): contentType is ContentType | ContentType[] {
+    if (Array.isArray(contentType)) {
+      return contentType.some(it => this.isSupportedContentType(it));
+    }
+
     if (contentType === 'application/octet-stream') return true;
-    return contentType === this.contentType;
+    if (contentType === this.primaryContentTyp) return true;
+    return this.contentType.includes(contentType as ContentType);
   }
   private isBinaryType(types: any): types is OctetStream {
     if (types === Buffer || types === Blob) return true;
@@ -252,7 +279,7 @@ class HttpServer implements Plugin {
       return Result.failure(new HttpServerError('Not Found', 404));
     }
 
-    if (!params.contentType || this.isSupportedContentType(params.contentType)) {
+    if (!params.contentType || !this.isSupportedContentType(params.contentType)) {
       return Result.failure(new HttpServerError('Unsupported Media Type', 415));
     }
     if (params.acceptType && !this.isSupportedContentType(params.acceptType)) {

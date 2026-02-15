@@ -1,4 +1,4 @@
-export type ContentType = 'application/json' | 'text/plain' | 'application/octet-stream';
+export type ContentType = 'application/json' | 'application/octet-stream' | 'text/html' | 'text/plain';
 
 class ParserContent {
   private constructor() {}
@@ -23,12 +23,14 @@ class ParserContent {
   static selectToParser(contentType: ContentType) {
     if (contentType === 'application/json') return this.toJSON.bind(this);
     if (contentType === 'text/plain') return this.toString.bind(this);
+    if (contentType === 'text/html') return this.toString.bind(this);
     return null;
   }
 
   static selectFromParser(contentType: ContentType) {
     if (contentType === 'application/json') return this.fromJSON.bind(this);
     if (contentType === 'text/plain') return this.toString.bind(this);
+    if (contentType === 'text/html') return this.toString.bind(this);
     return null;
   }
 }

@@ -20,7 +20,6 @@ interface VirtualSpaceConfig {
   path?: string;
   rootModule?: string;
   moduleExtractor?: ModuleExtractor;
-  watchTimeout?: number;
   associated?: ComponentAssociated;
 }
 interface ModuleGroup {
@@ -43,14 +42,27 @@ const DEFAULT_ASSOCIATED: ComponentAssociated = {
 };
 
 class Space implements ISpace {
-  static async factory(config: VirtualSpaceConfig = {}) {
+  static factory(config: VirtualSpaceConfig = {}) {
     const space = new Space(
       config.path,
       config.rootModule,
       config.moduleExtractor,
       config.associated
     );
+    return async () => {
+      await space.load();
 
+      return space.current;
+    }
+  }
+
+  static async create(config: VirtualSpaceConfig = {}) {
+    const space = new Space(
+      config.path,
+      config.rootModule,
+      config.moduleExtractor,
+      config.associated
+    );
     await space.load();
 
     return space.current;
@@ -120,7 +132,10 @@ class Space implements ISpace {
     if (modulePath === ROOT_MODULE_KEY) return module;
 
     const code = await this.loadCode(modulePath);
-    const moduleSource = this.extractor(code, modulePath);
+    const moduleSource = this.extractor(
+      code,
+      this.getModuleVariantNames(path.parse(modulePath).name)
+    );
     return this.moduleParser.parse(moduleSource);
   }
 
@@ -180,7 +195,7 @@ class Space implements ISpace {
 
     for (const file of group.files) {
       const code = await this.loadCode(file);
-      const componentSource = this.extractor(code, file);
+      const componentSource = this.extractor(code, this.getModuleVariantNames(path.parse(file).name));
       const componentType = this.getComponentTypeByPath(file);
 
       const metadata = this.metadataParser.parse(componentSource);
@@ -217,6 +232,14 @@ class Space implements ISpace {
     const name = StringUtils.factoryPascalCase.apply(StringUtils, parsed.name.split('.'));
     if (!parsed.dir) return name;
     return `${parsed.dir}/${name}`;
+  }
+
+  private getModuleVariantNames(name: string): string[] {
+    return [
+      name,
+      StringUtils.factoryPascalCase(...name.split('.')),
+      StringUtils.factoryCamelCase(...name.split('.')),
+    ];
   }
 }
 

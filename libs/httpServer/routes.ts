@@ -1,19 +1,21 @@
-import { HandleRequest, RESTMethod } from './handleRequest';
+import { HandleRequest } from './handleRequest';
 import { Types } from '../utils';
+import { RESTMethod } from './httpUtils';
 
 interface DynamicNode {
   index: number;
   regex: RegExp | null;
   method: RESTMethod;
 }
+export type Routing = (path: string, method: RESTMethod) => HandleRequest | null;
 
 
 class Routes {
-  static initialize() {
+  static initialize(): Routing {
     return () => null;
   }
 
-  static byHandlers(handlers: HandleRequest[]) {
+  static byHandlers(handlers: HandleRequest[]): Routing {
     const routes = new Routes(handlers);
     return routes.route.bind(routes);
   }
@@ -35,13 +37,11 @@ class Routes {
       }
     }
 
-
-
     this.mapping = Object.fromEntries(staticEntries.filter(it => it));
     Object.freeze(this.dynamicTree);
   }
 
-  route(key: string, method: RESTMethod = 'get'): HandleRequest | null {
+  route(key: string, method: RESTMethod): HandleRequest | null {
     if (!key.startsWith('/')) key = '/' + key;
     if (key.endsWith('/')) key += 'index';
     const staticKey = `${method}:${key}`;
@@ -65,9 +65,9 @@ class Routes {
     let partsStr = `\/`;
 
     const paramMap: Record<string, string> = {
-      number: "\\d\+",
-      string: "\[\\w\\d\]\+",
-    }
+      number: '\\d\+',
+      string: '\[\\w\\d\]\+',
+    };
 
     for (let i = 0; i < parts.length; i++) {
       let part = parts[i];
@@ -75,7 +75,7 @@ class Routes {
       if (parts[i].startsWith('<') && parts[i].endsWith('>')) {
         const param = part.slice(1, -1).split(':');
         const paramType = param[1] ?? param[0] ?? 'string';
-        const regex = paramMap[paramType] ?? "\[\^\/\]\+";
+        const regex = paramMap[paramType] ?? '\[\^\/\]\+';
         partsStr += `${regex}\/`;
       } else {
         partsStr += `${part}\/`;

@@ -48,6 +48,7 @@ class Instance extends EventEmitter implements IInstance {
     }
     const instance = new Instance(moduleSource, logger, plugins);
     await instance.build();
+    await instance.run();
     return instance;
   }
 
@@ -80,6 +81,11 @@ class Instance extends EventEmitter implements IInstance {
     }
 
     return await runner.run(body, session, params ?? {});
+  }
+
+  async run() {
+      this.logger.info('Instance is running...');
+      await Promise.all(this.plugins.map(it => it.init?.(this)));
   }
 
   private async subscribeToModuleChanges(source: AsyncIterable<Module>) {
@@ -120,9 +126,11 @@ class Instance extends EventEmitter implements IInstance {
       handlers = handlers.concat(commands);
     }
     this.commands = Object.fromEntries(handlers);
+    this.commandsList = this.generateCommandsList();
     this.logger.info(`Building commands with ${handlers.length} handlers...`);
 
     Object.freeze(this.commands);
+    Object.freeze(this.commandsList);
   }
 
   private async getCommandsFromConsumer(
