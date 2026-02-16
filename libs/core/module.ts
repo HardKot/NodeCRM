@@ -1,6 +1,4 @@
-import { Component, ComponentInjectType, ComponentType } from './component';
-import { ComponentInstance, Container } from '../application/container';
-import { MetadataRegistry } from './metadataRegistry';
+import { Component } from './component';
 import { SchemaRegistry } from '../schema';
 
 interface ModuleHook {

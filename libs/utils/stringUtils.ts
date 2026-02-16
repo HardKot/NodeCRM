@@ -5,7 +5,7 @@ class StringUtils {
 
   static factoryCamelCase(...strings: string[]): string {
     const value = strings
-      .flatMap(it => this.#parse(it))
+      .flatMap(it => this.parse(it))
       .map(it => it.toLowerCase())
       .map(it => `${it[0].toUpperCase()}${it.slice(1)}`)
       .map(it => it.trim())
@@ -15,14 +15,14 @@ class StringUtils {
 
   static factoryPascalCase(...strings: string[]): string {
     return strings
-      .flatMap(it => this.#parse(it))
+      .flatMap(it => this.parse(it))
       .map(it => it.toLowerCase())
       .map(it => `${it[0].toUpperCase()}${it.slice(1)}`)
       .map(it => it.trim())
       .join('');
   }
 
-  static #parse(source: string): string[] {
+  static parse(source: string): string[] {
     return source.split(/[_\-.]+|(?=[A-Z])/g).filter(Boolean);
   }
 }

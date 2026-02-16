@@ -28,6 +28,7 @@ interface ModuleSourceClass extends ModuleSource {
 
 class SourceModuleParser extends SourceParser<Module> {
   private moduleStore: Map<ModuleSource, Module> = new Map();
+
   constructor(private componentParser: SourceComponentParser) {
     super();
   }
@@ -103,7 +104,7 @@ class SourceModuleParser extends SourceParser<Module> {
     const imports = this.extractImports(source);
     const components = this.extractComponents(source);
 
-    const module = new Module(name || Symbol(), components, hooks, imports);
+    const module = new Module(name ?? Symbol(), components, hooks, imports);
     this.moduleStore.set(source, module);
 
     return module;

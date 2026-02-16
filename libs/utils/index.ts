@@ -7,3 +7,4 @@ export { Table } from './table';
 export { TreeNode } from './treeNode';
 export { Result } from './result';
 export { FunctionUtils } from './functionUtils';
+export { Polyfill } from "./polyfill"

@@ -1,7 +1,7 @@
 import { Metadata } from './metadata';
 
 class MetadataRegistry {
-  private readonly registry: Map<any, Metadata> = new Map();
+  private readonly registry: WeakMap<any, Metadata> = new WeakMap();
 
   public registerTarget(target: any) {
     if (!this.registry.has(target)) {

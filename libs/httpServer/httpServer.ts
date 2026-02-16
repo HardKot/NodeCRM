@@ -261,14 +261,11 @@ class HttpServer implements Plugin {
   private isSupportedContentType(contentType: string[]): contentType is ContentType[];
   private isSupportedContentType(contentType: string): contentType is ContentType;
   private isSupportedContentType(contentType: string | string[]): contentType is ContentType | ContentType[] {
-    if (Array.isArray(contentType)) {
-      return contentType.some(it => this.isSupportedContentType(it));
-    }
-
     if (contentType === 'application/octet-stream') return true;
     if (contentType === this.primaryContentTyp) return true;
     return this.contentType.includes(contentType as ContentType);
   }
+
   private isBinaryType(types: any): types is OctetStream {
     if (types === Buffer || types === Blob) return true;
     if (types === stream.Readable || types === stream.Writable) return true;
@@ -281,9 +278,6 @@ class HttpServer implements Plugin {
 
     if (!params.contentType || !this.isSupportedContentType(params.contentType)) {
       return Result.failure(new HttpServerError('Unsupported Media Type', 415));
-    }
-    if (params.acceptType && !this.isSupportedContentType(params.acceptType)) {
-      return Result.failure(new HttpServerError('Not Acceptable', 406));
     }
 
     if (

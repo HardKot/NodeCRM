@@ -16,7 +16,7 @@
 
 ### Hello World
 
-**main.js**
+**main.ts**
 ```javascript
 const path = require('node:path');
 const fs = require('node:fs');
@@ -43,7 +43,7 @@ Application.build()
   .run();
 ```
 
-**src/app.module.js**
+**src/app.module.ts**
 ```javascript
 const { hello } = require('./controllers/hello');
 
@@ -909,7 +909,7 @@ OrderModule.$inject = ['userService', 'productService'];
 module.exports = { OrderModule };
 ```
 
-**src/app.module.js**
+**src/app.module.ts**
 ```javascript
 const { UserModule } = require('./modules/users/user.module');
 const { ProductModule } = require('./modules/products/product.module');

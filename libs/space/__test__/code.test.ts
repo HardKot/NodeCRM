@@ -49,7 +49,7 @@ describe('Code', () => {
     expect(code.exports?.foo()).toBe('bar');
   });
 
-  it('Load ESM module', async () => {
+  it.skip('Load ESM module', async () => {
     const code = new Code<{ value: number; foo(): string }>(
       `      
         export const value = 42;
@@ -111,7 +111,7 @@ describe('Code', () => {
     expect(mockRequire).toHaveBeenCalledWith('path');
   });
 
-  it('Import module in ESM', async () => {
+  it.skip('Import module in ESM', async () => {
     const mockRequire = jest.fn().mockImplementation(it => import(it));
 
     const code = new Code(

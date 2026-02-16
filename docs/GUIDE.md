@@ -34,7 +34,7 @@ openssl req -x509 -newkey rsa:4096 -keyout certs/server.key \
   -out certs/server.crt -days 365 -nodes -subj "/CN=localhost"
 
 # Запустить приложение
-node main.js
+node main.ts
 ```
 
 ### Первый запуск
@@ -80,7 +80,7 @@ src/
 ├── config/                     # Конфигурация
 │   ├── database.config.js
 │   └── app.config.js
-└── app.module.js              # Корневой модуль
+└── app.module.ts              # Корневой модуль
 ```
 
 ### Файловая конвенция
@@ -153,7 +153,7 @@ module.exports = { OrderModule };
 ### Регистрация в главном модуле
 
 ```javascript
-// src/app.module.js
+// src/app.module.ts
 const { UserModule } = require('./modules/users/user.module');
 const { BlogModule } = require('./modules/blog/blog.module');
 
@@ -782,7 +782,7 @@ MyService.$inject = ['logger'];
       "request": "launch",
       "name": "Launch Application",
       "skipFiles": ["<node_internals>/**"],
-      "program": "${workspaceFolder}/main.js",
+      "program": "${workspaceFolder}/main.ts",
       "env": {
         "NODE_ENV": "development"
       }
@@ -802,7 +802,7 @@ MyService.$inject = ['logger'];
 ### Chrome DevTools
 
 ```bash
-node --inspect main.js
+node --inspect main.ts
 ```
 
 Откройте `chrome://inspect` в Chrome
@@ -811,11 +811,11 @@ node --inspect main.js
 
 ```bash
 # CPU профиль
-node --prof main.js
+node --prof main.ts
 node --prof-process isolate-*.log > profile.txt
 
 # Heap snapshot
-node --inspect main.js
+node --inspect main.ts
 # В Chrome DevTools: Memory → Take heap snapshot
 ```
 
@@ -888,7 +888,7 @@ class DatabaseService {
 ### Кластеризация
 
 ```javascript
-// main.js
+// main.ts
 Application.build()
   .clusterCount(require('os').cpus().length)  // По количеству CPU
   .module(virtualSpace)

@@ -113,7 +113,7 @@ openssl req -x509 -newkey rsa:4096 -keyout certs/server.key -out certs/server.cr
 
 ### Создание первого модуля
 
-1. Создайте файл `src/app.module.js`:
+1. Создайте файл `src/app.module.ts`:
 
 ```javascript
 const { helloWorld } = require('./controllers/helloWorld.js');
@@ -147,7 +147,7 @@ module.exports = { helloWorld };
 3. Запустите приложение:
 
 ```bash
-node main.js
+node main.ts
 ```
 
 4. Протестируйте API:
@@ -161,7 +161,7 @@ curl -k https://localhost:3000/hello
 
 ```
 NodeCRM/
-├── main.js                    # Точка входа приложения
+├── main.ts                    # Точка входа приложения
 ├── package.json              # Зависимости и скрипты
 ├── tsconfig.json             # Конфигурация TypeScript
 ├── jest.config.js            # Конфигурация тестов
@@ -230,7 +230,7 @@ NodeCRM/
 │       └── functionUtils.ts  # Работа с функциями
 │
 └── src/                      # Исходный код приложения
-    ├── app.module.js         # Главный модуль
+    ├── app.module.ts         # Главный модуль
     └── controllers/          # Контроллеры
         └── helloWorld.js     # Пример контроллера
 ```
@@ -770,7 +770,7 @@ pnpm precommit
 
 ### Конфигурация для разработки
 
-**main.js** (разработка)
+**main.ts** (разработка)
 
 ```javascript
 Application.build()
@@ -823,7 +823,7 @@ MyService.$inject = ['logger'];
       "request": "launch",
       "name": "Launch Program",
       "skipFiles": ["<node_internals>/**"],
-      "program": "${workspaceFolder}/main.js"
+      "program": "${workspaceFolder}/main.ts"
     }
   ]
 }
@@ -857,7 +857,7 @@ src/
 │   ├── services/
 │   ├── utils/
 │   └── types/
-└── app.module.js
+└── app.module.ts
 ```
 
 ## Лицензия

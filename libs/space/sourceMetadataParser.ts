@@ -30,11 +30,11 @@ class SourceMetadataParser extends SourceParser<Metadata> {
     );
   }
   override parseFunction(source: FunctionWithMetadata) {
-    if (source.metadata) return new Metadata(Object.entries(source.metadata));
+    if (source[Metadata.KEY]) return new Metadata(Object.entries(source[Metadata.KEY]));
     return this.parseObject(source);
   }
   override parseClass(source: ClassWithMetadata) {
-    if (source.metadata) new Metadata();
+    if (source[Metadata.KEY]) new Metadata();
     return this.parseObject(source);
   }
 }
