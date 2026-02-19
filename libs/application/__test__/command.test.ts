@@ -1,5 +1,5 @@
 import { Command, AccessError, CommandMetadata } from '../command';
-import { Session } from '../session';
+import { Session } from '../../security/session';
 import { Metadata } from '../../core/metadata';
 import { SchemaRegistry } from '../../schema';
 

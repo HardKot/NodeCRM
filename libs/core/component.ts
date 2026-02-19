@@ -2,22 +2,18 @@ import { Metadata } from './metadata';
 import { Module, RootModule } from './module';
 import { Types } from '../utils';
 
-type ComponentInjectType = string | symbol;
+import type { ComponentInjectType, ComponentTypeValue, EnumMap, ScopedValue } from './types';
 
-const ComponentType = Object.freeze({
+
+const ComponentType: EnumMap<ComponentTypeValue> = Object.freeze({
   CONSUMER: 0,
   PROVIDER: 1,
 });
-
-type ComponentTypeValue = keyof typeof ComponentType;
-
-const Scoped = Object.freeze({
+const Scoped: EnumMap<ScopedValue> = Object.freeze({
   SINGLETON: 0,
   TRANSIENT: 1,
   SCOPED: 2,
 });
-
-type ScopedValue = keyof typeof Scoped;
 
 class Component<T = unknown, D extends { [key: string | symbol]: any } = {}> {
   public readonly inject: ComponentInjectType[];
@@ -51,7 +47,12 @@ class Component<T = unknown, D extends { [key: string | symbol]: any } = {}> {
       })
       .orElse(Scoped.SINGLETON);
     this.eager = metadata.get<boolean>('eager').orElse(false);
-    this.binding = metadata.get<ComponentInjectType[]>('binding').orElse([]);
+    const binding = metadata.get<ComponentInjectType[] | ComponentInjectType>('binding').orElse([]);
+    if (Array.isArray(binding)) {
+      this.binding = binding;
+    } else {
+      this.binding = [binding];
+    }
 
     this.postConstructMethods = metadata
       .get<string | symbol>('postConstruct')
@@ -69,4 +70,4 @@ class Component<T = unknown, D extends { [key: string | symbol]: any } = {}> {
   }
 }
 
-export { Component, ComponentInjectType, ComponentType, Scoped, ComponentTypeValue, ScopedValue };
+export { Component, ComponentType, Scoped };

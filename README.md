@@ -80,7 +80,7 @@ Space.js Platform - это enterprise-grade фреймворк для разра
 ┌─────────────────────────────────────────────────────────┐
 │                     Plugins Layer                       │
 │  ┌─────────────┐  ┌──────────────┐  ┌────────────────┐  │
-│  │ HTTP Server │  │   Security   │  │   Database     │  │
+│  │ HTTP Server │  │   TokenService   │  │   Database     │  │
 │  └─────────────┘  └──────────────┘  └────────────────┘  │
 └─────────────────────────────────────────────────────────┘
 ```
@@ -147,7 +147,7 @@ module.exports = { helloWorld };
 3. Запустите приложение:
 
 ```bash
-node main.ts
+node main.js
 ```
 
 4. Протестируйте API:
@@ -161,7 +161,7 @@ curl -k https://localhost:3000/hello
 
 ```
 NodeCRM/
-├── main.ts                    # Точка входа приложения
+├── main.js                    # Точка входа приложения
 ├── package.json              # Зависимости и скрипты
 ├── tsconfig.json             # Конфигурация TypeScript
 ├── jest.config.js            # Конфигурация тестов
@@ -450,7 +450,7 @@ getUsers.$inject = ['userService'];
 // Получить пользователя по ID
 function getUser({ params }, userService) {
   const user = userService.findById(Number(params.id));
-  if (!user) throw new Error('User not found');
+  if (!user) throw new Error('UserService not found');
   return user;
 }
 getUser.$mapping = '/users/<number>';
@@ -474,7 +474,7 @@ createUser.$body = {
 // Обновить пользователя
 function updateUser({ params, body }, userService) {
   const user = userService.update(Number(params.id), body);
-  if (!user) throw new Error('User not found');
+  if (!user) throw new Error('UserService not found');
   return user;
 }
 updateUser.$mapping = '/users/<number>';
@@ -489,7 +489,7 @@ updateUser.$body = {
 // Удалить пользователя
 function deleteUser({ params }, userService) {
   const deleted = userService.delete(Number(params.id));
-  if (!deleted) throw new Error('User not found');
+  if (!deleted) throw new Error('UserService not found');
   return { success: true };
 }
 deleteUser.$mapping = '/users/<number>';
@@ -539,7 +539,7 @@ class AuthService {
   
   async login(email, password) {
     const user = await this.userService.findByEmail(email);
-    if (!user) throw new Error('User not found');
+    if (!user) throw new Error('UserService not found');
     
     // Проверка пароля (упрощенно)
     if (user.password !== password) {
@@ -770,7 +770,7 @@ pnpm precommit
 
 ### Конфигурация для разработки
 
-**main.ts** (разработка)
+**main.js** (разработка)
 
 ```javascript
 Application.build()
@@ -823,7 +823,7 @@ MyService.$inject = ['logger'];
       "request": "launch",
       "name": "Launch Program",
       "skipFiles": ["<node_internals>/**"],
-      "program": "${workspaceFolder}/main.ts"
+      "program": "${workspaceFolder}/main.js"
     }
   ]
 }

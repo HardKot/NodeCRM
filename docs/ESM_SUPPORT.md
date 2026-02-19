@@ -219,12 +219,12 @@ TypeScript files using ESM syntax are automatically detected and processed:
 ```typescript
 const code = new Code(
   `
-    export interface User {
+    export interface UserService {
       name: string;
       age: number;
     }
     
-    export function createUser(name: string, age: number): User {
+    export function createUser(name: string, age: number): UserService {
       return { name, age };
     }
   `,

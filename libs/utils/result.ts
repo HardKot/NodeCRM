@@ -17,6 +17,12 @@ export class Result<T, E = Error> {
     return new Result<T, E>(error, false);
   }
 
+  static fromPromise<T, E = Error>(promise: Promise<T>): Promise<Result<T, E>> {
+    return promise
+      .then(value => Result.success<T, E>(value))
+      .catch(error => Result.failure<T, E>(error as E));
+  }
+
   constructor(value: T | E, isSuccess: boolean | null = null) {
     this.value = value;
 

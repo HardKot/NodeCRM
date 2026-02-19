@@ -5,8 +5,9 @@ import { Command, CommandBodyType, CommandReturnsType } from './command';
 import { Logger } from './logger';
 import { Result, Types } from '../utils';
 import { Plugin } from './plugin';
-import { Session } from './session';
+import { Session } from '../security';
 import { SchemaRegistry } from '../schema';
+import { defultComponents } from './defultComponents';
 
 const InstanceEvent = Object.freeze({
   BUILD: 'build',
@@ -15,13 +16,15 @@ const InstanceEvent = Object.freeze({
 
 export type InstanceModule = Module | AsyncIterable<Module>;
 
-export type ExecCommand = (path: string, body: any, session?: Session, params?: Record<string, any> | null) => Promise<Result<any>>;
+export type ExecCommand = (path: string, body: any, session?: Session | null, params?: Record<string, any> | null) => Promise<Result<any>>;
 type InstanceEventType = (typeof InstanceEvent)[keyof typeof InstanceEvent];
 
 export interface IInstance {
   execute: ExecCommand;
   commandsList: Readonly<Array<CommandInfo>>;
+  plugins: Plugin[];
   on(event: InstanceEventType, listener: () => void): void;
+  getProvider: <T>(bind: string | symbol) => Promise<T | null>;
 }
 
 
@@ -74,13 +77,17 @@ class Instance extends EventEmitter implements IInstance {
     this.emit(InstanceEvent.BUILD);
   }
 
-  async execute(name: string, body: any, session = new Session(), params: null | undefined | object) {
+  async execute(name: string, body: any, session: Session | null | undefined = new Session(), params: null | undefined | object) {
     const runner = this.commands[name];
     if (Types.isNull(runner) || Types.isUndefined(runner)) {
       return Result.failure(new InstanceError(`Consumer not found: ${name}`));
     }
 
-    return await runner.run(body, session, params ?? {});
+    return await runner.run(body, session ?? undefined, params ?? {});
+  }
+
+  async getProvider<T>(token: string | symbol): Promise<T | null> {
+    return this.container.get<T>(token);
   }
 
   async run() {
@@ -104,7 +111,7 @@ class Instance extends EventEmitter implements IInstance {
   private combineComponents(module: Module, plugins: Plugin[]) {
     const pluginComponents = plugins.map(it => it.components ?? []).flat();
 
-    return module.components.concat(pluginComponents);
+    return module.components.concat(pluginComponents, defultComponents);
   }
 
   private async buildContainer() {

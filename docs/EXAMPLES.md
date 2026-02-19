@@ -16,7 +16,7 @@
 
 ### Hello World
 
-**main.ts**
+**main.js**
 ```javascript
 const path = require('node:path');
 const fs = require('node:fs');
@@ -336,7 +336,7 @@ class AuthService {
   async register(data) {
     const existingUser = await this.userService.findByEmail(data.email);
     if (existingUser) {
-      throw new Error('User already exists');
+      throw new Error('UserService already exists');
     }
 
     const passwordHash = this.hashPassword(data.password);
@@ -498,7 +498,7 @@ verifyToken.$body = {
 function getProfile({ session }, userService) {
   const userId = session.get('userId');
   const user = userService.findById(userId);
-  if (!user) throw new Error('User not found');
+  if (!user) throw new Error('UserService not found');
   return user;
 }
 

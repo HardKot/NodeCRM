@@ -34,7 +34,7 @@ openssl req -x509 -newkey rsa:4096 -keyout certs/server.key \
   -out certs/server.crt -days 365 -nodes -subj "/CN=localhost"
 
 # Запустить приложение
-node main.ts
+node main.js
 ```
 
 ### Первый запуск
@@ -644,7 +644,7 @@ const { Container } = require('../../libs/core');
 const { UserService } = require('../services/user.service');
 const { DatabaseService } = require('../shared/database.service');
 
-describe('User Integration', () => {
+describe('UserService Integration', () => {
   let container;
   let userService;
   
@@ -782,7 +782,7 @@ MyService.$inject = ['logger'];
       "request": "launch",
       "name": "Launch Application",
       "skipFiles": ["<node_internals>/**"],
-      "program": "${workspaceFolder}/main.ts",
+      "program": "${workspaceFolder}/main.js",
       "env": {
         "NODE_ENV": "development"
       }
@@ -802,7 +802,7 @@ MyService.$inject = ['logger'];
 ### Chrome DevTools
 
 ```bash
-node --inspect main.ts
+node --inspect main.js
 ```
 
 Откройте `chrome://inspect` в Chrome
@@ -811,11 +811,11 @@ node --inspect main.ts
 
 ```bash
 # CPU профиль
-node --prof main.ts
+node --prof main.js
 node --prof-process isolate-*.log > profile.txt
 
 # Heap snapshot
-node --inspect main.ts
+node --inspect main.js
 # В Chrome DevTools: Memory → Take heap snapshot
 ```
 
@@ -888,7 +888,7 @@ class DatabaseService {
 ### Кластеризация
 
 ```javascript
-// main.ts
+// main.js
 Application.build()
   .clusterCount(require('os').cpus().length)  // По количеству CPU
   .module(virtualSpace)

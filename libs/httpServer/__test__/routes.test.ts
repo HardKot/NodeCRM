@@ -1,10 +1,10 @@
 import { Routes } from '../routes';
-import { HandleRequest } from '../handleRequest';
-import { RESTMethod } from '../httpUtils';
+import { Handle } from '../handle';
+import { RESTMethod } from '../types';
 
 describe('ControllerNode', () => {
   let wrapperHandler = (name: string, path: string, method: RESTMethod) => {
-    return new HandleRequest(name, path, method, 200, null, null, null);
+    return new Handle(name, path, method, 200, null, null, null);
   }
 
   it('should add a value with path Static', () => {

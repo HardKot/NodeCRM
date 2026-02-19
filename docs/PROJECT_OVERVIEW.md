@@ -199,7 +199,7 @@ libs/
 ### 1. SaaS приложения
 - Multi-tenant архитектура
 - Управление подписками
-- User management
+- UserService management
 - Role-based access control
 
 ### 2. API серверы
@@ -355,7 +355,7 @@ openssl req -x509 -newkey rsa:4096 -keyout certs/server.key \
   -out certs/server.crt -days 365 -nodes -subj "/CN=localhost"
 
 # Запуск
-node main.ts
+node main.js
 
 # Тестирование
 curl -k https://localhost:3000/hello

@@ -1,9 +1,9 @@
 import * as process from 'node:process';
 import * as path from 'node:path';
 import * as fs from 'node:fs';
-import { TLSOptions } from './httpServer';
 
-export type RESTMethod = 'get' | 'post' | 'put' | 'delete';
+import type { RESTMethod, TLSOptions } from './types';
+
 
 class HttpUtils {
   private constructor() {}

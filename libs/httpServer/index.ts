@@ -1,2 +1,3 @@
-export { HttpServer, HttpServerError } from "./httpServer";
+export { HttpServer } from "./httpServer";
 export { HttpUtils } from './httpUtils'
+export { HttpServerError } from "./httpServerError";

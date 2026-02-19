@@ -1,5 +1,5 @@
-import { parserAccess } from '../access';
-import { Session } from '../session';
+import { parserAccess } from '../../security/access';
+import { Session } from '../../security/session';
 
 describe('Access', () => {
   it("factoryAccess 'public'", () => {

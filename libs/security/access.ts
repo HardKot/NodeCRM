@@ -1,9 +1,7 @@
-import { Session } from './session';
 import { FunctionUtils } from '../utils';
+import { AccessFunction } from './types';
+import { Session } from './session';
 
-interface AccessFunction {
-  (session: Session): Promise<boolean> | boolean;
-}
 
 const AccessHandle = {
   Public: 'public',

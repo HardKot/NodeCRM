@@ -1,4 +1,4 @@
-export type ContentType = 'application/json' | 'application/octet-stream' | 'text/html' | 'text/plain';
+import { ContentType } from './types';
 
 class ParserContent {
   private constructor() {}

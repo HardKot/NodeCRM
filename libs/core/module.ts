@@ -1,12 +1,9 @@
-import { Component } from './component';
 import { SchemaRegistry } from '../schema';
 
-interface ModuleHook {
-  onModulePreBuild?: () => Promise<void>;
-  onModulePostBuild?: () => Promise<void>;
-}
+import { Component } from './component';
+import type{ ModuleHook } from './types';
 
-export type Namespace = string | symbol;
+
 
 class Module {
   constructor(

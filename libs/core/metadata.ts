@@ -1,8 +1,7 @@
 import { Optional } from '../utils';
 
-type MetadataKey = string | symbol;
-type MetadataEntriesRecord = Record<MetadataKey, any>;
-type MetadataEntriesIterable = Iterable<readonly [MetadataKey, any]>;
+import type { MetadataEntriesIterable, MetadataEntriesRecord, MetadataKey } from './types';
+
 
 class MetadataError extends Error {}
 

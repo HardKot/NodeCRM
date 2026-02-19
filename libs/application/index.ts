@@ -7,7 +7,6 @@ export {
   IInstance,
   CommandInfo,
 } from './instance';
-export { AccessFunction } from './access';
 export { CommandError, AccessError, CommandMetadata, CommandBody, CommandReturns, Command } from './command';
 
 export { ValidateError, FieldError, Schema } from '../schema';

@@ -1,13 +1,8 @@
-import { HandleRequest } from './handleRequest';
+import { Handle } from './handle';
 import { Types } from '../utils';
-import { RESTMethod } from './httpUtils';
 
-interface DynamicNode {
-  index: number;
-  regex: RegExp | null;
-  method: RESTMethod;
-}
-export type Routing = (path: string, method: RESTMethod) => HandleRequest | null;
+import type { DynamicNode, Routing, RESTMethod } from './types';
+
 
 
 class Routes {
@@ -15,7 +10,7 @@ class Routes {
     return () => null;
   }
 
-  static byHandlers(handlers: HandleRequest[]): Routing {
+  static byHandlers(handlers: Handle[]): Routing {
     const routes = new Routes(handlers);
     return routes.route.bind(routes);
   }
@@ -23,7 +18,7 @@ class Routes {
   private mapping: Record<string, number> = {};
   private dynamicTree: DynamicNode[] = [];
 
-  constructor(public readonly handlers: HandleRequest[]) {
+  constructor(public readonly handlers: Handle[]) {
     const staticEntries: [string, number][] = new Array(handlers.length);
 
     for (let index = 0; index < handlers.length; index++) {
@@ -41,7 +36,7 @@ class Routes {
     Object.freeze(this.dynamicTree);
   }
 
-  route(key: string, method: RESTMethod): HandleRequest | null {
+  route(key: string, method: RESTMethod): Handle | null {
     if (!key.startsWith('/')) key = '/' + key;
     if (key.endsWith('/')) key += 'index';
     const staticKey = `${method}:${key}`;
@@ -51,7 +46,7 @@ class Routes {
     return this.findDynamicNode(key, method);
   }
 
-  private findDynamicNode(path: string, method: RESTMethod): HandleRequest | null {
+  private findDynamicNode(path: string, method: RESTMethod): Handle | null {
     for (const node of this.dynamicTree) {
       if (node.method === method && node.regex?.test(path)) {
         return this.handlers[node.index];

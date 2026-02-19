@@ -2,7 +2,7 @@ import { Instance, InstanceError } from '../instance';
 import { Logger } from '../logger';
 import { Component, Metadata, RootModule } from '../../core';
 import { AccessError } from '../command';
-import { Session } from '../session';
+import { Session } from '../../security/session';
 
 class TestLogger extends Logger {
   constructor() {

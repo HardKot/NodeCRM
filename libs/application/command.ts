@@ -4,9 +4,9 @@ import * as buffer from 'node:buffer';
 
 import { Result, Types } from '../utils';
 import { BaseField, SchemaRegistry } from '../schema';
-import { AccessFunction, parserAccess, PrivateAccess, wrapAccessFunction } from './access';
+import { AccessFunction, parserAccess, PrivateAccess, wrapAccessFunction } from '../security/access';
 import { Metadata } from '../core';
-import { Session } from './session';
+import { Session } from '../security/session';
 
 class CommandError extends Error {}
 class AccessError extends CommandError {}
