@@ -37,7 +37,7 @@ class HttpSecurity {
   }
 
   public generateTokens(session: Session): Tokens {
-    const refreshToken = this.refreshTokenService.generate({ sessionId: session.id });
+    const refreshToken = this.refreshTokenService.generate({ sessionId: session.id, username: session.get("username") });
     const jti = this.refreshTokenService.getJTI(refreshToken).getOrNull()!;
 
     const sessionEntries = session.entries().toArray();

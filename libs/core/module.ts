@@ -34,6 +34,7 @@ class Module {
 
   includeModule(module: Module): boolean {
     if (module === this) return true;
+    if (module instanceof RootModule) return true;
     if (this.imports.includes(module)) return true;
     return this.imports.some(it => it.includeModule(module));
   }

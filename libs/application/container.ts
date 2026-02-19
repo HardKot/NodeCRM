@@ -111,8 +111,7 @@ class Container {
       const publicDepKey = this.getPublicInjectKey(depKey);
 
       const isExist = !!depComponent;
-      // TODO: Придумать более изящный способ проверки, что зависимость входит в модуль компонента. Возможно, стоит добавить в компонент список публичных зависимостей, которые он может использовать.
-      const isInModule = true // isExist && component.module.includeModule(depComponent.module);
+      const isInModule = isExist && component.module.includeModule(depComponent.module);
 
       if (isExist && isInModule) {
         dependency[i] = [publicDepKey, await this.get(depComponent)];
