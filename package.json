@@ -2,8 +2,9 @@
   "name": "@space-js/platform",
   "version": "1.0.0",
   "description": "Framework for building multi-tenant SaaS applications",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "./index.js",
+  "types": "./types/index.d.ts",
+  "type": "module",
   "scripts": {
     "precommit": "npm run check",
     "build": "tsc",
