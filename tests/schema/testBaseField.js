@@ -1,4 +1,4 @@
-import { BaseField } from '../baseField';
+import { BaseField } from '../../libs/schema/baseField.js';
 export class TestBaseField extends BaseField {
     mockedValidateType;
     mockedTransform;

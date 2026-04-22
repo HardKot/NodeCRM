@@ -1,4 +1,4 @@
-import { TreeNode } from '../treeNode';
+import { TreeNode } from '../../libs/utils/treeNode.js';
 describe('TreeNode', () => {
     it('Создание узла и добавление дочерних узлов', () => {
         const root = new TreeNode('root');

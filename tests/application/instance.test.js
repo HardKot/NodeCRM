@@ -1,7 +1,7 @@
-import { Instance } from '../instance';
-import { Logger } from '../logger';
-import { Component, Metadata, RootModule } from '../../core';
-import { Session } from '../../security/session';
+import { Instance } from '../../libs/application/instance.js';
+import { Logger } from '../../libs/application/logger.js';
+import { Component, RootModule } from '../../libs/core/index.js';
+import { Session } from '../../libs/security/session.js';
 class TestLogger extends Logger {
     constructor() {
         super('TEST', process.stdout, process.stderr);
@@ -17,24 +17,24 @@ describe('instance', () => {
         expect(instance).toBeInstanceOf(Instance);
     });
     it('load app module', async () => {
-        new Component('TestService', () => () => ({ message: 'Hello, World!' }), new Metadata(), RootModule.Instance);
+        new Component('TestService', () => () => ({ message: 'Hello, World!' }), {}, RootModule.Instance);
         const instance = await Instance.create(RootModule.Instance, new TestLogger());
         expect(instance).toBeInstanceOf(Instance);
     });
     it('run execute handler', async () => {
-        new Component('TestHandler', () => ({ body }) => ({ message: `Hello, ${body}!` }), Metadata.from({
+        new Component('TestHandler', () => ({ body }) => ({ message: `Hello, ${body}!` }), {
             type: 'consumer',
             access: 'public',
             returns: { message: 'string' },
             body: 'string',
-        }), RootModule.Instance);
+        }, RootModule.Instance);
         const instance = await Instance.create(RootModule.Instance, new TestLogger());
         const result = await instance.execute('TestHandler', 'World', new Session(), null);
         expect(result.isSuccess).toBeTruthy();
         expect(result.getOrElse({})).toEqual({ message: 'Hello, World!' });
     });
     it('run execute with private', async () => {
-        new Component('TestHandler', () => () => () => ({ message: `Hello, World!'` }), Metadata.from({ type: 'consumer', access: 'private', returns: { message: 'string' } }), RootModule.Instance);
+        new Component('TestHandler', () => () => () => ({ message: `Hello, World!'` }), { type: 'consumer', access: 'private', returns: { message: 'string' } }, RootModule.Instance);
         const instance = await Instance.create(RootModule.Instance, new TestLogger());
         const result = await instance.execute('TestHandler', null, new Session(), null);
         expect(result.isFailure).toBeTruthy();
@@ -44,7 +44,7 @@ describe('instance', () => {
         const session = new Session();
         new Component('TestHandler', () => ({ session }) => {
             session.set('message', 'Hello, world!');
-        }, Metadata.from({ type: 'consumer', access: 'public' }), RootModule.Instance);
+        }, { type: 'consumer', access: 'public' }, RootModule.Instance);
         const instance = await Instance.create(RootModule.Instance, new TestLogger());
         const result = await instance.execute('TestHandler', null, session, null);
         expect(result.isSuccess).toBeTruthy();

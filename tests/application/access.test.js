@@ -1,5 +1,5 @@
-import { parserAccess } from '../../security/access';
-import { Session } from '../../security/session';
+import { parserAccess } from '../../libs/security/access.js';
+import { Session } from '../../libs/security/session.js';
 describe('Access', () => {
     it("factoryAccess 'public'", () => {
         const accessFunc = parserAccess('public');

@@ -1,4 +1,4 @@
-import { Optional } from '../optional';
+import { Optional } from '../../libs/utils/optional.js';
 describe('Optional', () => {
     it('Создание Optional с непустым значением', () => {
         const optional = Optional.of(5);

@@ -25,7 +25,7 @@ Space.js Platform построен на модульной архитектур�
 │                    Module Layer                              │
 │  - Component Organization                                   │
 │  - Lifecycle Hooks                                          │
-│  - Metadata Management                                      │
+│  - Module Management                                        │
 └─────────────────────────────────────────────────────────────┘
                            ↓
 ┌─────────────────────────────────────────────────────────────┐
@@ -128,7 +128,6 @@ interface Module {
   name: string | symbol;
   consumers: Component[];      // API endpoints
   providers: Component[];      // Services
-  metadataRegistry: MetadataRegistry;
   hooks: ModuleHooks;
 }
 ```
@@ -153,7 +152,7 @@ class Component<T, D> {
   scope: Scoped;                       // Область видимости
   eager: boolean;                      // Eager loading
   binding: ComponentInjectType[];      // Дополнительные привязки
-  metadata: Metadata;                  // Метаданные
+  metadata: Record<string, any>;       // Произвольные данные
 }
 ```
 
@@ -376,8 +375,6 @@ Parse Module Classes
 Extract Providers
     ↓
 Extract Consumers
-    ↓
-Parse Metadata
     ↓
 Build Components
     ↓

@@ -1,11 +1,16 @@
 import * as querystring from 'node:querystring';
 import * as path from 'node:path';
-import { SpaceMetadataKey } from '../space';
 const RequestMetadataKey = Object.freeze({
     MAPPING: 'mapping',
     METHOD: 'method',
     STATUS_CODE: 'statusCode',
 });
+function getCommandMeta(metadata, key, defaultValue = undefined) {
+    if (!metadata)
+        return defaultValue;
+    const value = metadata[key];
+    return typeof value === 'undefined' ? defaultValue : value;
+}
 class Handle {
     name;
     mapping;
@@ -15,21 +20,14 @@ class Handle {
     paramSchema;
     returnsSchema;
     static fromCommand(cmd) {
-        let mapping = cmd.metadata.get(RequestMetadataKey.MAPPING).getOrUndefined();
-        if (!mapping) {
-            let relativePath = cmd.metadata.get(SpaceMetadataKey.RELATIVE_PATH).getOrUndefined();
-            mapping = relativePath && this.getMappingFromRelativePath(relativePath);
-        }
+        const mapping = getCommandMeta(cmd.metadata, RequestMetadataKey.MAPPING);
         if (!mapping)
             return null;
-        const method = cmd.metadata
-            .get(RequestMetadataKey.METHOD)
-            .map(it => it.toLowerCase())
-            .filter(it => this.isRestMethod(it))
-            .orElse('get');
-        let statusCode = cmd.metadata
-            .get(RequestMetadataKey.STATUS_CODE)
-            .orElseGet(() => (method === 'post' ? 201 : 200));
+        const rawMethod = getCommandMeta(cmd.metadata, RequestMetadataKey.METHOD, 'get');
+        const method = typeof rawMethod === 'string'
+            ? rawMethod.toLowerCase()
+            : 'get';
+        let statusCode = getCommandMeta(cmd.metadata, RequestMetadataKey.STATUS_CODE, method === 'post' ? 201 : 200);
         return new Handle(cmd.name, mapping, method, statusCode, cmd.body, cmd.params, cmd.returns);
     }
     static isRestMethod(method) {

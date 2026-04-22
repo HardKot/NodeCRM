@@ -1,7 +1,7 @@
-import { ArrayField } from '../arrayField';
+import { ArrayField } from '../../libs/schema/arrayField.js';
 import { TestBaseField } from './testBaseField';
-import { Result } from '../../utils';
-import { ValidateError } from '../fieldError';
+import { Result } from '../../libs/utils/result.js';
+import { ValidateError } from '../../libs/schema/fieldError.js';
 describe('ArrayField', () => {
     let mockValidateField;
     const mockedValidateType = jest.fn();

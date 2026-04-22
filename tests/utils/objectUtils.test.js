@@ -1,4 +1,4 @@
-import { ObjectUtils } from '../objectUtils';
+import { ObjectUtils } from '../../libs/utils/objectUtils.js';
 describe('ObjectUtils -> firstNotNullValue', () => {
     it('Возвращает первое ненулевое значение свойства из переданных объектов', () => {
         const obj1 = { a: null, b: 2 };

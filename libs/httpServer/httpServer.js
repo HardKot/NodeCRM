@@ -6,7 +6,7 @@ import { HttpSecurity } from './httpSecurity';
 import { JwtService } from './jwtService';
 import { HttpSecurityGetaway, HttpSecurityGetawayEmpty, SecurityRepositorySymbol, } from './httpSecurityGetaway';
 import { TokenRepositorySimpleComponent } from './tokenRepository';
-import { Component, Metadata } from '../core';
+import { Component } from '../core';
 class HttpServer {
     tls;
     port;
@@ -51,6 +51,17 @@ class HttpServer {
         this.handleRequest = new HandleRequest(this.routing, this.runCommand, this.contentType, this.bodyLimit, this.security);
         this.components.push(this.publicTokenService());
     }
+    publicTokenService() {
+        const self = this;
+        return new Component('HttpTokenService', () => ({
+            generateToken(session) {
+                return self.security.generateTokens(session);
+            },
+            refreshToken(refreshToken) {
+                return self.security.refreshToken(refreshToken);
+            }
+        }), {});
+    }
     constructorHttp2() {
         const server = http2.createSecureServer({
             allowHTTP1: true,
@@ -68,17 +79,6 @@ class HttpServer {
         accessTokenConfig.secret = "";
         refreshTokenConfig.secret = "";
         return { accessJwtService, refreshJwtService };
-    }
-    publicTokenService() {
-        const self = this;
-        return new Component('HttpTokenService', () => ({
-            generateToken(session) {
-                return self.security.generateTokens(session);
-            },
-            refreshToken(refreshToken) {
-                return self.security.refreshToken(refreshToken);
-            }
-        }), Metadata.from({}));
     }
     async init(instance) {
         this.runCommand = instance.execute.bind(instance);

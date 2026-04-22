@@ -1,4 +1,4 @@
-import { Component, Metadata } from '../core';
+import { Component } from '../core';
 import { isUserRepository, UserRepositorySymbol } from '../security';
 import { isTokenRepository, TokenRepositorySymbol } from './tokenRepository';
 const SecurityRepositorySymbol = Symbol();
@@ -14,13 +14,13 @@ const HttpSecurityGetaway = new Component("HttpSecurityGetaway", (deps) => {
         blockToken: tokenRepository?.blockToken.bind(tokenRepository) ?? (async () => false),
         isTokenBlocked: tokenRepository?.isBlocked.bind(tokenRepository) ?? (async () => 0),
     };
-}, Metadata.from({
+}, {
     binding: SecurityRepositorySymbol,
     type: 'provider',
     scope: 'singleton',
     eager: true,
     inject: [UserRepositorySymbol, TokenRepositorySymbol],
-}));
+});
 const HttpSecurityGetawayEmpty = {
     findUserByUsername: async () => null,
     blockToken: async () => false,

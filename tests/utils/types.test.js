@@ -1,4 +1,4 @@
-import { Types } from '../types';
+import { Types } from '../../libs/utils/types.js';
 describe('Types', () => {
     it('Проверка isObject', () => {
         expect(Types.isObject({})).toBe(true);

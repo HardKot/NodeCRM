@@ -1,4 +1,4 @@
-import { FunctionUtils } from '../functionUtils';
+import { FunctionUtils } from '../../libs/utils/functionUtils.js';
 describe('functionUtils -> curry', () => {
     it.each([
         { preset: [5], rest: [10], result: 15 },

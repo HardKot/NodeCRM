@@ -199,10 +199,6 @@ NodeCRM/
 │   │   │       ├── arrayField.ts
 │   │   │       ├── schemaField.ts
 │   │   │       └── enumField.ts
-│   │   │
-│   │   └── metadata/         # Система метаданных
-│   │       ├── metadata.ts
-│   │       └── metadataRegistry.ts
 │   │
 │   ├── httpServer/           # HTTP/2 сервер
 │   │   ├── httpServer.ts     # Основной сервер

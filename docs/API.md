@@ -184,7 +184,6 @@ await container.runScope(async () => {
 - `name: string | symbol` - имя модуля
 - `consumers: Component[]` - API-эндпоинты
 - `providers: Component[]` - сервисы и утилиты
-- `metadataRegistry: MetadataRegistry` - реестр метаданных
 - `hooks: ModuleHooks` - хуки жизненного цикла
 
 #### Методы
@@ -235,14 +234,14 @@ await container.runScope(async () => {
 new Component<T, D>(
   name: string | symbol,
   factory: (deps: D) => T,
-  metadata: Metadata
+  metadata?: Record<string, any>
 )
 ```
 
 **Параметры**:
 - `name` - имя компонента для инъекции
 - `factory` - фабрика создания экземпляра
-- `metadata` - метаданные компонента
+- `metadata` - произвольный объект конфигурации
 
 #### Свойства
 
@@ -253,7 +252,7 @@ new Component<T, D>(
 - `scope: Scoped` - область видимости
 - `eager: boolean` - eager loading
 - `binding: Array` - дополнительные привязки
-- `metadata: Metadata` - метаданные
+- `metadata: Record<string, any>` - произвольный объект конфигурации
 
 #### Методы
 
@@ -275,7 +274,7 @@ new Component<T, D>(
 ```typescript
 new Command<T extends Function>(
   runner: T,
-  metadata: Metadata,
+  metadata?: Record<string, any>,
   schemas: SchemaRegistry
 )
 ```

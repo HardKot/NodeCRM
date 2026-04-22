@@ -1,4 +1,4 @@
-import { SourceParser } from '../sourceParser';
+import { SourceParser } from '../../libs/utils/sourceParser.js';
 class TestParser extends SourceParser {
     parseArray(source) {
         return `array:${source.length}`;

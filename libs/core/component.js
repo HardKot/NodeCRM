@@ -20,44 +20,44 @@ class Component {
     eager;
     binding;
     postConstructMethods;
-    constructor(name, factory, metadata, module = RootModule.Instance, reference) {
+    constructor(name, factory, metadata = {}, module = RootModule.Instance, reference) {
         this.name = name;
         this.factory = factory;
         this.metadata = metadata;
         this.module = module;
-        this.inject = metadata.get('inject').orElse([]);
-        this.type = metadata
-            .get('type')
-            .map(it => {
-            if (Types.isNumber(it))
-                return it;
-            return ComponentType[it.toUpperCase()];
-        })
-            .orElse(ComponentType.PROVIDER);
-        this.scope = metadata
-            .get('scope')
-            .map(it => {
-            if (Types.isNumber(it))
-                return it;
-            return Scoped[it.toUpperCase()];
-        })
-            .orElse(Scoped.SINGLETON);
-        this.eager = metadata.get('eager').orElse(false);
-        const binding = metadata.get('binding').orElse([]);
+        const inject = this.resolveValue(metadata, 'inject', []);
+        this.inject = Array.isArray(inject) ? inject : [inject].filter(Boolean);
+        this.type = this.resolveEnumValue(metadata, 'type', ComponentType, ComponentType.PROVIDER);
+        this.scope = this.resolveEnumValue(metadata, 'scope', Scoped, Scoped.SINGLETON);
+        this.eager = this.resolveValue(metadata, 'eager', false);
+        const binding = this.resolveValue(metadata, 'binding', []);
         if (Array.isArray(binding)) {
-            this.binding = binding;
+            this.binding = [...binding];
         }
         else {
-            this.binding = [binding];
+            this.binding = binding ? [binding] : [];
         }
-        this.postConstructMethods = metadata
-            .get('postConstruct')
-            .orElse('postConstruct');
+        this.postConstructMethods = this.resolveValue(metadata, 'postConstruct', 'postConstruct');
         if (!this.binding.includes(this.name))
             this.binding.push(this.name);
         if (reference && !this.binding.includes(reference))
             this.binding.push(reference);
         module.linkComponent(this);
+    }
+    resolveValue(metadata, key, defaultValue) {
+        if (!metadata)
+            return defaultValue;
+        const value = metadata[key];
+        return typeof value === 'undefined' ? defaultValue : value;
+    }
+    resolveEnumValue(metadata, key, enumMap, defaultValue) {
+        const value = this.resolveValue(metadata, key, defaultValue);
+        if (Types.isNumber(value))
+            return value;
+        if (Types.isString(value)) {
+            return enumMap[value.toUpperCase()] ?? defaultValue;
+        }
+        return defaultValue;
     }
     async runPostConstruct(instance) {
         const method = instance[this.postConstructMethods];

@@ -1,9 +1,9 @@
-import { SourceFieldParser } from '../sourceFieldParser';
-import { ScalarField, ScalarType } from '../scalarField';
-import { EnumField } from '../enumField';
-import { Schema } from '../schema';
-import { ArrayField } from '../arrayField';
-import { UnknownField } from '../fieldUnknown';
+import { SourceFieldParser } from '../../libs/schema/sourceFieldParser.js';
+import { ScalarField, ScalarType } from '../../libs/schema/scalarField.js';
+import { EnumField } from '../../libs/schema/enumField.js';
+import { Schema } from '../../libs/schema/schema.js';
+import { ArrayField } from '../../libs/schema/arrayField.js';
+import { UnknownField } from '../../libs/schema/fieldUnknown.js';
 describe('SourceFieldParser', () => {
     let sourceFieldParser;
     beforeEach(() => {

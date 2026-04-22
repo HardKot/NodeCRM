@@ -1,13 +1,12 @@
-import { Command, AccessError, CommandMetadata } from '../command';
-import { Session } from '../../security/session';
-import { Metadata } from '../../core/metadata';
-import { SchemaRegistry } from '../../schema';
+import { Command, AccessError, CommandMetadata } from '../../libs/application/command.js';
+import { Session } from '../../libs/security/session.js';
+import { SchemaRegistry } from '../../libs/schema/schamRegistry.js';
 import { Readable, Writable } from 'node:stream';
 describe('Command', () => {
     let metadata;
     let schemaRegistry;
     beforeEach(() => {
-        metadata = new Metadata();
+        metadata = {};
         schemaRegistry = new SchemaRegistry();
     });
     describe('constructor', () => {
@@ -21,13 +20,13 @@ describe('Command', () => {
         });
         it('should set body as stream for Readable', () => {
             const runner = jest.fn();
-            metadata.set(CommandMetadata.BodySymbol, Readable);
+            metadata[CommandMetadata.BodySymbol] = Readable;
             const handler = Command.createFromFunction(runner, metadata, schemaRegistry);
             expect(handler.body).toBe(Readable);
         });
         it('should set returns as stream for Writable', () => {
             const runner = jest.fn();
-            metadata.set(CommandMetadata.ReturnsSymbol, Writable);
+            metadata[CommandMetadata.ReturnsSymbol] = Writable;
             const handler = Command.createFromFunction(runner, metadata, schemaRegistry);
             expect(handler.returns).toBe(Writable);
         });
@@ -35,7 +34,7 @@ describe('Command', () => {
     describe('run', () => {
         it('should execute runner and return success result', async () => {
             const runner = jest.fn().mockResolvedValue({ data: 'test' });
-            metadata.set(CommandMetadata.AccessSymbol, 'public');
+            metadata[CommandMetadata.AccessSymbol] = 'public';
             const handler = Command.createFromFunction(runner, metadata, schemaRegistry);
             const session = new Session();
             const result = await handler.run(null, session);
@@ -44,7 +43,7 @@ describe('Command', () => {
         });
         it('should return failure if access is denied', async () => {
             const runner = jest.fn();
-            metadata.set(CommandMetadata.AccessSymbol, 'private');
+            metadata[CommandMetadata.AccessSymbol] = 'private';
             const handler = Command.createFromFunction(runner, metadata, schemaRegistry);
             const result = await handler.run(null);
             expect(result.isFailure).toBe(true);
@@ -53,9 +52,9 @@ describe('Command', () => {
         });
         it('should pass body, params and user to runner', async () => {
             const runner = jest.fn().mockResolvedValue(null);
-            metadata.set(CommandMetadata.AccessSymbol, 'public');
-            metadata.set(CommandMetadata.BodySymbol, { test: 'string' });
-            metadata.set(CommandMetadata.ParamsSymbol, { id: 'number' });
+            metadata[CommandMetadata.AccessSymbol] = 'public';
+            metadata[CommandMetadata.BodySymbol] = { test: 'string' };
+            metadata[CommandMetadata.ParamsSymbol] = { id: 'number' };
             const handler = Command.createFromFunction(runner, metadata, schemaRegistry);
             const body = { test: 'data' };
             const params = { id: 1 };
@@ -66,7 +65,7 @@ describe('Command', () => {
         it('should catch and return errors as failure', async () => {
             const error = new Error('Test error');
             const runner = jest.fn().mockRejectedValue(error);
-            metadata.set(CommandMetadata.AccessSymbol, 'public');
+            metadata[CommandMetadata.AccessSymbol] = 'public';
             const handler = Command.createFromFunction(runner, metadata, schemaRegistry);
             const result = await handler.run(null);
             expect(result.isFailure).toBe(true);

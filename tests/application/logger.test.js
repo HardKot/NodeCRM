@@ -1,5 +1,5 @@
 import { Writable } from 'node:stream';
-import { Logger } from '../logger';
+import { Logger } from '../../libs/application/logger.js';
 const timeNow = Date.parse('01.01.2025');
 jest.useFakeTimers({ now: timeNow });
 describe('Logger', () => {

@@ -1,4 +1,4 @@
-import { Component, Metadata } from '../core';
+import { Component } from '../core';
 const UserRepositorySymbol = Symbol();
 function isUserRepository(obj) {
     return typeof obj.findByUsername === 'function';
@@ -14,5 +14,5 @@ class UserRepositorySimple {
         return Promise.resolve(user);
     }
 }
-const UserRepositorySimpleComponent = new Component('UserRepositorySimple', () => new UserRepositorySimple(), Metadata.from({ binding: UserRepositorySymbol, type: 'provider', scope: 'singleton', eager: true }));
+const UserRepositorySimpleComponent = new Component('UserRepositorySimple', () => new UserRepositorySimple(), { binding: UserRepositorySymbol, type: 'provider', scope: 'singleton', eager: true });
 export { UserRepositorySimpleComponent, UserRepositorySymbol, isUserRepository };

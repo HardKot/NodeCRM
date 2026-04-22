@@ -1,6 +1,6 @@
-import { Schema } from '../schema';
-import { Result } from '../../utils';
-import { ValidateError } from '../fieldError';
+import { Schema } from '../../libs/schema/schema.js';
+import { Result } from '../../libs/utils/result.js';
+import { ValidateError } from '../../libs/schema/fieldError.js';
 import { TestBaseField } from './testBaseField';
 describe('Schema', () => {
     let mockValidateField;

@@ -1,4 +1,4 @@
-import { Component, Metadata } from '../core';
+import { Component } from '../core';
 const TokenRepositorySymbol = Symbol();
 function isTokenRepository(obj) {
     return typeof obj.blockToken === 'function' && typeof obj.isBlocked === 'function';
@@ -25,10 +25,10 @@ class TokenRepositorySimple {
         return Promise.resolve(status);
     }
 }
-const TokenRepositorySimpleComponent = new Component('TokenRepositorySimple', () => new TokenRepositorySimple(), Metadata.from({
+const TokenRepositorySimpleComponent = new Component('TokenRepositorySimple', () => new TokenRepositorySimple(), {
     binding: TokenRepositorySymbol,
     type: 'provider',
     scope: 'singleton',
     eager: true,
-}));
+});
 export { TokenRepositorySimpleComponent, TokenRepositorySymbol, isTokenRepository };

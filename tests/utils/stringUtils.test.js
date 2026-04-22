@@ -1,4 +1,4 @@
-import { StringUtils } from '../stringUtils';
+import { StringUtils } from '../../libs/utils/stringUtils.js';
 describe('StringUtils', () => {
     it('factoryCamelCase работает корректно', () => {
         expect(StringUtils.factoryCamelCase('hello', 'world')).toBe('helloWorld');

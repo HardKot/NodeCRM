@@ -1,4 +1,4 @@
-import { Module, Metadata } from '../core';
+import { Module } from '../core';
 import { EventEmitter } from 'node:events';
 import { CommandBodyType, CommandReturnsType } from './command';
 import { Logger } from './logger';
@@ -21,7 +21,7 @@ export interface CommandInfo {
     body: CommandBodyType | null;
     returns: CommandReturnsType | null;
     params: Record<string, any> | null;
-    metadata: Metadata;
+    metadata: any;
     description?: string;
 }
 declare class InstanceError extends Error {

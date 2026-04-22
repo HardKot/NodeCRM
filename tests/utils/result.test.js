@@ -1,4 +1,4 @@
-import { Result } from '../result';
+import { Result } from '../../libs/utils/result.js';
 describe('Result', () => {
     it('Создание успешного результата', () => {
         const result = Result.success(42);

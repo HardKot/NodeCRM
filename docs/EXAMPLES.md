@@ -18,21 +18,25 @@
 
 **main.js**
 ```javascript
-const path = require('node:path');
-const fs = require('node:fs');
-const { Application } = require('./libs/core');
+const { createApp } = require('./libs/application');
 const { HttpServer } = require('./libs/httpServer');
-const { Space } = require('./libs/space');
 
-Application.build()
-  .clusterCount(1)
-  .module(
-    Space.factory({
-      path: path.join(process.cwd(), 'src')
-    })
-  )
-  .plugins([
-    HttpServer.factory({
+const app = createApp();
+
+app.beans(bean => {
+  bean('helloService', class HelloService {
+    sayHello() { return 'Hello World'; }
+  }).singleton();
+});
+
+app.routing(route => {
+  route('/hello').get(async (ctx) => {
+    const helloService = await ctx.getBean('helloService');
+    return { message: helloService.sayHello() };
+  });
+});
+
+app.start(3000);
       port: 3000,
       tls: {
         key: fs.readFileSync('./certs/server.key'),

@@ -1,4 +1,3 @@
-import { Metadata } from './metadata';
 import { Module } from './module';
 import type { ComponentInjectType, ComponentTypeValue, EnumMap, ScopedValue } from './types';
 declare const ComponentType: EnumMap<ComponentTypeValue>;
@@ -8,7 +7,7 @@ declare class Component<T = unknown, D extends {
 } = {}> {
     readonly name: ComponentInjectType;
     readonly factory: (deps: D) => T;
-    readonly metadata: Metadata;
+    readonly metadata: any;
     module: Module;
     readonly inject: ComponentInjectType[];
     readonly type: number;
@@ -16,7 +15,7 @@ declare class Component<T = unknown, D extends {
     readonly eager: boolean;
     readonly binding: ComponentInjectType[];
     private readonly postConstructMethods;
-    constructor(name: ComponentInjectType, factory: (deps: D) => T, metadata: Metadata, module?: Module, reference?: any);
+    constructor(name: ComponentInjectType, factory: (deps: D) => T, metadata: any, module?: Module, reference?: any);
     runPostConstruct(instance: T): any;
 }
 export { Component, ComponentType, Scoped };

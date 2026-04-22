@@ -15,6 +15,21 @@ const CommandMetadata = Object.freeze({
     ReturnsSymbol: 'returns',
     AccessSymbol: 'access',
 });
+function getMeta(metadata, key, defaultValue = undefined) {
+    if (!metadata)
+        return defaultValue;
+    const value = metadata[key];
+    return typeof value === 'undefined' ? defaultValue : value;
+}
+function getMetaSubcomponent(metadata, subKey) {
+    if (!metadata)
+        return undefined;
+    if (typeof subKey === 'string' || typeof subKey === 'symbol')
+        return metadata[subKey];
+    if (typeof subKey === 'function')
+        return metadata[subKey.name] ?? metadata[subKey.name.toString()];
+    return undefined;
+}
 class Command {
     runner;
     metadata;
@@ -26,20 +41,20 @@ class Command {
     }
     static createFromObject(obj, metadata, schemas) {
         const commands = [];
-        let runnerNames = metadata.get('runners').orElse(['execute', 'run']);
+        let runnerNames = getMeta(metadata, 'runners', ['execute', 'run']);
         for (const runnerName of runnerNames) {
             const runner = obj[runnerName];
             if (!Types.isFunction(runner))
                 continue;
             commands.push([
                 runnerName,
-                new Command(runner, metadata.getSubcomponent(runner), this.extractSchemaCommand(CommandMetadata.ParamsSymbol, metadata, schemas), this.extractSchemaCommand(CommandMetadata.BodySymbol, metadata, schemas), this.extractSchemaCommand(CommandMetadata.ReturnsSymbol, metadata, schemas)),
+                new Command(runner, getMetaSubcomponent(metadata, runnerName), this.extractSchemaCommand(CommandMetadata.ParamsSymbol, metadata, schemas), this.extractSchemaCommand(CommandMetadata.BodySymbol, metadata, schemas), this.extractSchemaCommand(CommandMetadata.ReturnsSymbol, metadata, schemas)),
             ]);
         }
         return commands;
     }
     static extractSchemaCommand(key, metadata, schemas) {
-        const source = metadata.get(key).orElse(null);
+        const source = getMeta(metadata, key, null);
         if (!source)
             return null;
         if ([Readable, ReadableStream, Writable, WritableStream].includes(source))
@@ -58,17 +73,17 @@ class Command {
         this.params = params;
         this.body = body;
         this.returns = returns;
-        this.access = metadata
-            .get(CommandMetadata.AccessSymbol)
-            .map(it => {
-            if (Types.isFunction(it))
-                return wrapAccessFunction(it);
-            if (Types.isString(it))
-                return parserAccess(it);
-            return PrivateAccess;
-        })
-            .orElse(PrivateAccess);
-        this.description = metadata.get('description').orElse('No description');
+        const access = getMeta(metadata, CommandMetadata.AccessSymbol, null);
+        if (Types.isFunction(access)) {
+            this.access = wrapAccessFunction(access);
+        }
+        else if (Types.isString(access)) {
+            this.access = parserAccess(access);
+        }
+        else {
+            this.access = PrivateAccess;
+        }
+        this.description = getMeta(metadata, 'description', 'No description');
         Object.freeze(this);
     }
     async run(bodySource, session = new Session(), paramsSource = {}) {

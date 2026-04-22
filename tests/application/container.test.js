@@ -1,16 +1,16 @@
-import { Container, ContainerError } from '../container';
-import { Component, ComponentType, Scoped, Metadata } from '../../core';
-import { Module, RootModule } from '../../core';
+import { Container, ContainerError } from '../../libs/application/container.js';
+import { Component, ComponentType, Scoped } from '../../libs/core/index.js';
+import { Module, RootModule } from '../../libs/core/module.js';
 describe('Container test', () => {
     let componentA;
     let componentB;
     beforeEach(() => {
-        componentA = new Component('ComponentA', () => ({ value: 1 }), new Metadata());
+        componentA = new Component('ComponentA', () => ({ value: 1 }), {});
         componentB = new Component('ComponentB', ({ ComponentA }) => ({
             get value() {
                 return ComponentA?.value ?? null;
             },
-        }), Metadata.from({ type: ComponentType.PROVIDER, inject: ['ComponentA'] }));
+        }), { type: ComponentType.PROVIDER, inject: ['ComponentA'] });
         RootModule.Instance.clear();
     });
     it('should create Container instance', () => {
@@ -36,7 +36,7 @@ describe('Container test', () => {
     });
     it('Should create transient component instances', async () => {
         const container = await Container.create([
-            new Component('ComponentG', () => ({ value: Math.random() }), Metadata.from({ scope: Scoped.TRANSIENT })),
+            new Component('ComponentG', () => ({ value: Math.random() }), { scope: Scoped.TRANSIENT }),
         ]);
         const instanceG1 = await container.get('ComponentG');
         const instanceG2 = await container.get('ComponentG');
@@ -47,7 +47,7 @@ describe('Container test', () => {
     });
     it('Should call postConstructor if defined', async () => {
         const container = await Container.create([
-            new Component('ComponentH', () => ({ postConstruct: jest.fn() }), new Metadata()),
+            new Component('ComponentH', () => ({ postConstruct: jest.fn() }), {}),
         ]);
         const instanceA = await container.get('ComponentH');
         expect(instanceA).toBeDefined();
@@ -59,8 +59,8 @@ describe('Container test', () => {
         }).rejects.toThrow(ContainerError);
     });
     it('Should detect circular dependencies', async () => {
-        const componentC = new Component('ComponentC', () => ({}), Metadata.from({ type: ComponentType.PROVIDER, inject: ['ComponentD'] }));
-        const componentD = new Component('ComponentD', () => ({}), Metadata.from({ type: ComponentType.PROVIDER, inject: ['ComponentC'] }));
+        const componentC = new Component('ComponentC', () => ({}), { type: ComponentType.PROVIDER, inject: ['ComponentD'] });
+        const componentD = new Component('ComponentD', () => ({}), { type: ComponentType.PROVIDER, inject: ['ComponentC'] });
         await expect(async () => {
             await Container.create([componentC, componentD]);
         }).rejects.toThrow(ContainerError);
@@ -81,8 +81,8 @@ describe('Container test', () => {
             }
         }
         const container = await Container.create([
-            new Component('ServiceA', () => new ServiceA(), new Metadata(), RootModule.Instance, ServiceA),
-            new Component('ServiceB', ({ serviceA }) => new ServiceB(serviceA), Metadata.from({ inject: [ServiceA] }), RootModule.Instance, ServiceB),
+            new Component('ServiceA', () => new ServiceA(), {}, RootModule.Instance, ServiceA),
+            new Component('ServiceB', ({ serviceA }) => new ServiceB(serviceA), { inject: [ServiceA] }, RootModule.Instance, ServiceB),
         ]);
         const instanceB = await container.get('ServiceB');
         expect(instanceB).toBeDefined();
