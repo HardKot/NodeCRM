@@ -1,5 +1,5 @@
 const { Instance } = require('../../libs/application/instance.js');
-const { Logger } = require('../../libs/application/logger.js');
+const { Logger } = require('../../libs/core/logger.js');
 const { Component, RootModule } = require('../../libs/core/index.js');
 const { Session } = require('../../libs/security/session.js');
 class TestLogger extends Logger {

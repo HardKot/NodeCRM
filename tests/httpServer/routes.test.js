@@ -1,4 +1,4 @@
-const { Routes } = require('../../libs/httpServer/routes.js');
+const { Routes } = require('../../libs/httpServer/route.js');
 const { Handle } = require('../../libs/httpServer/handle.js');
 describe('ControllerNode', () => {
     let wrapperHandler = (name, path, method) => {

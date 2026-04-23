@@ -1,4 +1,4 @@
-import * as http2 from 'node:http2';
+import * as http2 from 'http2';
 import { Component } from '../core';
 import { JwtService } from './jwtService';
 import type { ISecurityGetaway, Tokens } from './types';

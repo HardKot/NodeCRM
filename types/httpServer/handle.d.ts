@@ -1,4 +1,4 @@
-import * as http2 from 'node:http2';
+import * as http2 from 'http2';
 import { CommandBody, CommandInfo, CommandReturns } from '../application';
 import type { RESTMethod } from './types';
 declare class Handle {

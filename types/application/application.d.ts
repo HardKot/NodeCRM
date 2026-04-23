@@ -1,6 +1,6 @@
 import { InstanceModule } from './instance';
 import { Plugin } from './plugin';
-import { Logger } from './logger';
+import { Logger } from '../core/logger';
 type InjectModule = InstanceModule | Promise<InstanceModule> | (() => InstanceModule | Promise<InstanceModule>);
 interface ApplicationConfig {
     clusterCount?: number;

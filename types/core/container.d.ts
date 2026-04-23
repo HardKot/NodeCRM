@@ -1,6 +1,6 @@
 import { Application } from "./application";
 
-class Container {
+declare class Container {
     public app: Application;
     constructor(app: Application);
 
@@ -8,3 +8,5 @@ class Container {
     async destroyAll(): Promise<void>;
     async destroyScoped(scopeId: string): Promise<void>;
 }
+
+export { Container }

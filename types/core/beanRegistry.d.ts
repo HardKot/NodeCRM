@@ -1,6 +1,6 @@
 import { Application } from "../application";
 
-class BeanRegistry {
+declare class BeanRegistry {
     public app: Application;
     constructor(app: Application, beans?: Bean[]);
 

@@ -1,7 +1,7 @@
 import { Module } from '../core';
 import { EventEmitter } from 'node:events';
 import { CommandBodyType, CommandReturnsType } from './command';
-import { Logger } from './logger';
+import { Logger } from '../core/logger';
 import { Result } from '../utils';
 import { Plugin } from './plugin';
 import { Session } from '../security';

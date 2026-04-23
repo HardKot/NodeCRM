@@ -1,4 +1,4 @@
-import * as http2 from 'node:http2';
+import * as http2 from 'http2';
 import { IInstance, Plugin } from '../application';
 import type { ContentType, HttpServerOptions, TLSOptions, TokenConfig } from './types';
 import { Component } from '../core';

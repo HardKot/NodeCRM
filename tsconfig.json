@@ -6,15 +6,11 @@
     ],
     "declaration": true,
     "emitDeclarationOnly": false,
-    "outDir": "./dist",
-    "rootDir": "./",
     "module": "commonjs",
-    "moduleResolution": "node",
     "target": "esnext",
     "esModuleInterop": true,
     "allowJs": true,
     "strict": true,
     "skipLibCheck": true
-  },
-  "exclude": ["node_modules", "dist"]
+  }
 }

@@ -1,7 +1,7 @@
 const cluster = require('node:cluster');
 const { Instance } = require('./instance');
 const { dirname } = require('node:path');
-const { Logger } = require('./logger');
+const { Logger } = require('../core/logger');
 const { Types } = require('../utils');
 class ApplicationError extends Error {
 }

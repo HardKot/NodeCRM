@@ -1,4 +1,4 @@
-import * as http2 from 'node:http2';
+import * as http2 from 'http2';
 import { ExecCommand } from '../application';
 import type { ContentType, Routing } from './types';
 import { HttpSecurity } from './httpSecurity';
