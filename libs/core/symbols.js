@@ -1,0 +1,1 @@
+exports.ValueSymbol = Symbol('value');

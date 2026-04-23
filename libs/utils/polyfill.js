@@ -1,7 +1,7 @@
-import { StringUtils } from './stringUtils';
-import { Result as _Result } from './result';
-import { Optional as _Optional } from './optional';
-import { FunctionUtils } from './functionUtils';
+const { StringUtils } = require('./stringUtils');
+const { Result: _Result } = require('./result');
+const { Optional: _Optional } = require('./optional');
+const { FunctionUtils } = require('./functionUtils');
 class Polyfill {
     static run(config) {
         const polyfill = new Polyfill();
@@ -44,4 +44,5 @@ class Polyfill {
     }
     ;
 }
-export { Polyfill };
+
+exports.Polyfill = Polyfill;

@@ -1,5 +1,5 @@
-import { Types } from './types';
-export class TreeNode extends Set {
+const { Types } = require('./types');
+class TreeNode extends Set {
     value;
     parent;
     constructor(value = null, parent = null, children) {
@@ -104,3 +104,5 @@ export class TreeNode extends Set {
         return false;
     }
 }
+
+exports.TreeNode = TreeNode;

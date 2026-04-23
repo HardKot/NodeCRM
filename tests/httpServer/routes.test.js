@@ -1,5 +1,5 @@
-import { Routes } from '../../libs/httpServer/routes.js';
-import { Handle } from '../../libs/httpServer/handle.js';
+const { Routes } = require('../../libs/httpServer/routes.js');
+const { Handle } = require('../../libs/httpServer/handle.js');
 describe('ControllerNode', () => {
     let wrapperHandler = (name, path, method) => {
         return new Handle(name, path, method, 200, null, null, null);

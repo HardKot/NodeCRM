@@ -1,5 +1,5 @@
-import { Types } from './types';
-export class Result {
+const { Types } = require('./types');
+class Result {
     value;
     isSuccess;
     isFailure;
@@ -65,3 +65,5 @@ export class Result {
         return Result.failure(this.value);
     }
 }
+
+exports.Result = Result;

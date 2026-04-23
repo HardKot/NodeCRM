@@ -1,6 +1,6 @@
-import { Component } from '../core';
-import { isUserRepository, UserRepositorySymbol } from '../security';
-import { isTokenRepository, TokenRepositorySymbol } from './tokenRepository';
+const { Component } = require('../core');
+const { isUserRepository, UserRepositorySymbol } = require('../security');
+const { isTokenRepository, TokenRepositorySymbol } = require('./tokenRepository');
 const SecurityRepositorySymbol = Symbol();
 const HttpSecurityGetaway = new Component("HttpSecurityGetaway", (deps) => {
     let userRepository = null;
@@ -26,4 +26,7 @@ const HttpSecurityGetawayEmpty = {
     blockToken: async () => false,
     isTokenBlocked: async () => 0,
 };
-export { HttpSecurityGetaway, SecurityRepositorySymbol, HttpSecurityGetawayEmpty };
+
+exports.HttpSecurityGetaway = HttpSecurityGetaway;
+exports.SecurityRepositorySymbol = SecurityRepositorySymbol;
+exports.HttpSecurityGetawayEmpty = HttpSecurityGetawayEmpty;

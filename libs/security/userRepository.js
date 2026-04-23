@@ -1,4 +1,4 @@
-import { Component } from '../core';
+const { Component } = require('../core');
 const UserRepositorySymbol = Symbol();
 function isUserRepository(obj) {
     return typeof obj.findByUsername === 'function';
@@ -15,4 +15,7 @@ class UserRepositorySimple {
     }
 }
 const UserRepositorySimpleComponent = new Component('UserRepositorySimple', () => new UserRepositorySimple(), { binding: UserRepositorySymbol, type: 'provider', scope: 'singleton', eager: true });
-export { UserRepositorySimpleComponent, UserRepositorySymbol, isUserRepository };
+
+exports.UserRepositorySimpleComponent = UserRepositorySimpleComponent;
+exports.UserRepositorySymbol = UserRepositorySymbol;
+exports.isUserRepository = isUserRepository;

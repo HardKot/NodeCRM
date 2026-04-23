@@ -1,4 +1,4 @@
-import { EnumField } from '../../libs/schema/enumField.js';
+const { EnumField } = require('../../libs/schema/enumField.js');
 describe('EnumField', () => {
     describe('EnumField check', () => {
         it('should validate value in enum', () => {

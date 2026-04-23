@@ -1,4 +1,4 @@
-import { SourceParser } from '../../libs/utils/sourceParser.js';
+const { SourceParser } = require('../../libs/utils/sourceParser.js');
 class TestParser extends SourceParser {
     parseArray(source) {
         return `array:${source.length}`;

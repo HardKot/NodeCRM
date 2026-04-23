@@ -1,7 +1,7 @@
-import { Instance } from '../../libs/application/instance.js';
-import { Logger } from '../../libs/application/logger.js';
-import { Component, RootModule } from '../../libs/core/index.js';
-import { Session } from '../../libs/security/session.js';
+const { Instance } = require('../../libs/application/instance.js');
+const { Logger } = require('../../libs/application/logger.js');
+const { Component, RootModule } = require('../../libs/core/index.js');
+const { Session } = require('../../libs/security/session.js');
 class TestLogger extends Logger {
     constructor() {
         super('TEST', process.stdout, process.stderr);

@@ -1,4 +1,4 @@
-import { Types } from '../utils';
+const { Types } = require('../utils');
 class Routes {
     handlers;
     static initialize() {
@@ -71,4 +71,5 @@ class Routes {
         };
     }
 }
-export { Routes };
+
+exports.Routes = Routes;

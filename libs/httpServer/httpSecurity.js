@@ -1,5 +1,5 @@
-import { HttpSecurityGetaway } from './httpSecurityGetaway';
-import { Session } from '../security';
+const { HttpSecurityGetaway } = require('./httpSecurityGetaway');
+const { Session } = require('../security');
 class SecurityError extends Error {
 }
 class HttpSecurity {
@@ -97,4 +97,5 @@ class HttpSecurity {
         });
     }
 }
-export { HttpSecurity };
+
+exports.HttpSecurity = HttpSecurity;

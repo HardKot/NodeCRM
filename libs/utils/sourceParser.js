@@ -1,5 +1,5 @@
-import { StringUtils } from './stringUtils';
-import { Types } from './types';
+const { StringUtils } = require('./stringUtils');
+const { Types } = require('./types');
 class SourceParserError extends Error {
 }
 class SourceParser {
@@ -38,4 +38,6 @@ class SourceParser {
         throw new SourceParserError('parseString method not implemented');
     }
 }
-export { SourceParser, SourceParserError };
+
+exports.SourceParser = SourceParser;
+exports.SourceParserError = SourceParserError;

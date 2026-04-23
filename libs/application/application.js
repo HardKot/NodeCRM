@@ -1,8 +1,8 @@
-import * as cluster from 'node:cluster';
-import { Instance } from './instance';
-import { dirname } from 'node:path';
-import { Logger } from './logger';
-import { Types } from '../utils';
+const cluster = require('node:cluster');
+const { Instance } = require('./instance');
+const { dirname } = require('node:path');
+const { Logger } = require('./logger');
+const { Types } = require('../utils');
 class ApplicationError extends Error {
 }
 class Application {
@@ -54,4 +54,6 @@ class Application {
         await Instance.create(module, this.logger, this.plugins);
     }
 }
-export { Application, ApplicationError };
+
+exports.Application = Application;
+exports.ApplicationError = ApplicationError;

@@ -1,4 +1,4 @@
-export class Table extends Map {
+class Table extends Map {
     add(row, value) {
         if (!this.has(row)) {
             super.set(row, [value]);
@@ -15,3 +15,5 @@ export class Table extends Map {
         return super.get(row);
     }
 }
+
+exports.Table = Table;

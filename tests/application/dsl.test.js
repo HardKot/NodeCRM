@@ -1,5 +1,4 @@
-import { createApp } from '../../libs/application/dsl.js';
-
+const { createApp } = require('../../libs/application/dsl.js');
 describe('SpaceJS DSL integration', () => {
   class UserRepository {
     constructor() { this.users = [{ id: 1, name: 'Alice' }]; }

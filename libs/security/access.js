@@ -1,4 +1,4 @@
-import { FunctionUtils } from '../utils';
+const { FunctionUtils } = require('../utils');
 const AccessHandle = {
     Public: 'public',
     Private: 'private',
@@ -70,4 +70,7 @@ function wrapAccessFunction(func) {
         }
     };
 }
-export { parserAccess, wrapAccessFunction, PrivateAccess };
+
+exports.parserAccess = parserAccess;
+exports.wrapAccessFunction = wrapAccessFunction;
+exports.PrivateAccess = PrivateAccess;

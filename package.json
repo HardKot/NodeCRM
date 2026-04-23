@@ -4,7 +4,7 @@
   "description": "Framework for building multi-tenant SaaS applications",
   "main": "./index.js",
   "types": "./types/index.d.ts",
-  "type": "module",
+  "type": "commonjs",
   "scripts": {
     "precommit": "npm run check",
     "build": "tsc",

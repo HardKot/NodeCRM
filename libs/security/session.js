@@ -1,5 +1,5 @@
-import * as crypto from 'node:crypto';
-export class Session extends Map {
+const crypto = require('node:crypto');
+class Session extends Map {
     #hasChange = false;
     id;
     constructor(payload = {}, id) {
@@ -26,3 +26,5 @@ export class Session extends Map {
         return this.get('permissions') ?? [];
     }
 }
+
+exports.Session = Session;

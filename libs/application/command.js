@@ -1,10 +1,10 @@
-import { Readable, Writable } from 'node:stream';
-import { ReadableStream, WritableStream } from 'node:stream/web';
-import * as buffer from 'node:buffer';
-import { Result, Types } from '../utils';
-import { BaseField } from '../schema';
-import { parserAccess, PrivateAccess, wrapAccessFunction } from '../security/access';
-import { Session } from '../security/session';
+const { Readable, Writable } = require('node:stream');
+const { ReadableStream, WritableStream } = require('node:stream/web');
+const buffer = require('node:buffer');
+const { Result, Types } = require('../utils');
+const { BaseField } = require('../schema');
+const { parserAccess, PrivateAccess, wrapAccessFunction } = require('../security/access');
+const { Session } = require('../security/session');
 class CommandError extends Error {
 }
 class AccessError extends CommandError {
@@ -151,4 +151,8 @@ class Command {
         return obj instanceof BaseField;
     }
 }
-export { Command, CommandError, AccessError, CommandMetadata };
+
+exports.Command = Command;
+exports.CommandError = CommandError;
+exports.AccessError = AccessError;
+exports.CommandMetadata = CommandMetadata;

@@ -33,4 +33,6 @@ class ValidateError extends FieldError {
         }
     }
 }
-export { ValidateError, FieldError };
+
+exports.ValidateError = ValidateError;
+exports.FieldError = FieldError;

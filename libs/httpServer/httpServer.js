@@ -1,12 +1,12 @@
-import * as http2 from 'node:http2';
-import { Routes } from './routes';
-import { Handle } from './handle';
-import { HandleRequest } from './handleRequest';
-import { HttpSecurity } from './httpSecurity';
-import { JwtService } from './jwtService';
-import { HttpSecurityGetaway, HttpSecurityGetawayEmpty, SecurityRepositorySymbol, } from './httpSecurityGetaway';
-import { TokenRepositorySimpleComponent } from './tokenRepository';
-import { Component } from '../core';
+const http2 = require('node:http2');
+const { Routes } = require('./routes');
+const { Handle } = require('./handle');
+const { HandleRequest } = require('./handleRequest');
+const { HttpSecurity } = require('./httpSecurity');
+const { JwtService } = require('./jwtService');
+const { HttpSecurityGetaway, HttpSecurityGetawayEmpty, SecurityRepositorySymbol, } = require('./httpSecurityGetaway');
+const { TokenRepositorySimpleComponent } = require('./tokenRepository');
+const { Component } = require('../core');
 class HttpServer {
     tls;
     port;
@@ -103,4 +103,5 @@ class HttpServer {
         });
     }
 }
-export { HttpServer };
+
+exports.HttpServer = HttpServer;

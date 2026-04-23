@@ -5,4 +5,5 @@ class HttpServerError extends Error {
         this.code = code;
     }
 }
-export { HttpServerError };
+
+exports.HttpServerError = HttpServerError;

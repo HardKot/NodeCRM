@@ -1,6 +1,6 @@
-import { BaseField } from './baseField';
-import { ValidateError } from './fieldError';
-import { Result } from '../utils';
+const { BaseField } = require('./baseField');
+const { ValidateError } = require('./fieldError');
+const { Result } = require('../utils');
 const ScalarType = Object.freeze({
     String: 0,
     Number: 1,
@@ -73,4 +73,6 @@ class ScalarField extends BaseField {
         return Math.floor(num);
     }
 }
-export { ScalarField, ScalarType };
+
+exports.ScalarField = ScalarField;
+exports.ScalarType = ScalarType;

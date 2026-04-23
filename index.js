@@ -1,2 +1,2 @@
-export * from "./libs/application";
-export * from "./libs/httpServer";
+Object.assign(exports, require("./libs/application"));
+Object.assign(exports, require("./libs/httpServer"));

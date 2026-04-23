@@ -1,6 +1,6 @@
-import { BaseField } from './baseField';
-import { Result, Types } from '../utils';
-import { ValidateError } from './fieldError';
+const { BaseField } = require('./baseField');
+const { Result, Types } = require('../utils');
+const { ValidateError } = require('./fieldError');
 class ArrayField extends BaseField {
     itemField;
     constructor(itemField, required = false, tests = []) {
@@ -37,4 +37,5 @@ class ArrayField extends BaseField {
         return value.map(item => this.itemField.transform(item)).filter(item => item !== undefined);
     }
 }
-export { ArrayField };
+
+exports.ArrayField = ArrayField;

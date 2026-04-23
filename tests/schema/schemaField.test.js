@@ -1,7 +1,7 @@
-import { Schema } from '../../libs/schema/schema.js';
-import { Result } from '../../libs/utils/result.js';
-import { ValidateError } from '../../libs/schema/fieldError.js';
-import { TestBaseField } from './testBaseField';
+const { Schema } = require('../../libs/schema/schema.js');
+const { Result } = require('../../libs/utils/result.js');
+const { ValidateError } = require('../../libs/schema/fieldError.js');
+const { TestBaseField } = require('./testBaseField');
 describe('Schema', () => {
     let mockValidateField;
     const mockedValidateType = jest.fn();

@@ -1,8 +1,8 @@
-import * as stream from 'node:stream';
-import * as streamWeb from 'node:stream/web';
-export class TypeError extends Error {
+const stream = require('node:stream');
+const streamWeb = require('node:stream/web');
+class TypeError extends Error {
 }
-export class Types {
+class Types {
     constructor() {
         throw new Error('Types is a static class and cannot be instantiated');
     }
@@ -77,4 +77,11 @@ export class Types {
     static isAsyncIterator(v) {
         return !!v && Symbol.asyncIterator in v;
     }
+    
+    static isNotInstanceOf(v, Class) {
+        return !(v instanceof Class);
+    }
 }
+
+exports.TypeError = TypeError;
+exports.Types = Types;

@@ -1,4 +1,4 @@
-export class Optional {
+class Optional {
     value;
     constructor(value) {
         this.value = value;
@@ -63,3 +63,5 @@ export class Optional {
         return this;
     }
 }
+
+exports.Optional = Optional;

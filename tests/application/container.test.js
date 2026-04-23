@@ -1,6 +1,6 @@
-import { Container, ContainerError } from '../../libs/application/container.js';
-import { Component, ComponentType, Scoped } from '../../libs/core/index.js';
-import { Module, RootModule } from '../../libs/core/module.js';
+const { Container, ContainerError } = require('../../libs/application/container.js');
+const { Component, ComponentType, Scoped } = require('../../libs/core/index.js');
+const { Module, RootModule } = require('../../libs/core/module.js');
 describe('Container test', () => {
     let componentA;
     let componentB;

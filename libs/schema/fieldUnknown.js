@@ -1,6 +1,6 @@
-import { BaseField } from './baseField';
-import { Result } from '../utils';
-import { ValidateError } from './fieldError';
+const { BaseField } = require('./baseField');
+const { Result } = require('../utils');
+const { ValidateError } = require('./fieldError');
 class UnknownField extends BaseField {
     constructor() {
         super(false, []);
@@ -12,4 +12,5 @@ class UnknownField extends BaseField {
         return value;
     }
 }
-export { UnknownField };
+
+exports.UnknownField = UnknownField;

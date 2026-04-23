@@ -1,11 +1,11 @@
-import { Container } from './container';
-import { ComponentType } from '../core';
-import { EventEmitter } from 'node:events';
-import { Command } from './command';
-import { Result, Types } from '../utils';
-import { Session } from '../security';
-import { SchemaRegistry } from '../schema';
-import { defultComponents } from './defultComponents';
+const { Container } = require('./container');
+const { ComponentType } = require('../core');
+const { EventEmitter } = require('node:events');
+const { Command } = require('./command');
+const { Result, Types } = require('../utils');
+const { Session } = require('../security');
+const { SchemaRegistry } = require('../schema');
+const { defultComponents } = require('./defultComponents');
 const InstanceEvent = Object.freeze({
     BUILD: 'build',
     UPDATE: 'update',
@@ -129,4 +129,7 @@ class Instance extends EventEmitter {
         return commandsList;
     }
 }
-export { Instance, InstanceEvent, InstanceError };
+
+exports.Instance = Instance;
+exports.InstanceEvent = InstanceEvent;
+exports.InstanceError = InstanceError;

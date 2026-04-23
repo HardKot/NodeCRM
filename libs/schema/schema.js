@@ -1,6 +1,6 @@
-import { BaseField } from './baseField';
-import { Result, Types } from '../utils';
-import { ValidateError } from './fieldError';
+const { BaseField } = require('./baseField');
+const { Result, Types } = require('../utils');
+const { ValidateError } = require('./fieldError');
 class Schema extends BaseField {
     schema;
     proto;
@@ -47,4 +47,5 @@ class Schema extends BaseField {
         }
     }
 }
-export { Schema };
+
+exports.Schema = Schema;

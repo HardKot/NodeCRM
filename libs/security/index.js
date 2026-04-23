@@ -1,3 +1,3 @@
-export * from "./session";
-export * from "./access";
-export * from "./userRepository";
+Object.assign(exports, require("./session"));
+Object.assign(exports, require("./access"));
+Object.assign(exports, require("./userRepository"));

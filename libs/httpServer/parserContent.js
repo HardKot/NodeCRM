@@ -35,4 +35,5 @@ class ParserContent {
         return null;
     }
 }
-export { ParserContent };
+
+exports.ParserContent = ParserContent;

@@ -1,5 +1,5 @@
-import { Result } from '../utils';
-import { ValidateError } from './fieldError';
+const { Result } = require('../utils');
+const { ValidateError } = require('./fieldError');
 class BaseField {
     required;
     tests;
@@ -37,4 +37,5 @@ class BaseField {
         return Result.success(transformer);
     }
 }
-export { BaseField };
+
+exports.BaseField = BaseField;

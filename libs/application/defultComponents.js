@@ -1,3 +1,4 @@
-import { UserRepositorySimpleComponent } from '../security';
+const { UserRepositorySimpleComponent } = require('../security');
 const defultComponents = Object.freeze([UserRepositorySimpleComponent]);
-export { defultComponents };
+
+exports.defultComponents = defultComponents;

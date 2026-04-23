@@ -1,4 +1,4 @@
-import { SchemaRegistry } from '../schema';
+const { SchemaRegistry } = require('../schema');
 class Module {
     name;
     _components;
@@ -51,4 +51,6 @@ class RootModule extends Module {
     }
     static Instance = new RootModule();
 }
-export { Module, RootModule };
+
+exports.Module = Module;
+exports.RootModule = RootModule;

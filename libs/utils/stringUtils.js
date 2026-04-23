@@ -23,4 +23,5 @@ class StringUtils {
         return source.split(/[_\-.]+|(?=[A-Z])/g).filter(Boolean);
     }
 }
-export { StringUtils };
+
+exports.StringUtils = StringUtils;

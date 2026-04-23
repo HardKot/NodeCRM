@@ -1,6 +1,6 @@
-import { AsyncLocalStorage } from 'node:async_hooks';
-import { Component, Scoped } from '../core';
-import { Types } from '../utils';
+const { AsyncLocalStorage } = require('node:async_hooks');
+const { Component, Scoped } = require('../core');
+const { Types } = require('../utils');
 class ContainerError extends Error {
 }
 const UnknownSymbol = Symbol();
@@ -152,4 +152,6 @@ class Container {
         return UnknownSymbol;
     }
 }
-export { Container, ContainerError };
+
+exports.Container = Container;
+exports.ContainerError = ContainerError;

@@ -1,4 +1,4 @@
-import { ScalarField, ScalarType } from '../../libs/schema/scalarField.js';
+const { ScalarField, ScalarType } = require('../../libs/schema/scalarField.js');
 describe('ScalarField', () => {
     describe('ScalarField check', () => {
         it('should validate correct type for required field', () => {

@@ -1,5 +1,5 @@
-import * as querystring from 'node:querystring';
-import * as path from 'node:path';
+const querystring = require('node:querystring');
+const path = require('node:path');
 const RequestMetadataKey = Object.freeze({
     MAPPING: 'mapping',
     METHOD: 'method',
@@ -90,4 +90,5 @@ class Handle {
         return paramsEntries;
     }
 }
-export { Handle };
+
+exports.Handle = Handle;

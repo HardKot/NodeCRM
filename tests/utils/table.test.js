@@ -1,4 +1,4 @@
-import { Table } from '../../libs/utils/table.js';
+const { Table } = require('../../libs/utils/table.js');
 describe('Table', () => {
     it('Добавление и получение значений', () => {
         const table = new Table();

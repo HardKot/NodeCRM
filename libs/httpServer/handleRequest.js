@@ -1,9 +1,9 @@
-import * as stream from 'node:stream';
-import * as streamWeb from 'node:stream/web';
-import { Result, Types } from '../utils';
-import { HttpServerError } from './httpServerError';
-import { ParserContent } from './parserContent';
-import { HttpUtils } from './httpUtils';
+const stream = require('node:stream');
+const streamWeb = require('node:stream/web');
+const { Result, Types } = require('../utils');
+const { HttpServerError } = require('./httpServerError');
+const { ParserContent } = require('./parserContent');
+const { HttpUtils } = require('./httpUtils');
 const ApplicationOctetStream = 'application/octet-stream';
 class HandleRequest {
     routing;
@@ -176,4 +176,5 @@ class HandleRequest {
         return Result.success(true);
     }
 }
-export { HandleRequest };
+
+exports.HandleRequest = HandleRequest;

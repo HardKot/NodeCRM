@@ -1,7 +1,7 @@
-import { Command, AccessError, CommandMetadata } from '../../libs/application/command.js';
-import { Session } from '../../libs/security/session.js';
-import { SchemaRegistry } from '../../libs/schema/schamRegistry.js';
-import { Readable, Writable } from 'node:stream';
+const { Command, AccessError, CommandMetadata } = require('../../libs/application/command.js');
+const { Session } = require('../../libs/security/session.js');
+const { SchemaRegistry } = require('../../libs/schema/schamRegistry.js');
+const { Readable, Writable } = require('node:stream');
 describe('Command', () => {
     let metadata;
     let schemaRegistry;

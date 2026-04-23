@@ -1,5 +1,5 @@
-import * as crypto from 'node:crypto';
-import { Result } from '../utils';
+const crypto = require('node:crypto');
+const { Result } = require('../utils');
 class JwtError extends Error {
 }
 class JwtService {
@@ -89,4 +89,6 @@ class JwtService {
         return JSON.parse(json);
     }
 }
-export { JwtError, JwtService };
+
+exports.JwtError = JwtError;
+exports.JwtService = JwtService;

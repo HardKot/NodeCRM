@@ -1,9 +1,9 @@
-import { SourceFieldParser } from '../../libs/schema/sourceFieldParser.js';
-import { ScalarField, ScalarType } from '../../libs/schema/scalarField.js';
-import { EnumField } from '../../libs/schema/enumField.js';
-import { Schema } from '../../libs/schema/schema.js';
-import { ArrayField } from '../../libs/schema/arrayField.js';
-import { UnknownField } from '../../libs/schema/fieldUnknown.js';
+const { SourceFieldParser } = require('../../libs/schema/sourceFieldParser.js');
+const { ScalarField, ScalarType } = require('../../libs/schema/scalarField.js');
+const { EnumField } = require('../../libs/schema/enumField.js');
+const { Schema } = require('../../libs/schema/schema.js');
+const { ArrayField } = require('../../libs/schema/arrayField.js');
+const { UnknownField } = require('../../libs/schema/fieldUnknown.js');
 describe('SourceFieldParser', () => {
     let sourceFieldParser;
     beforeEach(() => {

@@ -1,5 +1,5 @@
-import { BaseField } from '../../libs/schema/baseField.js';
-export class TestBaseField extends BaseField {
+const { BaseField } = require('../../libs/schema/baseField.js');
+class TestBaseField extends BaseField {
     mockedValidateType;
     mockedTransform;
     constructor(mockedValidateType, mockedTransform, required = false, tests = []) {
@@ -14,3 +14,5 @@ export class TestBaseField extends BaseField {
         return this.mockedTransform(value);
     }
 }
+
+exports.TestBaseField = TestBaseField;

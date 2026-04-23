@@ -1,4 +1,6 @@
 const TestPreset = {};
-export function FindTestPreset(source) {
+function FindTestPreset(source) {
     return null;
 }
+
+exports.FindTestPreset = FindTestPreset;

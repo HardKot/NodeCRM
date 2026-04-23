@@ -1,4 +1,4 @@
-import { Component } from '../core';
+const { Component } = require('../core');
 const TokenRepositorySymbol = Symbol();
 function isTokenRepository(obj) {
     return typeof obj.blockToken === 'function' && typeof obj.isBlocked === 'function';
@@ -31,4 +31,7 @@ const TokenRepositorySimpleComponent = new Component('TokenRepositorySimple', ()
     scope: 'singleton',
     eager: true,
 });
-export { TokenRepositorySimpleComponent, TokenRepositorySymbol, isTokenRepository };
+
+exports.TokenRepositorySimpleComponent = TokenRepositorySimpleComponent;
+exports.TokenRepositorySymbol = TokenRepositorySymbol;
+exports.isTokenRepository = isTokenRepository;

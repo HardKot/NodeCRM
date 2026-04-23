@@ -1,4 +1,4 @@
-export class ObjectUtils {
+class ObjectUtils {
     constructor() {
         throw new Error('ObjectUtils is a static class and cannot be instantiated');
     }
@@ -73,3 +73,5 @@ export class ObjectUtils {
         return base64.replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
     }
 }
+
+exports.ObjectUtils = ObjectUtils;

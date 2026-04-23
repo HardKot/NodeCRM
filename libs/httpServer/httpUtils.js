@@ -1,6 +1,6 @@
-import * as process from 'node:process';
-import * as path from 'node:path';
-import * as fs from 'node:fs';
+const process = require('node:process');
+const path = require('node:path');
+const fs = require('node:fs');
 class HttpUtils {
     constructor() { }
     static readTLS(dir) {
@@ -17,4 +17,5 @@ class HttpUtils {
         return ['get', 'post', 'put', 'delete'].includes(method);
     }
 }
-export { HttpUtils };
+
+exports.HttpUtils = HttpUtils;
