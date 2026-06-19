@@ -6,4 +6,4 @@ class HttpServerError extends Error {
     }
 }
 
-exports.HttpServerError = HttpServerError;
+export { HttpServerError };

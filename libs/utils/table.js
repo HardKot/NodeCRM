@@ -16,4 +16,4 @@ class Table extends Map {
     }
 }
 
-exports.Table = Table;
+export { Table };

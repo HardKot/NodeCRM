@@ -1,6 +1,6 @@
-const { Types } = require("../utils");
-const { Bean } = require("./bean");
-const { CoreError } = require("./coreError");
+import { Types } from '../utils/index.js';
+import { Bean } from './bean.js';
+import { CoreError } from './coreError.js';
 
 class BeanRegistry {
     #bindings;
@@ -81,4 +81,4 @@ class BeanRegistry {
     }
 }
 
-exports.BeanRegistry = BeanRegistry;
+export { BeanRegistry };

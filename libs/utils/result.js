@@ -1,4 +1,4 @@
-const { Types } = require('./types');
+import { Types } from './types.js';
 class Result {
     value;
     isSuccess;
@@ -66,4 +66,4 @@ class Result {
     }
 }
 
-exports.Result = Result;
+export { Result };

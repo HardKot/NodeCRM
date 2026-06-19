@@ -1,4 +1,4 @@
-const { Types } = require('./types');
+import { Types } from './types.js';
 class TreeNode extends Set {
     value;
     parent;
@@ -105,4 +105,4 @@ class TreeNode extends Set {
     }
 }
 
-exports.TreeNode = TreeNode;
+export { TreeNode };

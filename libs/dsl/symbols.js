@@ -1,1 +1,0 @@
-exports.ValueSymbol = Symbol('value');

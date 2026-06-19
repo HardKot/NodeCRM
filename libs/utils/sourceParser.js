@@ -1,5 +1,5 @@
-const { StringUtils } = require('./stringUtils');
-const { Types } = require('./types');
+import { StringUtils } from './stringUtils.js';
+import { Types } from './types.js';
 class SourceParserError extends Error {
 }
 class SourceParser {
@@ -39,5 +39,5 @@ class SourceParser {
     }
 }
 
-exports.SourceParser = SourceParser;
-exports.SourceParserError = SourceParserError;
+export { SourceParser };
+export { SourceParserError };

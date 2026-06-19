@@ -7,4 +7,4 @@ class FunctionUtils {
     }
 }
 
-exports.FunctionUtils = FunctionUtils;
+export { FunctionUtils };

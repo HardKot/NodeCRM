@@ -4,13 +4,17 @@
   "description": "Framework for building multi-tenant SaaS applications",
   "main": "./index.js",
   "types": "./types/index.d.ts",
-  "type": "commonjs",
+  "type": "module",
   "scripts": {
     "precommit": "npm run check",
     "build": "tsc",
-    "test": "jest",
+    "test": "node --import ./tests/setup.js --test",
     "lint": "eslint"
   },
+  "imports": {
+    "#*": "./libs/*/index.js"
+  },
+
   "dependencies": {
     "pg": "^8.16.3"
   },

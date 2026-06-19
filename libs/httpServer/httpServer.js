@@ -1,11 +1,11 @@
-const http2 = require('node:http2');
-const utils = require('node:util');
-const events = require('node:events');
+import * as http2 from 'node:http2';
+import * as utils from 'node:util';
+import * as events from 'node:events';
 
-const { Router } = require('./router');
-const { HttpServerError } = require('./httpServerError');
+import { Router } from '../routing/router.js';
+import { HttpServerError } from './httpServerError.js';
 
-const { Types } = require('../utils');
+import { Types } from '../utils/index.js';
 
 const HOOKS = Object.freeze({
   onRequest: 0,
@@ -30,11 +30,10 @@ class HttpServer {
     this.port = config.getValue('http.port', 8443);
     this.host = config.getValue('http.host', '0.0.0.0');
 
-    this.contentType = config.getValue('http.contentType', [
-      'application/json',
-      'application/octet-stream',
-    ]);
-    if (!Array.isArray(this.contentType)) this.contentType = [this.contentType];
+    this.classes = {
+        request: Request,
+        response: Response,
+    }
 
     const tls = config.getValue('http.tls');
     const requestTimeout = config.getValue('http.timeout', 60);
@@ -82,14 +81,20 @@ class HttpServer {
     this.eventEmitter.on(HOOKS[name], fn);
   }
 
+  register(callback) {
+    if (!Types.isFunction(callback)) throw new HttpServerError('Register callback must be a function');
+    callback(this);
+  }
+
+
   /**
    *
    * @param {http2.Http2ServerRequest} req
    * @param {http2.Http2ServerResponse} res
    */
   async #onRequest(req, res) {
-    const request = new Request(req);
-    const response = new Response(res);
+    const request = new this.classes.request(req);
+    const response = new this.classes.response(res);
     let args = Object.freeze({ request, response });
 
     try {
@@ -116,10 +121,10 @@ class HttpServer {
 
 class Request {
   /** @type {http2.Http2ServerRequest} */
-  #requst;
+  #request;
 
   constructor(request) {
-    this.#requst = request;
+    this.#request = request;
 
     const { method, headers, url } = request;
     const [pathname, searchStr] = url.split('?');
@@ -134,20 +139,40 @@ class Request {
   }
 
   getContentType() {
-    return this.#requst.headers['content-type']?.split(';')[0]?.toLowerCase() ?? '';
+    return this.#request.headers['content-type']?.split(';')[0]?.toLowerCase() ?? '';
   }
 
-  data() {
+  async data() {
+    if (this.getContentType().includes('application/json')) return this.json();
+    if (this.getContentType().includes('application/text')) return this.text();
+    return null;
+  }
+
+  async text() {
+    let data = await this.#readData();
+    if (Types.isBinary(data)) data = data.toString();
+    return data;
+  }
+
+  async json() {
+    let data = await this.#readData();
+    if (Types.isBinary(data)) data = data.toString();
+    if (data.includes("__proto__") || data.includes("constructor") || data.includes("prototype")) return null;
+
+    return JSON.parse(data);
+  }
+
+  #readData() {
     return new Promise((res, rej) => {
       const data = [];
-      this.#requst.on('data', v => {
+      this.#request.on('data', v => {
         data.push(v);
       });
 
-      this.#requst.on('error', e => rej(e));
-      this.#requst.on('end', () => {
-        if (data.filter(it => !Types.isString(it)).length) return data.concat('');
-        return Buffer.concat(data);
+      this.#request.on('error', e => rej(e));
+      this.#request.on('end', () => {
+        if (data.filter(it => !Types.isString(it)).length) return res(data.concat(''));
+        return res(Buffer.concat(data));
       });
     });
   }
@@ -236,4 +261,5 @@ function searchParamsToObject(searchStr) {
   return search;
 }
 
-exports.HttpServer = HttpServer;
+export { HttpServer };
+export { HOOKS };

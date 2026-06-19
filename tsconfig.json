@@ -1,12 +1,13 @@
 {
   "compilerOptions": {
     "typeRoots": [
-      "./types",
+      "./types/**/*",
       "./node_modules/@types"
     ],
     "declaration": true,
     "emitDeclarationOnly": false,
-    "module": "commonjs",
+    "module": "esnext",
+    "moduleResolution": "node16",
     "target": "esnext",
     "esModuleInterop": true,
     "allowJs": true,

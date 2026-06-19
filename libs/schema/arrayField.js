@@ -1,6 +1,6 @@
-const { BaseField } = require('./baseField');
-const { Result, Types } = require('../utils');
-const { ValidateError } = require('./fieldError');
+import { BaseField } from './baseField.js';
+import { Result, Types } from '../utils/index.js';
+import { ValidateError } from './fieldError.js';
 class ArrayField extends BaseField {
     itemField;
     constructor(itemField, required = false, tests = []) {
@@ -38,4 +38,4 @@ class ArrayField extends BaseField {
     }
 }
 
-exports.ArrayField = ArrayField;
+export { ArrayField };

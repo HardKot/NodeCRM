@@ -1,9 +1,9 @@
-const { SourceParser, Types } = require('../utils');
-const { EnumField } = require('./enumField');
-const { ScalarField, ScalarType } = require('./scalarField');
-const { UnknownField } = require('./fieldUnknown');
-const { ArrayField } = require('./arrayField');
-const { Schema } = require('./schema');
+import { SourceParser, Types } from '../utils/index.js';
+import { EnumField } from './enumField.js';
+import { ScalarField, ScalarType } from './scalarField.js';
+import { UnknownField } from './fieldUnknown.js';
+import { ArrayField } from './arrayField.js';
+import { Schema } from './schema.js';
 class SourceFieldParser extends SourceParser {
     parseString(source) {
         // TODO: support typescript interface parsing
@@ -68,4 +68,4 @@ class SourceFieldParser extends SourceParser {
     }
 }
 
-exports.SourceFieldParser = SourceFieldParser;
+export { SourceFieldParser };

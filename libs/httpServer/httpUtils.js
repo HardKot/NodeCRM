@@ -1,6 +1,6 @@
-const process = require('node:process');
-const path = require('node:path');
-const fs = require('node:fs');
+import * as process from 'node:process';
+import * as path from 'node:path';
+import * as fs from 'node:fs';
 class HttpUtils {
     constructor() { }
     static readTLS(dir) {
@@ -18,4 +18,4 @@ class HttpUtils {
     }
 }
 
-exports.HttpUtils = HttpUtils;
+export { HttpUtils };

@@ -1,6 +1,6 @@
-const { CoreError } = require('./coreError');
-const { Scoped } = require('./enums');
-const { Types } = require('../utils');
+import { CoreError } from './coreError.js';
+import { Scoped } from './enums.js';
+import { Types } from '../utils/index.js';
 
 class Bean {
     constructor ({
@@ -43,4 +43,4 @@ class Bean {
 }
 
 
-exports.Bean = Bean;
+export { Bean };

@@ -1,8 +1,8 @@
-const cluster = require('node:cluster');
-const { Instance } = require('./instance');
-const { dirname } = require('node:path');
-const { Logger } = require('../core/logger');
-const { Types } = require('../utils');
+import * as cluster from 'node:cluster';
+import { Instance } from './instance.js';
+import { dirname } from 'node:path';
+import { Logger } from '../core/logger.js';
+import { Types } from '../utils/index.js';
 class ApplicationError extends Error {
 }
 class Application {
@@ -55,5 +55,5 @@ class Application {
     }
 }
 
-exports.Application = Application;
-exports.ApplicationError = ApplicationError;
+export { Application };
+export { ApplicationError };

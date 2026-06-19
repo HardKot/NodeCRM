@@ -1,4 +1,4 @@
-const crypto = require('node:crypto');
+import * as crypto from 'node:crypto';
 class Session extends Map {
     #hasChange = false;
     id;
@@ -27,4 +27,4 @@ class Session extends Map {
     }
 }
 
-exports.Session = Session;
+export { Session };

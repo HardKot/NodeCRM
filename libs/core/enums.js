@@ -4,4 +4,4 @@ const Scoped = Object.freeze({
     SCOPED: 2,
 });
 
-exports.Scoped = Scoped;
+export { Scoped };

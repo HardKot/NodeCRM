@@ -1,4 +1,4 @@
-const console = require('node:console');
+import * as console from 'node:console';
 class Logger extends console.Console {
     prefix;
     stdout;
@@ -42,4 +42,4 @@ class Logger extends console.Console {
     }
 }
 
-exports.Logger = Logger;
+export { Logger };

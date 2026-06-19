@@ -1,6 +1,6 @@
-const { BaseField } = require('./baseField');
-const { Result, Types } = require('../utils');
-const { ValidateError } = require('./fieldError');
+import { BaseField } from './baseField.js';
+import { Result, Types } from '../utils/index.js';
+import { ValidateError } from './fieldError.js';
 class Schema extends BaseField {
     schema;
     proto;
@@ -48,4 +48,4 @@ class Schema extends BaseField {
     }
 }
 
-exports.Schema = Schema;
+export { Schema };

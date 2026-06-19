@@ -104,7 +104,7 @@ class ScopeManager {
 }
 
 // 4. Route & Router
-const { parserAccess } = require('../security/access.js');
+import { parserAccess } from '../security/access.js';
 class Route {
   constructor(path) {
     this.path = path;
@@ -206,13 +206,13 @@ class ApplicationContext {
 function createApp() { return new ApplicationContext(); }
 
 
-exports.createApp = createApp;
-exports.ApplicationContext = ApplicationContext;
-exports.BeanRegistry = BeanRegistry;
-exports.BeanDefinitionBuilder = BeanDefinitionBuilder;
-exports.ScopeManager = ScopeManager;
-exports.Route = Route;
-exports.Router = Router;
-exports.SchemaRegistry = SchemaRegistry;
-exports.SchemaBuilder = SchemaBuilder;
-exports.SchemaFieldBuilder = SchemaFieldBuilder;
+export { createApp };
+export { ApplicationContext };
+export { BeanRegistry };
+export { BeanDefinitionBuilder };
+export { ScopeManager };
+export { Route };
+export { Router };
+export { SchemaRegistry };
+export { SchemaBuilder };
+export { SchemaFieldBuilder };

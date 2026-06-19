@@ -74,4 +74,4 @@ class ObjectUtils {
     }
 }
 
-exports.ObjectUtils = ObjectUtils;
+export { ObjectUtils };

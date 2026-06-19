@@ -1,27 +1,27 @@
-const path = require('node:path');
-const cluster = require('node:cluster');
+import * as path from 'node:path';
+import * as cluster from 'node:cluster';
 
-const { Logger } = require('./logger');
-const { Config } = require('./config');
-const { Container } = require('./container');
-const { BeanRegistry } = require('./beanRegistry');
-const { HttpServer } = require('../httpServer/httpServer');
+import { Logger } from './logger.js';
+import { Config } from './config.js';
+import { Container } from './container.js';
+import { BeanRegistry } from './beanRegistry.js';
+import { HttpServer } from '../httpServer/httpServer.js';
 
 class Application {
-    constructor(stdout, stderr) {
-        this.prefix = `Instance@${path.dirname(process.cwd())}`;
-        if (cluster.isWorker) this.prefix = `Worker#${cluster.worker?.id}`;
+  constructor(stdout, stderr) {
+    this.prefix = `Instance@${path.dirname(process.cwd())}`;
+    if (cluster.isWorker) this.prefix = `Worker#${cluster.worker?.id}`;
 
-        this.logger = new Logger(this.prefix, stdout, stderr);
+    this.logger = new Logger(this.prefix, stdout, stderr);
 
-        this.container = new Container(this);
-        this.beanRegistry = new BeanRegistry(this);
-        this.config = new Config(this);
-        this.httpServer = new HttpServer(this);
+    this.container = new Container(this);
+    this.beanRegistry = new BeanRegistry(this);
+    this.config = new Config(this);
+    this.server = new HttpServer(this);
+    this.router = this.server.router;
 
-        Object.freeze(this);
-    }
+    Object.freeze(this);
+  }
 }
 
-
-exports.Application = Application;
+export { Application };

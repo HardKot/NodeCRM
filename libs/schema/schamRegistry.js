@@ -1,5 +1,5 @@
-const { Optional, Types } = require('../utils');
-const { SourceFieldParser } = require('./sourceFieldParser');
+import { Optional, Types } from '../utils/index.js';
+import { SourceFieldParser } from './sourceFieldParser.js';
 class SchemaRegistry {
     registry = new Map();
     sourceParser = new SourceFieldParser();
@@ -25,4 +25,4 @@ class SchemaRegistry {
     }
 }
 
-exports.SchemaRegistry = SchemaRegistry;
+export { SchemaRegistry };

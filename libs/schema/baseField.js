@@ -1,5 +1,5 @@
-const { Result } = require('../utils');
-const { ValidateError } = require('./fieldError');
+import { Result } from '../utils/index.js';
+import { ValidateError } from './fieldError.js';
 class BaseField {
     required;
     tests;
@@ -38,4 +38,4 @@ class BaseField {
     }
 }
 
-exports.BaseField = BaseField;
+export { BaseField };

@@ -64,4 +64,4 @@ class Optional {
     }
 }
 
-exports.Optional = Optional;
+export { Optional };

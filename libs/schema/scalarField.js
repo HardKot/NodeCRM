@@ -1,6 +1,6 @@
-const { BaseField } = require('./baseField');
-const { ValidateError } = require('./fieldError');
-const { Result } = require('../utils');
+import { BaseField } from './baseField.js';
+import { ValidateError } from './fieldError.js';
+import { Result } from '../utils/index.js';
 const ScalarType = Object.freeze({
     String: 0,
     Number: 1,
@@ -74,5 +74,5 @@ class ScalarField extends BaseField {
     }
 }
 
-exports.ScalarField = ScalarField;
-exports.ScalarType = ScalarType;
+export { ScalarField };
+export { ScalarType };

@@ -24,4 +24,4 @@ class StringUtils {
     }
 }
 
-exports.StringUtils = StringUtils;
+export { StringUtils };

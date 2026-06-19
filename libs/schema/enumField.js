@@ -1,6 +1,6 @@
-const { BaseField } = require('./baseField');
-const { Result } = require('../utils');
-const { ValidateError } = require('./fieldError');
+import { BaseField } from './baseField.js';
+import { Result } from '../utils/index.js';
+import { ValidateError } from './fieldError.js';
 class EnumField extends BaseField {
     values;
     constructor(values, required = false) {
@@ -20,4 +20,4 @@ class EnumField extends BaseField {
     }
 }
 
-exports.EnumField = EnumField;
+export { EnumField };

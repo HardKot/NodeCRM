@@ -10,4 +10,4 @@ class Config {
 }
 
 
-exports.Config = Config;
+export { Config };
