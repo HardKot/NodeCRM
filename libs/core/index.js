@@ -1,6 +1,12 @@
-export * from './container.js';
-export * from './bean.js';
-export * from './beanRegistry.js';
-export * from './config.js';
-export * from './coreError.js';
-export * from './enums.js';
+export { Application } from './application.js';
+export { Bean, BeanBuilder } from './bean.js';
+export { BeanRegistry } from './beanRegistry.js';
+export { Config } from './config.js';
+export { Container } from './container.js';
+export { ApplicationEvent, ScalarType, Scoped } from './enums.js';
+export { CoreError, ValidateError, FieldError } from './errors.js';
+export { Logger } from './logger.js';
+export { Package } from './package.js';
+export { Schema } from './schema.js';
+export { PackageManager } from './packageManager.js';
+export { SpaceModule } from './spaceModule.js';

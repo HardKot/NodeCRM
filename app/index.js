@@ -1,32 +1,20 @@
-import { App } from '../libs/dsl/index.js';
+import { Application } from '#core';
 
-App(({
-    bean,
-    routing,
-}) => {
-    bean('ad', () => null)
+Application.default(({ }) => { });
 
-    routing(({ route }) => {
-        route('/test2', it => {
-            it.get(() => null)
-            it.post(() => null)
+App(({ bean, routing }) => {
+  bean('ad', () => null);
 
-            it.route('/<id>', item => {
-                item.get(() => null)
-                item.put(() => null)
-                item.delete(() => null)
-            })
-        })
+  routing(({ route }) => {
+    route('/test2', test => {
+      test.get(() => null);
+      test.post(() => null);
 
-        const testRoute3 = route('/test3', it => {
-            it.get(() => null)
-            it.post(() => null)
-        });
-
-        testRoute3.route('/<id>', it => {
-            it.get(() => null)
-            it.put(() => null)
-            it.delete(() => null)
-        });
-    })
-})
+      test.route('/<id>', id => {
+        id.get(() => null);
+        id.put(() => null);
+        id.delete(() => null);
+      });
+    });
+  });
+});

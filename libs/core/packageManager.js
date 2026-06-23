@@ -4,8 +4,10 @@ import fs from 'node:fs';
 
 import { StringUtils, Types } from '#utils';
 
-import { CoreError } from './coreError.js';
+import { CoreError } from './errors.js';
 import { Package } from './package.js';
+
+export { PackageManager };
 
 class PackageManager {
   app;
@@ -16,24 +18,16 @@ class PackageManager {
   #instance;
   #require;
 
-  constructor(app, packages = []) {
+  constructor(app) {
     this.app = app;
 
-    this.#packages = new Set(packages.filter(it => Types.isNotInstanceOf(it, Package)));
+    this.#packages = new Set();
     this.#instance = new WeakMap();
     this.#packageByName = {};
     this.#packageByGroup = {};
     this.#require = module.createRequire(process.cwd());
 
-    for (const package of packages) this.add(package);
-    for (const package of this.#packages) this.#initInstance(package);
-
     Object.freeze(this);
-  }
-
-  async init() {
-    await this.nodePackages();
-    await this.npmPackages();
   }
 
   add(def) {
@@ -72,7 +66,7 @@ class PackageManager {
     return packageByName;
   }
 
-  async nodePackages() {
+  loadNodePackages() {
     const deprected = [];
     const packagesNode = module.builtinModules
       .filter(it => !it.startsWith('_'))
@@ -103,11 +97,11 @@ class PackageManager {
     }
   }
 
-  async npmPackages() {
+  loadNpmPackages() {
     const pkgPath = path.join(process.cwd(), 'package.json');
     if (!fs.existsSync(pkgPath)) {
       this.app.logger.error(`Can't found "package.json"(${pkgPath})`);
-      return [];
+      return;
     }
 
     const packageJson = this.#require(pkgPath);
@@ -124,7 +118,7 @@ class PackageManager {
 
       try {
         const package = require(packageName);
-        this.app(
+        this.add(
           new Package.Npm({
             name,
             package,
@@ -136,12 +130,4 @@ class PackageManager {
       }
     }
   }
-
-  async #initInstance(def) {
-    if (Types.isNotInstanceOf(def, Package)) throw new CoreError('Invalid package defination');
-    const packagePromise = await (def.factory?.() ?? import(def.name));
-    this.#instance.set(def, packagePromise);
-  }
 }
-
-export { PackageManager };

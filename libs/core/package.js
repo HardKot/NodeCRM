@@ -1,5 +1,7 @@
 import { Types } from '#utils';
-import { CoreError } from './coreError.js';
+import { CoreError } from './errors.js';
+
+export { Package };
 
 class Package {
   constructor({ name, group, package }) {
@@ -30,5 +32,3 @@ class Package {
     }
   };
 }
-
-export { Package };
