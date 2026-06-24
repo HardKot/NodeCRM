@@ -16,36 +16,35 @@ export { Application };
 
 class Application {
   static async base(callback) {
-    const app = new Application();
+    const app = new Application({});
     await app.prepare(callback);
     await app.build();
     await app.run('default');
     return app;
   }
 
-  static async with(plugins, callback) {
-    const app = new Application({ plugins });
-    await app.prepare(callback);
-    await app.build();
-    await app.run('default');
-    return app;
-  }
+  constructor({ stdout, stderr, stdin }) {
+    this.stdout = stdout;
+    this.stdin = stdin;
+    this.stderr = stderr;
 
-  constructor({ stdout, stderr, stdin, plugins }) {
-    this.stdout = stdout ?? process.stdout;
-    this.stdin = stdin ?? process.stdin;
-    this.stderr = stderr ?? process.stderr;
-
-    this.prefix = `Instance@${path.dirname(process.cwd())}`;
+    this.prefix = `Instance@${path.parse(process.cwd()).base}`;
 
     this.eventEmitter = new EventEmitter({});
-    this.logger = new Logger(this.prefix, stdout, stderr);
+    this.logger = new Logger({ prefix: this.prefix, stdout, stderr });
     this.container = new Container(this);
     this.packages = new PackageManager(this);
     this.beanRegistry = new BeanRegistry(this);
     this.config = new Config(this);
-    this.plugins = new Set(...plugins);
-    this.entrypoints = {};
+    this.plugins = new Set();
+    this.entrypoints = {
+      default: () => {
+        for (const plugin of this.plugins) {
+          if (!plugin.run) continue;
+          plugin.run();
+        }
+      },
+    };
 
     const packageDescription = callback => this.packages.binder(callback);
     packageDescription.loadNodePackages = () => this.packages.loadNodePackages();
@@ -77,8 +76,23 @@ class Application {
 
   async prepare(callback) {
     try {
-      this.eventEmitter.emit(ApplicationEvent.PREPARE, this, e);
-      await callback(this.description);
+      this.eventEmitter.emit(ApplicationEvent.PREPARE, this);
+      const proxy = new Proxy(this.description, {
+        get(target, key) {
+          if (key in target) return target[key];
+          return (...args) => target[key]?.(...args);
+        },
+        set() {
+          return false;
+        },
+        has() {
+          return true;
+        },
+        deleteProperty() {
+          return false;
+        },
+      });
+      await callback(proxy);
     } catch (e) {
       this.logger.error(e);
       this.eventEmitter.emit(ApplicationEvent.ERROR, this, e);
@@ -89,9 +103,14 @@ class Application {
     try {
       this.eventEmitter.emit(ApplicationEvent.BUILD, this);
       await this.beanRegistry.validate();
-      await this.container.build();
+      await this.container.buildContainer();
 
-      await Promise.all(this.modules.map(it => it.prepare?.()));
+      const promises = this.plugins
+        .values()
+        .map(it => it.prepare?.())
+        .filter(it => it)
+        .toArray();
+      await Promise.all(promises);
     } catch (e) {
       this.logger.error(e);
       this.eventEmitter.emit(ApplicationEvent.ERROR, this, e);
@@ -99,13 +118,13 @@ class Application {
   }
 
   async run(name) {
-    if (Types.isString(name)) {
+    if (!Types.isString(name)) {
       return this.logger.error(
         new CoreError(`Application[run] awaiting name is String but get ${typeof name}`)
       );
     }
     const runner = this.entrypoints[name];
-    if (runner) {
+    if (!runner) {
       return this.logger.error(new CoreError(`Entrypoint "${name}" not found`));
     }
     try {

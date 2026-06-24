@@ -4,10 +4,10 @@ import { CoreError } from './errors.js';
 export { Package };
 
 class Package {
-  constructor({ name, group, package }) {
+  constructor({ name, group, package: package_ }) {
     this.name = name;
     this.group = group ?? 'npm';
-    this.package = package;
+    this.package = package_;
 
     if (!this.name) throw new CoreError('Package name is undefiend');
     if (Types.isFunction(this.loadPackage)) throw new CoreError('Package loader is not function');

@@ -1,16 +1,14 @@
-import * as console from 'node:console';
+import { Console } from 'node:console';
 
 export { Logger };
 
-class Logger extends console.Console {
-  prefix;
-  stdout;
-  stderr;
-  constructor(prefix, stdout, stderr) {
-    super(stdout, stderr);
+class Logger extends Console {
+  constructor({ prefix, stdout, stderr, level }) {
+    super(stdout ?? process.stdout, stderr ?? process.stderr);
     this.prefix = prefix;
     this.stdout = stdout;
     this.stderr = stderr;
+    this.level = level ?? 'log';
   }
   log(...data) {
     const args = [Date.now().toString()];
@@ -37,6 +35,13 @@ class Logger extends console.Console {
     super.error(...args);
   }
   extend(prefix) {
-    return new Logger(prefix, this.stdout, this.stderr);
+    const child = new Logger({
+      prefix,
+      stdout: this.stdout,
+      stderr: this.stderr,
+    });
+
+    Object.setPrototypeOf(child, this);
+    return child;
   }
 }

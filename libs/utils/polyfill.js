@@ -1,16 +1,12 @@
 import { StringUtils } from './stringUtils.js';
-import { Result: _Result } from './result.js';
-import { Optional: _Optional } from './optional.js';
+
 import { FunctionUtils } from './functionUtils.js';
 class Polyfill {
   static run(config) {
     const polyfill = new Polyfill();
-    if (config.stringToPolyfill)
-      polyfill.stringPolyfill();
-    if (config.namespaceJS)
-      polyfill.namespaceJS();
-    if (config.functionToPolyfill)
-      polyfill.functionToPolyfill();
+    if (config.stringToPolyfill) polyfill.stringPolyfill();
+    if (config.namespaceJS) polyfill.namespaceJS();
+    if (config.functionToPolyfill) polyfill.functionToPolyfill();
   }
   constructor() { }
   stringPolyfill() {
@@ -28,8 +24,7 @@ class Polyfill {
     }
   }
   namespaceJS() {
-    if (global.SpaceJS)
-      return;
+    if (global.SpaceJS) return;
     global.SpaceJS = {
       Result: _Result,
       Optional: _Optional,
@@ -42,7 +37,6 @@ class Polyfill {
       };
     }
   }
-  ;
 }
 
 export { Polyfill };

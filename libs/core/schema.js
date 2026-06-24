@@ -2,13 +2,6 @@ import { Result, Types } from '#utils';
 import { CoreError, ValidateError } from './errors.js';
 import { ScalarType } from './enums.js';
 
-const Schema = ObjectSchema;
-Schema.Array = ArraySchema;
-Schema.Scalar = ScalarSchema;
-Schema.Enum = EnumSchema;
-
-export { Schema };
-
 class BaseSchema {
   constructor(options = {}) {
     this.require = options.require ?? false;
@@ -171,3 +164,10 @@ class ScalarSchema extends BaseSchema {
     [ScalarType.String]: Types.isString,
   };
 }
+
+const Schema = ObjectSchema;
+Schema.Array = ArraySchema;
+Schema.Scalar = ScalarSchema;
+Schema.Enum = EnumSchema;
+
+export { Schema };

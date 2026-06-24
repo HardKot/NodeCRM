@@ -45,10 +45,10 @@ class PackageManager {
   }
 
   get(name) {
-    const package = this.#packageByName[name];
-    if (!package) return null;
+    const package_ = this.#packageByName[name];
+    if (!package_) return null;
 
-    return this.#instance.get(package);
+    return this.#instance.get(package_);
   }
 
   getGroup(name) {
@@ -57,9 +57,9 @@ class PackageManager {
 
     const packageByName = {};
 
-    for (const package of packages) {
-      const instance = this.#instance.get(package);
-      packageByName[package.name] = instance;
+    for (const package_ of packages) {
+      const instance = this.#instance.get(package_);
+      packageByName[package_.name] = instance;
     }
 
     Object.freeze(packageByName);
@@ -87,11 +87,11 @@ class PackageManager {
     nodeModules.fsp = nodeModules['fs/promises'];
     if (!nodeModules.timers.promises) nodeModules.timers.promises = nodeModules['timers/promises'];
 
-    for (const [name, package] of Object.entries(nodeModules)) {
+    for (const [name, package_] of Object.entries(nodeModules)) {
       this.add(
         new Package.Node({
           name,
-          package,
+          package: package_,
         })
       );
     }
@@ -117,11 +117,11 @@ class PackageManager {
       );
 
       try {
-        const package = require(packageName);
+        const package_ = require(packageName);
         this.add(
           new Package.Npm({
             name,
-            package,
+            package: package_,
           })
         );
         this.app.logger.info(`Success import ${name}(${packageName})`);

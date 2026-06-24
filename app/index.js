@@ -1,19 +1,17 @@
 import { Application } from '#core';
+import { SpaceFastify } from '#http';
 
-Application.default(({ }) => { });
+Application.base(({ plugin, server }) => {
+  plugin(SpaceFastify);
 
-App(({ bean, routing }) => {
-  bean('ad', () => null);
+  server(({ port, host, routing }) => {
+    port(3000);
+    host('127.0.0.1');
 
-  routing(({ route }) => {
-    route('/test2', test => {
-      test.get(() => null);
-      test.post(() => null);
-
-      test.route('/<id>', id => {
-        id.get(() => null);
-        id.put(() => null);
-        id.delete(() => null);
+    routing(({ get }) => {
+      get('/', ({ send }) => {
+        console.log('Hello, world!');
+        send('Hello, world!');
       });
     });
   });
