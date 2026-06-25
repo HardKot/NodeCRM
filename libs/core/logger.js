@@ -11,27 +11,19 @@ class Logger extends Console {
     this.level = level ?? 'log';
   }
   log(...data) {
-    const args = [Date.now().toString()];
-    if (this.prefix) args.push(`| ${this.prefix}`);
-    args.push('| LOG |', ...data);
+    const args = this.#buildMessage(new Date(), 'log', data);
     super.log(...args);
   }
   info(...data) {
-    const args = [Date.now().toString()];
-    if (this.prefix) args.push(`| ${this.prefix}`);
-    args.push('| INFO |', ...data);
+    const args = this.#buildMessage(new Date(), 'info', data);
     super.info(...args);
   }
   warn(...data) {
-    const args = [Date.now().toString()];
-    if (this.prefix) args.push(`| ${this.prefix}`);
-    args.push('| WARN |', ...data);
+    const args = this.#buildMessage(new Date(), 'warn', data);
     super.warn(...args);
   }
   error(...data) {
-    const args = [Date.now().toString()];
-    if (this.prefix) args.push(`| ${this.prefix}`);
-    args.push('| ERROR |', ...data);
+    const args = this.#buildMessage(new Date(), 'error', data);
     super.error(...args);
   }
   extend(prefix) {
@@ -39,9 +31,21 @@ class Logger extends Console {
       prefix,
       stdout: this.stdout,
       stderr: this.stderr,
+      level: this.level,
     });
-
     Object.setPrototypeOf(child, this);
     return child;
+  }
+
+  transform(v) {
+    return v;
+  }
+
+  #buildMessage(time, level, data) {
+    const args = [time.getTime()];
+
+    if (this.prefix) args.push(`| ${this.prefix}`);
+    args.push(`| ${level.toUpperCase()} |`, ...data.map(it => this.transform(it)));
+    return args;
   }
 }

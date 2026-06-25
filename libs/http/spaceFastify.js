@@ -1,48 +1,43 @@
-import { IncomingMessage } from 'node:http';
-
 import Fastify from 'fastify';
 
-import { SpaceModule } from '#core';
 import { Types } from '#utils';
 
-import { RouteBuilder } from './routeBuilder.js';
 import { SpaceRequest } from './spaceRequest.js';
+import { HttpSpace } from './httpSpace.js';
 
 export { SpaceFastify };
 
-class SpaceFastify extends SpaceModule {
+class SpaceFastify extends HttpSpace {
   constructor(app) {
     super(app);
 
-    this.prefix = 'HTTP';
-    this.logger = this.app.logger.extend(this.prefix);
     this.logger.fatal = this.logger.error.bind(this.logger);
     this.logger.child = (key, options) => {
       if (Object.keys(key).length === 0) return this.logger;
       const entry = Object.entries(key)[0];
-      return this.logger.extend(`${this.prefix}@${entry[0]} = ${entry[1]}`, options);
+      const child = this.logger.extend(`${this.prefix}@${entry[1]}`, options);
+
+      return child;
+    };
+
+    this.logger.test = 1;
+    this.logger.transform = v => {
+      if (!Types.isObject(v)) return v;
+      if (v.req) {
+        const raw = v.req.raw;
+        return `${raw.method} ${raw.url}`;
+      }
+      if (v.res) {
+        const raw = v.res.request;
+
+        return `${raw.method} ${raw.url}`;
+      }
+      return v;
     };
 
     this.fastify = Fastify({
       loggerInstance: this.logger,
     });
-
-    this.runConfig = {
-      port: 3000,
-      host: '0.0.0.0',
-      bodyLimit: 1024 * 1024,
-      timeout: 60 * 1000,
-    };
-
-    const routingBuilder = new RouteBuilder({
-      registration: this.#registrationHandler.bind(this),
-    });
-    this.description = {
-      port: v => (this.runConfig.port = v),
-      host: v => (this.runConfig.host = v),
-      routing: callback => routingBuilder.route(callback),
-    };
-    this.app.description['server'] = callback => callback(this.description);
 
     Object.freeze(this);
   }
@@ -50,13 +45,13 @@ class SpaceFastify extends SpaceModule {
   async run() {
     try {
       this.logger.info(this.fastify.printRoutes());
-      await this.fastify.listen(this.runConfig);
+      await this.fastify.listen(this.config);
     } catch (e) {
       this.logger.error(e);
     }
   }
 
-  #registrationHandler(options) {
+  registrationHandler(options) {
     let description = options.handler;
     let handler = ({ code, send }) => {
       code(404);
@@ -72,7 +67,8 @@ class SpaceFastify extends SpaceModule {
     if (Types.isFunction(description)) handler = description;
     if (Types.isClass(description)) description = new handler(this.app);
     if (Types.isObject(description)) handler = description.run.bind(description);
-    const handlerDescription = this.#handlerDescription.bind(this);
+
+    const handlerDescription = this.handlerDescription.bind(this);
 
     schema = Object.fromEntries(Object.entries(schema).filter(([_, v]) => v !== undefined));
 
@@ -86,32 +82,39 @@ class SpaceFastify extends SpaceModule {
     });
   }
 
-  #handlerDescription(req, reply) {
+  handlerDescription(req, reply) {
+    const commandDescription = this.app.commandDescription();
     const state = new Map();
 
     return Object.freeze({
       request: new SpaceRequest(req),
 
-      value: state.set.bind(state),
-      getValue: state.get.bind(state),
-      removeValue: state.delete.bind(state),
-      hasValue: state.has.bind(state),
+      state: key => ({
+        get: () => state.get(),
+        set: value => state.set(key, value),
+        remove: () => state.delete(key),
+        has: () => state.has(key),
+      }),
 
-      code: reply.code.bind(reply),
-      getCode: () => reply.statusCode,
+      setHttpCode: () => reply.code.bind(reply),
+      getHttpCode: () => reply.statusCode,
 
       send: reply.send.bind(reply),
       redirect: reply.redirect.bind(reply),
 
-      header: reply.header.bind(reply),
-      getHeader: reply.getHeader.bind(reply),
-      removeHeader: reply.removeHeader.bind(reply),
-      hasHeader: reply.hasHeader.bind(reply),
+      header: key => ({
+        get: () => reply.getHeader(key),
+        set: value => reply.setHeader(key, value),
+        remove: () => reply.removeHeader(key),
+        has: () => reply.hasHeader(key),
+      }),
 
-      type: reply.type.bind(reply),
-      getType: () => reply.getHeader('Content-Type'),
+      setContentType: reply.type.bind(reply),
+      getContentType: () => reply.getHeader('Content-Type'),
 
       cookie: value => reply.header('set-cookie', value),
+
+      ...commandDescription,
     });
   }
 }

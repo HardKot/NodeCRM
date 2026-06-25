@@ -153,4 +153,28 @@ class Application {
 
     this.plugins.add(source);
   }
+
+  injectDescription(key, description) {
+    if (key in this.description) throw new CoreError(`Description "${key}" is used`);
+    if (!Types.isFunction(description)) description = () => description;
+    this.description[key] = description;
+  }
+
+  commandDescription() {
+    let scopeId = undefined;
+    return {
+      setScope: id => (scopeId = id),
+      getScope: () => scopeId,
+      bean: alias => this.container.resolve(alias, scopeId),
+      node: name => this.packages.get(name),
+      npm: name => this.packages.get(name),
+      config: (key, defaultValue) => this.config.getValue(key, defaultValue),
+      print: {
+        log: (...args) => this.logger.log(...args),
+        info: (...args) => this.logger.info(...args),
+        warn: (...args) => this.logger.warn(...args),
+        error: (...args) => this.logger.warn(...args),
+      },
+    };
+  }
 }
