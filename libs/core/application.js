@@ -1,4 +1,5 @@
 import * as path from 'node:path';
+import * as child_process from 'node:child_process';
 import { EventEmitter } from 'node:events';
 
 import { Types } from '#utils';
@@ -9,7 +10,7 @@ import { Container } from './container.js';
 import { BeanRegistry } from './beanRegistry.js';
 import { PackageManager } from './packageManager.js';
 import { SpaceModule } from './spaceModule.js';
-import { ApplicationEvent } from './enums.js';
+import { ApplicationArgs, ApplicationEvent } from './enums.js';
 import { CoreError } from './errors.js';
 
 export { Application };
@@ -19,7 +20,7 @@ class Application {
     const app = new Application({});
     await app.prepare(callback);
     await app.build();
-    await app.run('default');
+    await app.run();
     return app;
   }
 
@@ -28,7 +29,14 @@ class Application {
     this.stdin = stdin;
     this.stderr = stderr;
 
-    this.prefix = `Instance@${path.parse(process.cwd()).base}`;
+    this.isRunner = !!process.argv[2] && !!process.argv[2]?.includes(`${ApplicationArgs.RUNNER}:`);
+    this.isMaster = !this.isRunner;
+
+    if (this.isRunner) this.runnerName = process.argv[2]?.split(':')[1];
+
+    this.instanceName = path.parse(process.cwd()).base;
+    this.prefix = `${this.instanceName}@Master`;
+    if (this.isRunner) this.prefix = `${this.instanceName}@${this.runnerName}`;
 
     this.eventEmitter = new EventEmitter({});
     this.logger = new Logger({ prefix: this.prefix, stdout, stderr });
@@ -37,39 +45,10 @@ class Application {
     this.beanRegistry = new BeanRegistry(this);
     this.config = new Config(this);
     this.plugins = new Set();
-    this.entrypoints = {
-      default: () => {
-        for (const plugin of this.plugins) {
-          if (!plugin.run) continue;
-          plugin.run();
-        }
-      },
-    };
+    this.children = {};
+    this.entrypoints = {};
 
-    const packageDescription = callback => this.packages.binder(callback);
-    packageDescription.loadNodePackages = () => this.packages.loadNodePackages();
-    packageDescription.loadNpmPackages = () => this.packages.loadNpmPackages();
-
-    this.description = {
-      bean: callback => this.beanRegistry.binder(callback),
-      package: packageDescription,
-      config: () => ({
-        get: (...args) => this.config.getValue(...args),
-      }),
-      plugin: plugin => this.linkPlugins(plugin),
-      on: () => ({
-        prepare: callback => this.eventEmitter.on(ApplicationEvent.PREPARE, callback),
-        run: callback => this.eventEmitter.on(ApplicationEvent.RUN, callback),
-        error: callback => this.eventEmitter.on(ApplicationEvent.ERROR, callback),
-        stop: callback => this.eventEmitter.on(ApplicationEvent.STOP, callback),
-      }),
-      print: () => ({
-        log: (...args) => this.logger.log(...args),
-        info: (...args) => this.logger.info(...args),
-        warn: (...args) => this.logger.warn(...args),
-        error: (...args) => this.logger.warn(...args),
-      }),
-    };
+    this.description = this.applicationDescription();
 
     Object.freeze(this);
   }
@@ -117,24 +96,15 @@ class Application {
     }
   }
 
-  async run(name) {
-    if (!Types.isString(name)) {
-      return this.logger.error(
-        new CoreError(`Application[run] awaiting name is String but get ${typeof name}`)
-      );
-    }
-    const runner = this.entrypoints[name];
-    if (!runner) {
-      return this.logger.error(new CoreError(`Entrypoint "${name}" not found`));
-    }
+  async run() {
     try {
-      this.eventEmitter.emit(ApplicationEvent.RUN, this, runner);
-      await runner();
+      if (this.isMaster) this.runMaster();
+      if (this.isRunner) this.runRunner();
     } catch (e) {
       this.logger.error(e);
-      this.eventEmitter.emit(ApplicationEvent.ERROR, e, this, runner);
+      this.eventEmitter.emit(ApplicationEvent.ERROR, e, this);
     } finally {
-      this.eventEmitter.emit(ApplicationEvent.STOP, this, runner);
+      this.eventEmitter.emit(ApplicationEvent.STOP, this);
     }
   }
 
@@ -155,9 +125,19 @@ class Application {
   }
 
   injectDescription(key, description) {
+    if (!Types.isString(key)) throw new CoreError('Awaiting String');
     if (key in this.description) throw new CoreError(`Description "${key}" is used`);
+
     if (!Types.isFunction(description)) description = () => description;
     this.description[key] = description;
+  }
+
+  injectEntrypoint(key, runner) {
+    if (!Types.isString(key)) throw new CoreError('Awaiting String');
+    if (!Types.isFunction(runner)) throw new CoreError('Awaiting Function');
+
+    if (key in this.entrypoints) throw new CoreError(`Entrypoint "${runner}" is used`);
+    this.entrypoints[key] = runner;
   }
 
   commandDescription() {
@@ -176,5 +156,101 @@ class Application {
         error: (...args) => this.logger.warn(...args),
       },
     };
+  }
+
+  applicationDescription() {
+    const packageDescription = callback => this.packages.binder(callback);
+    packageDescription.loadNodePackages = () => this.packages.loadNodePackages();
+    packageDescription.loadNpmPackages = () => this.packages.loadNpmPackages();
+
+    return {
+      bean: callback => this.beanRegistry.binder(callback),
+      package: packageDescription,
+      config: () => ({
+        get: (...args) => this.config.getValue(...args),
+      }),
+      plugin: plugin => this.linkPlugins(plugin),
+      on: () => ({
+        prepare: callback => this.eventEmitter.on(ApplicationEvent.PREPARE, callback),
+        run: callback => this.eventEmitter.on(ApplicationEvent.RUN, callback),
+        error: callback => this.eventEmitter.on(ApplicationEvent.ERROR, callback),
+        stop: callback => this.eventEmitter.on(ApplicationEvent.STOP, callback),
+      }),
+      print: () => ({
+        log: (...args) => this.logger.log(...args),
+        info: (...args) => this.logger.info(...args),
+        warn: (...args) => this.logger.warn(...args),
+        error: (...args) => this.logger.warn(...args),
+      }),
+    };
+  }
+
+  runMaster() {
+    this.eventEmitter.emit(ApplicationEvent.RUN, this);
+    for (const key in this.entrypoints) {
+      this.logger.info(`Run application ${key}`);
+      // eslint-disable-next-line no-undef
+      const controller = new AbortController();
+      const main = process.argv[1];
+      const child = child_process.fork(main, [`${ApplicationArgs.RUNNER}:${key}`], {
+        signal: controller.signal,
+      });
+
+      child.on('error', error => {
+        this.logger.error(error);
+        this.eventEmitter.emit(ApplicationEvent.ERROR, error, this);
+      });
+
+      child.on('exit', code => {
+        if (code !== 0) return this.logger.error(`Runner ${key} exist with error ${code}`);
+        return this.logger.info(`Runner ${key} exit with code ${code}`);
+      });
+
+      child.on('message', message => this.parserChildMessage({ message, child, sender: key }));
+
+      this.children[key] = child;
+    }
+  }
+
+  runRunner() {
+    if (!this.runnerName) throw new CoreError('Runner is not defined');
+    const runner = this.entrypoints[this.runnerName];
+    if (!runner) throw new CoreError(`Runner "${this.runnerName}" is not defined`);
+
+    runner();
+  }
+
+  parserChildMessage({ message, child, sender }) {
+    if (!Types.isString(message)) throw new CoreError('Message is not string');
+    const { command, target, payload } = JSON.parse(message);
+
+    if (command === 'kill') return child.kill();
+    if (command === 'message') {
+      if (target === 'master') return this.eventEmitter.emit(ApplicationEvent.MESSAGE, payload);
+      if (target === 'all') return this.sendMessageAll({ message, sender, skip: child });
+      return this.sendMessage({ message: payload, target, sender });
+    }
+  }
+
+  sendMessage({ message, target, sender }) {
+    this.children[target]?.send(
+      JSON.stringify({
+        command: 'message',
+        sender: sender,
+        payload: message,
+      })
+    );
+  }
+
+  sendMessageAll({ message, sender, skip }) {
+    for (const childKey in this.children) {
+      const child = this.children[childKey];
+      if (child === skip) continue;
+      this.sendMessage({
+        message,
+        target: childKey,
+        sender,
+      });
+    }
   }
 }

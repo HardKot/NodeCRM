@@ -15,9 +15,9 @@
     "#*": "./libs/*/index.js"
   },
   "dependencies": {
-    "fastify": "^5.8.5",
-    "pg": "^8.16.3",
-    "yup": "^1.7.1"
+    "express": "^5.2.1",
+    "install": "0.13.0",
+    "pg": "^8.16.3"
   },
   "devDependencies": {
     "@eslint/js": "^9.37.0",
@@ -32,5 +32,9 @@
     "ts-jest": "^29.4.6",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3"
+  },
+  "peerDependencies": {
+    "fastify": "^5.8.5",
+    "yup": "^1.7.1"
   }
 }

@@ -1,4 +1,5 @@
 import { Console } from 'node:console';
+import * as utils from 'node:util';
 
 export { Logger };
 
@@ -42,10 +43,9 @@ class Logger extends Console {
   }
 
   #buildMessage(time, level, data) {
-    const args = [time.getTime()];
-
-    if (this.prefix) args.push(`| ${this.prefix}`);
-    args.push(`| ${level.toUpperCase()} |`, ...data.map(it => this.transform(it)));
-    return args;
+    return [
+      utils.format('%s | %s | %s |', time, this.prefix, level),
+      ...data.map(it => this.transform(it)),
+    ];
   }
 }

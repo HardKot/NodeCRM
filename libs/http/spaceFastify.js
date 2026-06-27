@@ -1,51 +1,89 @@
 import Fastify from 'fastify';
 
+import { SpaceModule } from '#core';
 import { Types } from '#utils';
 
 import { SpaceRequest } from './spaceRequest.js';
-import { HttpSpace } from './httpSpace.js';
+import { RouteBuilder } from './routeBuilder.js';
 
 export { SpaceFastify };
 
-class SpaceFastify extends HttpSpace {
+class SpaceFastify extends SpaceModule {
   constructor(app) {
     super(app);
 
-    this.logger.fatal = this.logger.error.bind(this.logger);
-    this.logger.child = (key, options) => {
-      if (Object.keys(key).length === 0) return this.logger;
-      const entry = Object.entries(key)[0];
-      const child = this.logger.extend(`${this.prefix}@${entry[1]}`, options);
-
-      return child;
+    this.prefix = `HTTP`;
+    this.logger = this.extendsLoggerForFastify();
+    this.routes = new Set();
+    this.config = {
+      port: 3000,
+      host: '0.0.0.0',
+      bodyLimit: 1024 * 1024,
+      timeout: 60 * 1000,
+      routerOptions: {},
+      errorHandler: null,
+      notFoundHandler: null,
     };
 
-    this.logger.test = 1;
-    this.logger.transform = v => {
-      if (!Types.isObject(v)) return v;
-      if (v.req) {
-        const raw = v.req.raw;
-        return `${raw.method} ${raw.url}`;
-      }
-      if (v.res) {
-        const raw = v.res.request;
-
-        return `${raw.method} ${raw.url}`;
-      }
-      return v;
-    };
-
-    this.fastify = Fastify({
-      loggerInstance: this.logger,
-    });
+    this.app.injectDescription('server', this.descriptionServer.bind(this));
+    this.app.injectEntrypoint('server.run', this.entrypointServer.bind(this));
 
     Object.freeze(this);
   }
 
-  async run() {
+  extendsLoggerForFastify() {
+    const logger = this.app.logger.extend(`${this.app.prefix}[${this.prefix}]`);
+    logger.fatal = logger.error.bind(logger);
+
+    logger.child = (key, options) => {
+      if (Object.keys(key).length === 0) return logger;
+      const entry = Object.entries(key)[0];
+      const child = logger.extend(`${this.app.prefix}[${this.prefix}#${entry[1]}]`, options);
+
+      return child;
+    };
+
+    logger.transform = v => {
+      if (!Types.isObject(v)) return v;
+      const { req, res, responseTime } = v;
+      if (req) return `IP: ${req.ip} ${req.method}: ${req.url}`;
+      if (res) return `STATUS: ${res.statusCode} ${Math.floor(responseTime)}ms`;
+      return v;
+    };
+
+    return logger;
+  }
+
+  createFastify() {
+    const fastify = Fastify({
+      connectionTimeout: this.config.timeout,
+      bodyLimit: this.config.bodyLimit,
+      loggerInstance: this.logger,
+    });
+    for (const route of this.routes) fastify.route(route);
+
+    return fastify;
+  }
+
+  descriptionServer(callback) {
+    const routingBuilder = new RouteBuilder({
+      registration: (...args) => this.registrationHandler(...args),
+    });
+
+    callback({
+      port: v => (this.config.port = v),
+      host: v => (this.config.host = v),
+      timeout: v => (this.config = v),
+      bodyLimit: v => (this.config = v),
+      routing: callback => routingBuilder.route(callback),
+    });
+  }
+
+  async entrypointServer() {
     try {
-      this.logger.info(this.fastify.printRoutes());
-      await this.fastify.listen(this.config);
+      const fastify = this.createFastify();
+      this.logger.info('Server routing:\n', fastify.printRoutes().trimEnd());
+      await fastify.listen({ port: this.config.port, host: this.config.host });
     } catch (e) {
       this.logger.error(e);
     }
@@ -72,10 +110,10 @@ class SpaceFastify extends HttpSpace {
 
     schema = Object.fromEntries(Object.entries(schema).filter(([_, v]) => v !== undefined));
 
-    this.fastify.route({
+    this.routes.add({
       url: options.mapping,
       method: options.method,
-      handler: function(request, reply) {
+      handler: function (request, reply) {
         handler(handlerDescription(request, reply));
       },
       schema: schema,

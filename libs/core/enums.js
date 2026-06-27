@@ -10,6 +10,7 @@ const ApplicationEvent = Object.freeze({
   STOP: 2,
   PREPARE: 3,
   BUILD: 4,
+  MESSAGE: 5,
 });
 
 const ScalarType = Object.freeze({
@@ -19,4 +20,8 @@ const ScalarType = Object.freeze({
   Int: 3,
 });
 
-export { Scoped, ApplicationEvent, ScalarType };
+const ApplicationArgs = Object.freeze({
+  RUNNER: 'runner',
+});
+
+export { Scoped, ApplicationEvent, ScalarType, ApplicationArgs };

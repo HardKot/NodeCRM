@@ -9,8 +9,7 @@ Application.base(({ plugin, server }) => {
     host('127.0.0.1');
 
     routing(({ get }) => {
-      get('/', ({ send }) => {
-        console.log('Hello, world!');
+      get('/', async ({ send }) => {
         send('Hello, world!');
       });
     });
