@@ -12,6 +12,7 @@ import { PackageManager } from './packageManager.js';
 import { SpaceModule } from './spaceModule.js';
 import { ApplicationArgs, ApplicationEvent } from './enums.js';
 import { CoreError } from './errors.js';
+import { HooksManager } from './hooksManager.js';
 
 export { Application };
 
@@ -44,6 +45,7 @@ class Application {
     this.packages = new PackageManager(this);
     this.beanRegistry = new BeanRegistry(this);
     this.config = new Config(this);
+    this.schemas = new SchemaManager(this);
     this.plugins = new Set();
     this.children = {};
     this.entrypoints = {};

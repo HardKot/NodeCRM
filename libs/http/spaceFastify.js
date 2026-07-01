@@ -1,6 +1,6 @@
 import Fastify from 'fastify';
 
-import { SpaceModule } from '#core';
+import { CoreError, SpaceModule } from '#core';
 import { Types } from '#utils';
 
 import { SpaceRequest } from './spaceRequest.js';
@@ -70,13 +70,15 @@ class SpaceFastify extends SpaceModule {
       registration: (...args) => this.registrationHandler(...args),
     });
 
-    callback({
-      port: v => (this.config.port = v),
-      host: v => (this.config.host = v),
-      timeout: v => (this.config = v),
-      bodyLimit: v => (this.config = v),
-      routing: callback => routingBuilder.route(callback),
-    });
+    const server = callback();
+    if (!Types.isObject(server)) throw new CoreError('Server description must be an object');
+    this.config.port = server.port ?? this.config.port;
+    this.config.host = server.host ?? this.config.host;
+    this.config.bodyLimit = server.bodyLimit ?? this.config.bodyLimit;
+    this.config.timeout = server.timeout ?? this.config.timeout;
+
+    if (!Types.isFunction(server.routing)) throw new CoreError('Server routing must be a function');
+    routingBuilder.route(server.routing);
   }
 
   async entrypointServer() {

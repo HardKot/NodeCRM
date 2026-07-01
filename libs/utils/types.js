@@ -78,6 +78,10 @@ class Types {
   static isInstanceOf(v, Class) {
     return v instanceof Class;
   }
+
+  static isAnyInstanceOf(v, ...classes) {
+    return classes.some(cls => v instanceof cls);
+  }
 }
 
 export { TypeError };

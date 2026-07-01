@@ -18,6 +18,9 @@ const ScalarType = Object.freeze({
   Number: 1,
   Boolean: 2,
   Int: 3,
+  Date: 4,
+  UUID: 5,
+  Text: 6,
 });
 
 const ApplicationArgs = Object.freeze({

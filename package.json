@@ -17,7 +17,9 @@
   "dependencies": {
     "express": "^5.2.1",
     "install": "0.13.0",
-    "pg": "^8.16.3"
+    "knex": "^3.3.0",
+    "pg": "^8.16.3",
+    "sequelize": "^6.37.8"
   },
   "devDependencies": {
     "@eslint/js": "^9.37.0",
