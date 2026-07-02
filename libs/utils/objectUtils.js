@@ -16,8 +16,7 @@ class ObjectUtils {
     for (const key of keys) {
       if (current && Object.prototype.hasOwnProperty.call(current, key)) {
         current = current[key];
-      }
-      else {
+      } else {
         return defaultValue;
       }
     }
@@ -26,10 +25,12 @@ class ObjectUtils {
   static deepFreeze(object) {
     Object.freeze(object);
     for (const key in object) {
-      if (object.hasOwnProperty(key) &&
+      if (
+        object.hasOwnProperty(key) &&
         object[key] !== null &&
         (typeof object[key] === 'object' || typeof object[key] === 'function') &&
-        !Object.isFrozen(object[key])) {
+        !Object.isFrozen(object[key])
+      ) {
         this.deepFreeze(object[key]);
       }
     }
@@ -38,16 +39,17 @@ class ObjectUtils {
   static deepAssign(target, ...sources) {
     for (const source of sources) {
       for (const key in source) {
-        if (source.hasOwnProperty(key) &&
+        if (
+          source.hasOwnProperty(key) &&
           source[key] !== null &&
           typeof source[key] === 'object' &&
-          !Array.isArray(source[key])) {
+          !Array.isArray(source[key])
+        ) {
           if (!target[key] || typeof target[key] !== 'object') {
             target[key] = {};
           }
           this.deepAssign(target[key], source[key]);
-        }
-        else {
+        } else {
           target[key] = source[key];
         }
       }
@@ -78,5 +80,6 @@ class ObjectUtils {
       return Object.keys(obj) ?? null;
     }
   }
+}
 
 export { ObjectUtils };

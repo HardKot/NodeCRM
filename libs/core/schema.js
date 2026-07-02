@@ -94,7 +94,7 @@ class ArraySchema extends BaseSchema {
 class ScalarSchema extends BaseSchema {
   constructor({ scalar, ...options } = {}) {
     super(options);
-    if (!scalar) throw CoreError(`Scalar type not found`);
+    if (!Types.isEnum(scalar, ScalarType)) throw new CoreError(`Scalar type not found`);
     this.scalar = scalar;
     this.transform = ScalarSchema.#scalarTransform[scalar];
     this.validate = v => {

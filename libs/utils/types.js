@@ -45,6 +45,13 @@ class Types {
   static isInt(v) {
     return Number.isInteger(v);
   }
+  static isEnum(v, enums) {
+    const keys = Object.keys(enums);
+    const values = Object.values(enums);
+
+    return values.includes(v) || keys.includes(v);
+  }
+
   static notNull(v) {
     if (typeof v === 'object') {
       return v !== null;
