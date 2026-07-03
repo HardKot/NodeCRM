@@ -1,11 +1,9 @@
 export { Application } from './application.js';
-export { Bean, BeanBuilder } from './bean.js';
-export { BeanRegistry } from './beanRegistry.js';
 export { Config } from './config.js';
-export { Container } from './container.js';
+export { Container } from './beans/container.js';
 export { ApplicationEvent, ScalarType, Scoped } from './enums.js';
 export { CoreError, ValidateError, FieldError } from './errors.js';
-export { Logger } from './logger.js';
+export { Logger } from './Logger.js';
 export { Package } from './package.js';
 export { Schema } from './schema.js';
 export { PackageManager } from './packageManager.js';

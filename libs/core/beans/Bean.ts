@@ -1,34 +1,65 @@
-import { CoreError } from './errors.js';
-import { Scoped } from './enums.js';
-import { Types } from '../utils/index.js';
+import { CoreError } from '../errors.js';
+import { Scoped } from '../enums.js';
 import { BuildSymbol } from './symbols.js';
+
+import type { IBean, ICallback, ScopeValue } from './interfaces.ts';
+import { Types } from '#utils';
 
 export { Bean, BeanBuilder };
 
-class Bean {
-  constructor({ name, factory, scope, deps, aliases, eager, postConstruct, preDestroy, async }) {
+interface BeanProps<T> {
+  name: string;
+  factory: (...deps: any[]) => T;
+  scope?: ScopeValue | keyof typeof Scoped;
+  deps?: string[];
+  aliases?: string[];
+  eager?: boolean;
+  async?: boolean;
+
+  postConstruct?: ICallback<T>;
+  preDestroy?: ICallback<T>;
+}
+
+class Bean<T> implements IBean<T> {
+  readonly name: string;
+  readonly factory: (...deps: any[]) => T;
+  readonly scope: ScopeValue;
+  readonly deps: string[];
+  readonly aliases: string[];
+  readonly eager: boolean;
+  readonly async: boolean;
+  readonly postConstructor: ICallback<T>;
+  readonly preDestroy: ICallback<T>;
+
+  constructor({
+    name,
+    factory,
+    scope,
+    deps,
+    aliases,
+    eager,
+    postConstruct,
+    preDestroy,
+    async,
+  }: BeanProps<T>) {
     this.name = name;
     this.factory = factory;
-    this.scope = scope;
     this.deps = deps ?? [];
     this.aliases = aliases ?? [];
     this.eager = eager ?? false;
     this.async = async ?? false;
-    this.postConstruct = postConstruct ?? [];
-    this.preDestroy = preDestroy ?? [];
+    this.postConstructor = postConstruct ?? (() => { });
+    this.preDestroy = preDestroy ?? (() => { });
 
     if (!this.name) throw new CoreError('Bean must have a name');
     if (!this.factory) throw new CoreError('Bean must have a factory');
 
-    if (Types.isString(this.scope))
-      this.scope = Scoped[this.scope.toUpperCase()] ?? Scoped.SINGLETON;
-    if (Types.isUndefined(this.scope)) this.scope = Scoped.SINGLETON;
+    if (Types.isNumber(scope)) this.scope = scope;
+    if (Types.isString(scope)) this.scope = Scoped[scope] ?? Scoped.SINGLETON;
+    if (Types.isUndefined(scope)) this.scope = Scoped.SINGLETON;
 
     if (!this.aliases.includes(this.name)) this.aliases.push(this.name);
-    if (!!this.postConstruct && !Array.isArray(this.postConstruct))
-      this.postConstruct = [this.postConstruct];
-    if (!!this.preDestroy && !Array.isArray(this.preDestroy)) this.preDestroy = [this.preDestroy];
-
+    if (!this.aliases.includes(this.name)) this.aliases.push(this.name);
     Object.freeze(this);
   }
 

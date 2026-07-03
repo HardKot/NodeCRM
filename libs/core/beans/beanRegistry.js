@@ -1,6 +1,6 @@
-import { Types } from '../utils/index.js';
-import { Bean } from './bean.js';
-import { CoreError } from './errors.js';
+import { Types } from '../../utils/index.js';
+import { Bean } from './Bean.js';
+import { CoreError } from '../errors.js';
 import { BuildSymbol } from './symbols.js';
 
 export { BeanRegistry };

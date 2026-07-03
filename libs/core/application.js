@@ -4,10 +4,10 @@ import { EventEmitter } from 'node:events';
 
 import { Types } from '#utils';
 
-import { Logger } from './logger.js';
+import { Logger } from './Logger.js';
 import { Config } from './config.js';
-import { Container } from './container.js';
-import { BeanRegistry } from './beanRegistry.js';
+import { Container } from './beans/container.js';
+import { BeanRegistry } from './beans/beanRegistry.js';
 import { PackageManager } from './packageManager.js';
 import { SpaceModule } from './spaceModule.js';
 import { ApplicationArgs, ApplicationEvent } from './enums.js';
