@@ -2,41 +2,33 @@
   "name": "@space-js/platform",
   "version": "1.0.0",
   "description": "Framework for building multi-tenant SaaS applications",
-  "main": "./index.js",
   "types": "./types/index.d.ts",
   "type": "module",
+  "engines": {
+    "node": ">= 24.15 < 25"
+  },
   "scripts": {
-    "precommit": "npm run check",
     "build": "tsc",
-    "test": "node --import ./tests/setup.js --test",
-    "lint": "eslint"
+    "test": "node --import ./lib/tests/setup.js --test",
+    "format": "prettier ./lib --write",
+    "format:check": "prettier ./lib --check",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
   },
   "imports": {
-    "#*": "./libs/*/index.js"
-  },
-  "dependencies": {
-    "express": "^5.2.1",
-    "install": "0.13.0",
-    "knex": "^3.3.0",
-    "pg": "^8.16.3",
-    "sequelize": "^6.37.8"
+    "#*": "./lib/*/index.js"
   },
   "devDependencies": {
-    "@eslint/js": "^9.37.0",
-    "@jest/globals": "^30.2.0",
-    "@types/jest": "^30.0.0",
+    "@eslint/js": "~10.0.1",
     "@types/node": "^25.0.10",
-    "eslint": "^9.37.0",
-    "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-prettier": "^5.5.4",
-    "jest": "^30.2.0",
+    "eslint": "~10.6.0",
+    "globals": "~17.7.0",
+    "pg": "^8.16.3",
     "prettier": "^3.6.2",
-    "ts-jest": "^29.4.6",
-    "tsx": "^4.21.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.62.1"
   },
   "peerDependencies": {
-    "fastify": "^5.8.5",
-    "yup": "^1.7.1"
+    "pg": "^8.16.3"
   }
 }

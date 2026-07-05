@@ -1,17 +1,57 @@
 {
   "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "moduleDetection": "force",
+    // Disable features not compatible with Type Stripping
+    "useDefineForClassFields": false,
+    "emitDecoratorMetadata": false,
+    "experimentalDecorators": false,
+    "noImplicitAny": true,
+    "noImplicitThis": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
+    "noEmitOnError": true,
+    "forceConsistentCasingInFileNames": true,
+    // Enable JS support
+    "allowJs": true,
+    "checkJs": true,
+    // Output settings
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "outDir": "dist",
+    "rootDir": ".",
+    // Type resolution
     "typeRoots": [
-      "./types/**/*",
+      "./lib/types",
       "./node_modules/@types"
     ],
-    "declaration": true,
-    "emitDeclarationOnly": false,
-    "module": "esnext",
-    "moduleResolution": "node16",
-    "target": "esnext",
+    "types": [], // Empty array prevents automatic inclusion of @types/*
+    // Module system features
     "esModuleInterop": true,
-    "allowJs": true,
-    "strict": true,
-    "skipLibCheck": true
-  }
+    "allowSyntheticDefaultImports": true,
+    "resolvePackageJsonExports": true,
+    "resolvePackageJsonImports": true,
+    // Strictness
+    "skipLibCheck": true,
+    "isolatedModules": true
+  },
+  "include": [
+    "src/**/*",
+    "lib/types/**/*",
+    "*.js",
+    "*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
 }
