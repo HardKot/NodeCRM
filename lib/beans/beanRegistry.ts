@@ -1,8 +1,8 @@
-import { Result, Types } from '../utils/index';
-import { Bean, BeanBuilder } from './Bean';
-import { CoreError } from '../core/errors';
-import { BuildSymbol } from './symbols';
-import { IBean, IBeanRegistry } from './interfaces';
+import { BeanError, BuildSymbol } from '#constant';
+import { Result, Types } from '#utils';
+
+import { Bean } from './bean.ts';
+import { BeanBuilder } from "./beanBuilder.ts"
 
 export { BeanRegistry };
 
@@ -18,19 +18,19 @@ class BeanRegistry implements IBeanRegistry {
   }
 
   add<T>(def: IBean<T>) {
-    if (Types.isNotInstanceOf(def, Bean)) throw new CoreError('Invalid bean definition');
-    if (this.#beans.has(def)) throw new CoreError(`Bean already registered: ${def.name}`);
+    if (Types.isNotInstanceOf(def, Bean)) throw new BeanError('Invalid bean definition');
+    if (this.#beans.has(def)) throw new BeanError(`Bean already registered: ${def.name}`);
 
     this.#beans.add(def);
     for (const alias of def.aliases) {
-      if (this.#bindings.has(alias)) throw new CoreError(`Duplicate bean name: ${alias}`);
+      if (this.#bindings.has(alias)) throw new BeanError(`Duplicate bean name: ${alias}`);
       this.#bindings.set(alias, def);
     }
   }
 
   getDef<T>(alias: string): IBean<T> {
     const bean = this.#bindings.get(alias);
-    if (!bean) throw new CoreError(`Bean not found: ${alias}`);
+    if (!bean) throw new BeanError(`Bean not found: ${alias}`);
     return bean;
   }
 
@@ -61,13 +61,13 @@ class BeanRegistry implements IBeanRegistry {
     const visited = new Set();
     const recStack = new Set();
 
-    const hasCycle = (name: string, path: string[] = []) => {
+    const hasCycle = (name: string, path: string[] = []): void => {
       if (recStack.has(name)) {
         const cycle = [...path, name];
         const cycleStart = cycle.indexOf(name);
-        throw new CoreError(`Circular dependency detected: ${cycle.slice(cycleStart).join(' -> ')}`);
+        throw new BeanError(`Circular dependency detected: ${cycle.slice(cycleStart).join(' -> ')}`);
       }
-      if (visited.has(name)) return false;
+      if (visited.has(name)) return;
       visited.add(name);
       recStack.add(name);
       const node = this.#bindings.get(name)!;
@@ -107,6 +107,6 @@ class BeanRegistry implements IBeanRegistry {
       text += `\n Component "${key}" depends on ${deps.map((it) => `"${it}"`).join(',')}, which is not registered in the container.`;
     }
 
-    return Result.failure<null>(new CoreError(text));
+    return Result.failure<null>(new BeanError(text));
   }
 }

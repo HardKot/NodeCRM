@@ -4,7 +4,7 @@ import fs from 'node:fs';
 
 import { StringUtils } from '../utils/index';
 
-import { CoreError } from '../core/errors.js';
+import { CoreError } from '../constant/errors.ts';
 import { Package, PackageGroups } from './package.js';
 import { IPackage, IPackageManager } from './interface';
 import { IApplication } from '../core/interfaces/IApplication';

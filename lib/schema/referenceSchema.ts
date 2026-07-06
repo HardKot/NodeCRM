@@ -1,5 +1,5 @@
-import { BaseSchema } from './baseSchema';
-import type { BaseSchemaProps } from './baseSchema';
+import { BaseSchema } from './baseSchema.ts';
+import type { BaseSchemaProps } from './baseSchema.ts';
 
 export { ReferenceSchema };
 

@@ -20,7 +20,7 @@
   },
   "devDependencies": {
     "@eslint/js": "~10.0.1",
-    "@types/node": "^25.0.10",
+    "@types/node": "^24.0.15",
     "eslint": "~10.6.0",
     "eslint-plugin-unicorn": "^70.0.0",
     "globals": "~17.7.0",

@@ -1,7 +1,4 @@
-import { Types } from '../utils/types';
-import type { IApplication } from '../core/interfaces/IApplication';
-import type { IContainer, ResolveOptions } from './IContainer';
-import type { IBean } from './interfaces';
+import { Types } from "#utils";
 
 export { Container };
 
@@ -39,10 +36,9 @@ class Container implements IContainer {
   }
 
   async destroyAll() {
-    const destroyScoped = this.#scoped
-      .keys()
+    const destroyScoped = [...this.#scoped
+      .keys()]
       .map((it) => this.destroyScoped(it))
-      .toArray();
     const destroySingletons = this.#destroySingletons();
     const destroyTransients = this.#destroyTransients();
 
@@ -63,11 +59,10 @@ class Container implements IContainer {
       .filter((it) => it.isTransient())
       .flatMap(
         (bean) =>
-          this.#transients
+          [...this.#transients
             .get(bean)
-            ?.values()
+            ?.values() ?? []]
             .map((item) => ({ bean, item }))
-            .toArray() ?? []
       )
       .map((it) => it.bean.preDestroy(it.item));
   }

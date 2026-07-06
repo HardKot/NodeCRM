@@ -1,12 +1,13 @@
-import { Result, Types } from '../utils/index';
-import { ValidateError } from '../core/errors.js';
-import { ArraySchema } from './arraySchema';
-import { BaseSchema } from './baseSchema';
-import { EnumSchema } from './enumSchema';
-import { ReferenceSchema } from './referenceSchema';
-import { ScalarSchema } from './scalarSchema';
+import { Result, Types } from '#utils';
 
-import type { BaseSchemaProps } from './baseSchema';
+import { ArraySchema } from './arraySchema.ts';
+import { BaseSchema } from './baseSchema.ts';
+import { EnumSchema } from './enumSchema.ts';
+import { ReferenceSchema } from './referenceSchema.ts';
+import { ScalarSchema } from './scalarSchema.ts';
+
+import type { BaseSchemaProps } from './baseSchema.ts';
+import { ValidateError } from '#constant';
 
 export { Schema };
 
@@ -49,7 +50,7 @@ class Schema<T extends SchemaBody = SchemaBody, U = null> extends BaseSchema {
     const error = new ValidateError('');
     for (const [key, field] of Object.entries(this.#schema)) {
       field.validate(value[key]).fold(
-        () => {},
+        () => { },
         (itemError) => {
           hasError = true;
           error.addError(itemError, key);

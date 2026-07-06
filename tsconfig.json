@@ -31,10 +31,13 @@
     "rootDir": ".",
     // Type resolution
     "typeRoots": [
-      "./lib/types",
+      "types",
       "./node_modules/@types"
     ],
-    "types": [], // Empty array prevents automatic inclusion of @types/*
+    "path": [
+      "#*": "./lib/*/index.js"
+    ],
+    "allowImportingTsExtensions": true,
     // Module system features
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
@@ -45,11 +48,8 @@
     "isolatedModules": true
   },
   "include": [
-    "src/**/*",
-    "lib/types/**/*",
-    "*.js",
-    "*.ts"
-  ],
+    "lib/**/*"
+, "types"  ],
   "exclude": [
     "node_modules",
     "dist"

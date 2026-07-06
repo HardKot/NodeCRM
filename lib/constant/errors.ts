@@ -1,18 +1,23 @@
-export { CoreError, FieldError, ValidateError };
+export class CoreError extends Error { }
 
-class CoreError extends Error {}
+export class BeanError extends Error { }
 
-class FieldError extends CoreError {}
+export class TypeError extends Error { }
 
-class ValidateError extends CoreError {
-  errors = {};
-  constructor(message, field = '*') {
+export class FieldError extends Error { }
+
+export class SourceParserError extends Error { }
+
+export class ValidateError extends CoreError {
+  errors: Record<string, string[]> = {};
+
+  constructor(message: string, field = '*') {
     super(`Validation error on field "${field}": ${message}`);
     this.errors = {
       [field]: [message],
     };
   }
-  addError(error, field) {
+  addError(error: Error, field: string) {
     if (error instanceof ValidateError) {
       for (const key in error.errors) {
         const messages = error.errors[key].filter((it) => !!it);

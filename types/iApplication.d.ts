@@ -1,16 +1,4 @@
-import type { EventEmitter } from 'node:events';
-
-import type { ILogger } from './ILogger.js';
-import type { IContainer } from '../../beans/IContainer.js';
-import type { IPackageManager, IPackageBuilder } from './IPackageManager.js';
-import type { IBeanBuilder, IBeanRegistry } from '../../beans/interfaces.js';
-import type { IConfig } from './IConfig.js';
-import type { ISchemaManager } from './ISchemaManager.js';
-import type { ISpaceModule } from './ISpaceModule.js';
-
-export type { IApplication, ApplicationDescription, CommandDescription };
-
-interface IApplication {
+declare declare interface IApplication {
   readonly stdout: NodeJS.ReadStream;
 
   readonly stdin: NodeJS.WriteStream;
@@ -22,7 +10,7 @@ interface IApplication {
   readonly instanceName: string;
   readonly prerfix: string;
 
-  readonly eventEmitter: EventEmitter;
+  readonly eventEmitter: NodeJS.EventEmitter;
   readonly logger: ILogger;
   readonly container: IContainer;
   readonly packages: IPackageManager;
@@ -59,7 +47,7 @@ interface ApplicationSubscription {
   error(callback: (error: Error, app: IApplication) => void): void;
 }
 
-interface ApplicationDescription {
+declare interface ApplicationDescription {
   bean<T>(callback: IBeanBuilder<T>): void;
   package<T>(callback: IPackageBuilder<T>): void;
   loadNodePackages(): void;
@@ -74,7 +62,7 @@ interface ApplicationDescription {
   on: ApplicationSubscription;
 }
 
-interface CommandDescription {
+declare interface CommandDescription {
   getScope(): string;
   setScope(id: string): void;
   bean<T>(alias: string): Promise<T>;

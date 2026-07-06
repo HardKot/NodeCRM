@@ -2,63 +2,70 @@ import { Types } from './types.js';
 
 const privateConstructor = Symbol();
 
-class Result<T = null> {
+class ResultError extends Error { }
+
+class Result<T = null> implements IResult<T> {
   readonly value: T | Error;
-  readonly isSuccess: boolean;
-  readonly isFailure: boolean;
 
   static of<U = null, E extends Error = Error>(value: U | E) {
-    return new Result<U>(value, true, privateConstructor);
+    return new Result<U>(value, privateConstructor);
   }
   static success<U = null>(value: U) {
-    return new Result<U>(value, true, privateConstructor);
+    if (Types.isError(value)) throw new ResultError(`Value is Error!`);
+    return new Result<U>(value, privateConstructor);
   }
-  static failure<U = null, E extends Error = Error>(error: E) {
-    return new Result<U>(error, false, privateConstructor);
+  static failure<U = null, E extends Error = Error>(error: E | unknown) {
+    return new Result<U>(Types.normolizeError(error), privateConstructor);
   }
 
   static fromPromise<U, E extends Error>(promise: Promise<U>) {
     return promise.then((value) => Result.success<U>(value)).catch((error) => Result.failure<U, E>(error));
   }
 
-  private constructor(value: T | Error, isSuccess: boolean, privateSymbol: symbol) {
-    if (privateSymbol === privateConstructor) throw new Error('Result constructor is private');
+  private constructor(value: T | Error, privateSymbol: symbol) {
+    if (privateSymbol === privateConstructor) throw new ResultError('Result constructor is private');
 
     this.value = value;
-    if (Types.isError(value) || !isSuccess) {
-      this.isSuccess = false;
-      this.isFailure = true;
-    } else {
-      this.isFailure = false;
-      this.isSuccess = true;
-    }
 
     Object.freeze(this);
   }
-  getOrNull() {
-    return this.isSuccess ? this.value : null;
+
+  get isSuccess() {
+    return !Types.isError(this.value);
   }
-  getOrThrow() {
-    if (this.isFailure) throw this.value;
+
+  get isFailure() {
+    return Types.isError(this.value);
+  }
+
+  getOrNull(): T | null {
+    return Types.isError(this.value) ? null : this.value;
+  }
+
+  getOrThrow(): T {
+    if (Types.isError(this.value)) throw this.value;
     return this.value;
   }
-  getOrElse(onFailure: (e: Error) => T) {
-    if (Types.isFunction(onFailure) && Types.isError(this.value)) {
-      return this.isSuccess ? this.value : onFailure(this.value);
+
+  getOrElse(onFailure: (e: Error) => T): T {
+    if (Types.isFunction(onFailure)) {
+      return Types.isError(this.value) ? onFailure(this.value) : this.value;
     }
-    return this.isSuccess ? this.value : onFailure;
+    return Types.isError(this.value) ? onFailure : this.value;
   }
-  errorOrNull() {
-    return this.isFailure ? this.value : null;
+
+  errorOrNull(): Error | null {
+    return Types.isError(this.value) ? this.value : null;
   }
-  fold<U>(onSuccess: (value: T) => U, onFailure: (value: Error) => U) {
+
+  fold<U>(onSuccess: (value: T) => U, onFailure: (value: Error) => U): U {
     if (Types.isError(this.value)) {
       return onFailure(this.value);
     }
     return onSuccess(this.value);
   }
 
-  map<U>(transform: (value: T) => U) {
+  map<U>(transform: (value: T) => U): Result<U> {
     if (!Types.isError(this.value)) {
       try {
         const transformed = transform(this.value);

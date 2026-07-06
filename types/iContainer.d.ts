@@ -1,10 +1,9 @@
-export type { IContainer, ResolveOptions };
 
-interface ResolveOptions {
+declare interface ResolveOptions {
   scopeId?: string;
 }
 
-interface IContainer {
+declare interface IContainer {
   build(): Promise<void>;
   resolve<T>(alias: string, options?: ResolveOptions): Promise<T>;
 

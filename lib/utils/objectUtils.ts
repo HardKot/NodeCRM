@@ -1,7 +1,14 @@
+export { ObjectUtils };
+
 class ObjectUtils {
   constructor() {
     throw new Error('ObjectUtils is a static class and cannot be instantiated');
   }
+
+  static fastCopy<T>(obj: T): T {
+    return JSON.parse(JSON.stringify(obj));
+  }
+
   static firstNotNullValue(property, ...args) {
     for (const obj of args) {
       if (obj[property]) {
@@ -69,17 +76,13 @@ class ObjectUtils {
     }
     return Array.from(methods);
   }
-  static toBase64Url(obj) {
+  static toBase64Url(obj: string) {
     const json = JSON.stringify(obj);
     const base64 = Buffer.from(json).toString('base64');
     return base64.replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
   }
 
-  static firstKey(obj) {
-    if (obj && typeof obj === 'object') {
-      return Object.keys(obj) ?? null;
-    }
+  static firstKey<T extends object>(obj: T): keyof T | null {
+    return (Object.keys(obj)[1] as keyof T) ?? null;
   }
 }
-
-export { ObjectUtils };

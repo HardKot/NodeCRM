@@ -1,29 +1,27 @@
-import { Result } from '../utils/result';
-import { Types } from '../utils/types';
-import { ValidateError } from '../core/errors';
-import { BaseSchema } from './baseSchema';
-import type { BaseSchemaProps } from './baseSchema';
-import { ScalarType } from './enums';
-import { ScalarValue } from './interface';
+import { ScalarType, ValidateError } from '#constant';
+import { Result, Types } from '#utils';
+
+import { BaseSchema } from './baseSchema.ts';
+import type { BaseSchemaProps } from './baseSchema.ts';
 
 export { ScalarSchema };
 
 interface ScalarSchemaProps extends BaseSchemaProps {
-  scalar: ScalarValue;
+  scalar: IScalarValue;
 }
 
 const validates = {
-  [ScalarType.Int]: (v: any) => Types.isInt(v),
-  [ScalarType.Boolean]: (v: any) => Types.isBoolean(v),
-  [ScalarType.Number]: (v: any) => Types.isNumber(v),
-  [ScalarType.String]: (v: any) => Types.isString(v) && !v.includes('\n'),
-  [ScalarType.Text]: (v: any) => Types.isString(v),
-  [ScalarType.Date]: (v: any) => Types.isInstanceOf(v, Date),
+  [ScalarType.INT]: (v: unknown) => Types.isInt(v),
+  [ScalarType.BOOLEAN]: (v: unknown) => Types.isBoolean(v),
+  [ScalarType.NUMBER]: (v: unknown) => Types.isNumber(v),
+  [ScalarType.STRING]: (v: unknown) => Types.isString(v) && !v.includes('\n'),
+  [ScalarType.TEXT]: (v: unknown) => Types.isString(v),
+  [ScalarType.DATE]: (v: unknown) => Types.isInstanceOf(v, Date),
 };
 
 class ScalarSchema extends BaseSchema {
-  readonly scalar: ScalarValue;
-  readonly #validator: (v: any) => boolean;
+  readonly scalar: IScalarValue;
+  readonly #validator: (v: unknown) => boolean;
 
   constructor({ scalar, ...options }: ScalarSchemaProps) {
     super(options);
@@ -33,7 +31,7 @@ class ScalarSchema extends BaseSchema {
     Object.freeze(this);
   }
 
-  override validate(v: any): Result {
+  override validate(v: unknown): Result {
     if (this.#validator(v)) return Result.success(null);
     return Result.failure(new ValidateError(`Invalid type, expected '${this.scalar}'`));
   }

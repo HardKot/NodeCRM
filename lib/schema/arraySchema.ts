@@ -1,7 +1,6 @@
-import { Result } from '../utils/result';
-import { ValidateError } from '../core/errors.js';
-import { BaseSchema } from './baseSchema';
-import type { BaseSchemaProps } from './baseSchema';
+import { ValidateError } from '#constant';
+import { Result } from '#utils';
+import { BaseSchema, BaseSchemaProps } from './baseSchema.ts';
 
 export { ArraySchema };
 
@@ -19,13 +18,13 @@ class ArraySchema extends BaseSchema {
     Object.freeze(this);
   }
 
-  override validate(value: any) {
+  override validate(value: unknown) {
     if (!Array.isArray(value)) return Result.failure(new ValidateError('Expected an array'));
     let hasError = false;
     const error = new ValidateError('');
     for (let i = 0; i < value.length; i++) {
       this.item.validate(value[i]).fold(
-        () => {},
+        () => { },
         (err) => {
           hasError = true;
           error.addError(err, `[${i}]`);

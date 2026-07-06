@@ -1,20 +1,20 @@
-import { Result } from '../utils/result';
-import { ValidateError } from '../core/errors';
+import { ValidateError } from '#constant';
+import { Result } from '#utils';
 
 export { BaseSchema };
 
 export interface BaseSchemaProps {
-  require?: boolean;
+  required?: boolean;
 }
 
-abstract class BaseSchema {
-  readonly require: boolean;
+class BaseSchema {
+  readonly required: boolean;
 
   constructor(options: BaseSchemaProps = {}) {
-    this.require = options.require ?? false;
+    this.required = options.required ?? false;
   }
 
-  validate(v: any): Result {
-    return Result.failure(new ValidateError('No implimeted'));
+  validate(v: unknown): Result {
+    return Result.failure(new ValidateError(`No implimeted, getted parametr v=${v}`));
   }
 }

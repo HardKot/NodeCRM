@@ -1,29 +1,34 @@
 import * as stream from 'node:stream';
 import * as streamWeb from 'node:stream/web';
 
-class TypeError extends Error {}
+export { Types };
+
+type EnumFunction<T extends string | number, U = string> = ((value: string | number) => T | null) &
+  Readonly<{ [key in T]: U }>;
 
 class Types {
   constructor() {
     throw new Error('Types is a static class and cannot be instantiated');
   }
-  static isObject(v: any): v is object {
+  static isObject(v: unknown): v is object {
     return v !== null && typeof v === 'object' && !Array.isArray(v);
   }
-  static isRecord<T>(v: any): v is Record<string, T> {
-    return typeof v === 'object' && !Array.isArray(v);
+  static isRecord<T>(v: unknown, fn?: (it: unknown) => it is T): v is Record<string, T> {
+    if (typeof v !== 'object' || Array.isArray(v) || v === null) return false;
+    if (!fn) return true;
+    return Object.values(v).some((it) => !fn(it));
   }
-  static isFunction(v: any): v is Function {
+  static isFunction(v: unknown): v is Function {
     if (typeof v !== 'function') return false;
     const str = Function.prototype.toString.call(v);
     return !str.startsWith('class ');
   }
-  static isClass<T extends { new (...args: any[]): any }>(v: any): v is T {
+  static isClass<T extends { new(...args: any[]): any }>(v: unknown): v is T {
     if (typeof v !== 'function') return false;
     const str = Function.prototype.toString.call(v);
     return str.startsWith('class ');
   }
-  static isUndefined(v: any): v is undefined {
+  static isUndefined(v: unknown): v is undefined {
     return typeof v === 'undefined';
   }
 
@@ -31,32 +36,31 @@ class Types {
     return !Types.isUndefined(v);
   }
 
-  static isSymbol(v: any): v is symbol {
+  static isSymbol(v: unknown): v is symbol {
     return typeof v === 'symbol';
   }
-  static isPrimitive(v: any): v is number | string | boolean | bigint | symbol | undefined {
+  static isPrimitive(v: unknown): v is number | string | boolean | bigint | symbol | undefined {
     return ['number', 'bigint', 'boolean', 'string', 'undefined', 'symbol'].includes(typeof v);
   }
-  static isPromise<T>(v: any): v is Promise<T> {
+  static isPromise<T>(v: unknown): v is Promise<T> {
     return v instanceof Promise;
   }
-  static isNull(v: any): v is null {
+  static isNull(v: unknown): v is null {
     return v === null;
   }
-  static isString(v: any): v is string {
+  static isString(v: unknown): v is string {
     return typeof v === 'string';
   }
-  static isNumber(v: any): v is number {
+  static isNumber(v: unknown): v is number {
     return typeof v === 'number' && !Number.isNaN(v);
   }
-  static isInt(v: any): v is number {
+  static isInt(v: unknown): v is number {
     return Number.isInteger(v);
   }
-  static isEnum<T extends object>(v: any, enums: T): v is keyof T | Pick<T, any> {
-    const keys = Object.keys(enums);
-    const values = Object.values(enums);
 
-    return values.includes(v) || keys.includes(v);
+  static isArray<T>(v: unknown, fn?: (it: unknown) => it is T): v is Array<T> {
+    if (!fn) return Array.isArray(v);
+    return Array.isArray(v) && v.some((it) => !fn(it));
   }
 
   static notNull<T extends object>(v: null | T): v is T {
@@ -65,10 +69,10 @@ class Types {
     }
     return false;
   }
-  static isBoolean(v: any): v is boolean {
+  static isBoolean(v: unknown): v is boolean {
     return typeof v === 'boolean';
   }
-  static isWritableStream(v: any): v is stream.Writable | streamWeb.WritableStream {
+  static isWritableStream(v: unknown): v is stream.Writable | streamWeb.WritableStream {
     if (v instanceof stream.Writable) return true;
     if (v instanceof streamWeb.WritableStream) return true;
     return false;
@@ -78,11 +82,11 @@ class Types {
     if (v instanceof streamWeb.ReadableStream) return true;
     return false;
   }
-  static isBinary(v: any): v is Buffer | Blob {
+  static isBinary(v: unknown): v is Buffer | Blob {
     return Buffer.isBuffer(v) || v instanceof Blob;
   }
-  static isAsyncIterator(v: any): v is { [Symbol.asyncIterator]: Function } {
-    return !!v && Symbol.asyncIterator in v;
+  static isAsyncIterator(v: unknown): v is { [Symbol.asyncIterator]: Function } {
+    return Types.isObject(v) && Symbol.asyncIterator in v;
   }
 
   static isNotInstanceOf<T, U extends new (...args: any[]) => any>(
@@ -92,24 +96,43 @@ class Types {
     return !Types.isInstanceOf(v, Class);
   }
 
-  static isError(value: any): value is Error {
-    return value instanceof Error || Error.isError(value);
+  static isError(value: unknown): value is Error {
+    return value instanceof Error;
   }
 
-  static isInstanceOf<T extends new (...args: any[]) => any>(v: any, Class: T): v is InstanceType<T> {
+  static isInstanceOf<T extends new (...args: any[]) => any>(v: unknown, Class: T): v is InstanceType<T> {
     return v instanceof Class;
   }
 
-  static isAnyInstanceOf<T, TT extends { new (...args: any[]): T }[]>(v: any, ...classes: TT): v is T {
+  static isAnyInstanceOf<T, TT extends { new(...args: any[]): T }[]>(v: unknown, ...classes: TT): v is T {
     return classes.some((cls) => v instanceof cls);
   }
 
-  static normolizeError(v: any) {
+  static normolizeError(v: unknown, DefaultClass?: { new(...args: any[]): Error }) {
     if (v instanceof Error) return v;
-    return new Error(v);
+    return new (DefaultClass ?? Error)(`${v}`);
+  }
+
+  static isIn<T extends object>(value: unknown, obj: T): value is keyof T {
+    return this.isString(value) && value in obj;
+  }
+
+  static enum<T extends string | number, U = string>(obj: readonly T[] | Record<string, T>): EnumFunction<T, U> {
+    const simpleEntriesEnum = Array.isArray(obj)
+      ? (obj as readonly T[]).map((it, index) => [it, String(index)])
+      : Object.entries(obj);
+
+    const enumDict = Object.fromEntries(simpleEntriesEnum) as Record<string, T>;
+    const enumReverseDict = Object.fromEntries(simpleEntriesEnum.map(([k, v]) => [v, k])) as Record<string, T>;
+
+    const enumFn = (value: string | number): T | null => enumReverseDict[String(value)] ?? null;
+
+    for (const [key, value] of Object.entries(enumDict)) {
+      (enumFn as any as Record<string, unknown>)[key] = value;
+    }
+
+    Object.freeze(enumFn);
+
+    return enumFn as EnumFunction<T, U>;
   }
 }
-
-export type EnumValue<T extends object, TT> = keyof T | TT;
-
-export { Types };
