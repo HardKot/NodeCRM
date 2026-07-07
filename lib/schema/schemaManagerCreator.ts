@@ -1,7 +1,7 @@
 import { ScalarType, SourceParserError } from '#constant';
-import { ObjectUtils, StringUtils, Types } from '#utils';
-import { ArraySchema } from './arraySchema.ts';
+import { FunctionUtils, ObjectUtils, StringUtils, Types } from '#utils';
 
+import { ArraySchema } from './arraySchema.ts';
 import { BaseSchema } from './baseSchema.ts';
 import { EnumSchema } from './enumSchema.ts';
 import { ReferenceSchema } from './referenceSchema.ts';
@@ -27,10 +27,6 @@ const createtorSchema: Record<string, (require: boolean, ...options: unknown[]) 
   date: (required: boolean) => new ScalarSchema({ scalar: ScalarType.DATE, required }),
   uuid: (required: boolean) => new ScalarSchema({ scalar: ScalarType.UUID, required }),
   text: (required: boolean) => new ScalarSchema({ scalar: ScalarType.TEXT, required }),
-  link: (required: boolean, name: unknown) => {
-    if (!Types.isString(name)) throw new SourceParserError(`Expected string, but get ${typeof name}`);
-    return new ReferenceSchema({ name, required });
-  },
   enum: (required: boolean, values: unknown) => {
     if (!Types.isArray(values, Types.isString))
       throw new SourceParserError(`Expected string array, but get ${typeof values}`);
@@ -60,10 +56,32 @@ const StringToScalarType: Record<string, IScalarValue> = {
   text: ScalarType.TEXT,
 };
 
-class SchemaCreator {
+export class SchemaManagerCreator {
+  #store = new Map<string, any>();
+
+  constructor() {
+    const caches = new Map<any, BaseSchema>();
+
+    this.parse = FunctionUtils.memo<unknown, BaseSchema>(this.parse, caches).bind(this);
+    this.parseString = FunctionUtils.memo<string, BaseSchema>(this.parseString, caches).bind(this);
+    this.parseObject = FunctionUtils.memo(this.parseObject, caches).bind(this);
+    this.parseArray = FunctionUtils.memo(this.parseArray, caches).bind(this);
+    this.parseClass = FunctionUtils.memo(this.parseClass, caches).bind(this);
+  }
+
+  get<T extends BaseSchema>(name: string): T | null {
+    const it = this.#store.get(name);
+    return it ?? null;
+  }
+
+  add(alias: string, schema: BaseSchema) {
+    if (this.#store.has(alias)) throw new SourceParserError(`Alias: "${alias}" is exists`);
+    this.#store.set(alias, schema);
+  }
+
   parse(value: unknown): BaseSchema {
     const srcType = this.#getSourceType(value);
-    const methodName = StringUtils.factoryCamelCase(`parse`, srcType) as keyof SchemaCreator | string;
+    const methodName = StringUtils.factoryCamelCase(`parse`, srcType) as keyof SchemaManagerCreator | string;
     if (!Types.isIn(methodName, this)) throw new SourceParserError(`Parser for source type "${srcType}" not specified`);
     const parser = this[methodName];
     if (!Types.isFunction(parser)) throw new SourceParserError(`Parser for source type "${srcType}" not specified`);
@@ -75,7 +93,11 @@ class SchemaCreator {
     if (required) source = source.slice(0, -1);
     if (source.startsWith('@')) {
       const name = source.slice(1);
-      return new ReferenceSchema({ name, required });
+      return new ReferenceSchema({
+        name,
+        load: this.#createLoader(name),
+        required,
+      });
     }
     if (source.includes('|')) {
       const values = source.split('|');
@@ -96,17 +118,24 @@ class SchemaCreator {
     return this.#createSchema(source);
   }
 
-  parseArray(source: Array<unknown>): BaseSchema {
+  parseArray(source: Array<any>): BaseSchema {
     if (source.length === 0) throw new SourceParserError(`Empty erray is not supported`);
     if (source.length === 1) return new ArraySchema({ item: this.parse(source[0]), required: true });
     if (Types.isArray(source, Types.isString)) return new EnumSchema({ values: source, required: true });
     throw new SourceParserError(`Not supported array type for schema`);
   }
-  parseFunction(source, options) {
-    throw new SourceParserError('parseFunction method not implemented');
+
+  parseFunction(source: Function): BaseSchema {
+    return this.parse(source());
   }
-  parseClass(source, options) {
-    throw new SourceParserError('parseClass method not implemented');
+
+  parseClass<T>(source: { new(...args: any[]): T; schema?: object }): BaseSchema {
+    const schema: Record<string, BaseSchema> = {};
+    const entries = Object.entries(source.schema ?? {});
+
+    for (const [key, value] of entries) schema[key] = this.parse(value);
+
+    return new Schema({ schema, proto: source.prototype });
   }
 
   #parseSourceSchema(source: object & SchemaObject): BaseSchema {
@@ -129,6 +158,10 @@ class SchemaCreator {
   }
 
   #createSchema({ Type, Required = true, Options }: ISource): BaseSchema {
+    if (Type === 'link') {
+      const name = `${Options[0]}`;
+      return new ReferenceSchema({ name, required: Required, load: this.#createLoader(name) });
+    }
     const createSchema = createtorSchema[Type];
     if (!createSchema) throw new SourceParserError(`Type "${Type}" is not supported`);
     return createSchema(Required, ...Options);
@@ -145,5 +178,9 @@ class SchemaCreator {
   #isISource(value: unknown): value is ISource {
     if (!Types.isObject(value)) return false;
     return ObjectUtils.firstKey(value) === 'Type';
+  }
+
+  #createLoader(name: string): () => BaseSchema | null {
+    return () => this.#store.get(name);
   }
 }

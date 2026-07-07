@@ -5,6 +5,7 @@ export { ReferenceSchema };
 
 interface ReferenceSchemaProps extends BaseSchemaProps {
   name: string;
+  load: () => BaseSchema | null;
 }
 
 class ReferenceSchema extends BaseSchema {
