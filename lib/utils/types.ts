@@ -3,8 +3,7 @@ import * as streamWeb from 'node:stream/web';
 
 export { Types };
 
-type EnumFunction<T extends string | number, U = string> = ((value: string | number) => T | null) &
-  Readonly<{ [key in T]: U }>;
+type EnumFunction<T extends string, U = number> = ((value: U) => T | null) & Readonly<{ [key in T]: U }>;
 
 class Types {
   constructor() {
@@ -117,15 +116,15 @@ class Types {
     return this.isString(value) && value in obj;
   }
 
-  static enum<T extends string | number, U = string>(obj: readonly T[] | Record<string, T>): EnumFunction<T, U> {
-    const simpleEntriesEnum = Array.isArray(obj)
-      ? (obj as readonly T[]).map((it, index) => [it, String(index)])
-      : Object.entries(obj);
+  static enum<T extends string, U = number>(obj: readonly T[] | Record<T, U>): EnumFunction<T, U> {
+    const simpleEntriesEnum: [T, U][] = Array.isArray(obj)
+      ? obj.map((it, index) => [it, index] as [T, U])
+      : (Object.entries(obj) as [T, U][]);
 
-    const enumDict = Object.fromEntries(simpleEntriesEnum) as Record<string, T>;
+    const enumDict = Object.fromEntries(simpleEntriesEnum) as Record<string, U>;
     const enumReverseDict = Object.fromEntries(simpleEntriesEnum.map(([k, v]) => [v, k])) as Record<string, T>;
 
-    const enumFn = (value: string | number): T | null => enumReverseDict[String(value)] ?? null;
+    const enumFn = (value: U): T | null => enumReverseDict[String(value)] ?? null;
 
     for (const [key, value] of Object.entries(enumDict)) {
       (enumFn as any as Record<string, unknown>)[key] = value;

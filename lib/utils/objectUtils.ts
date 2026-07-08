@@ -1,8 +1,34 @@
+import { Types } from './types.ts';
+
 export { ObjectUtils };
 
 class ObjectUtils {
   constructor() {
     throw new Error('ObjectUtils is a static class and cannot be instantiated');
+  }
+
+  static flatten<T = any, U = Record<string, any>>(obj: T, prefix = ''): U {
+    const result: Record<string, any> = {};
+
+    if (Types.isNull(obj)) {
+      return { [prefix]: obj } as U;
+    }
+
+    const entries = Array.isArray(obj) ? obj.map((v, i) => [`${i}`, v]) : Object.entries(obj);
+
+    for (const [key, value] of entries) {
+      const newKey = prefix === '' ? key : `${prefix}.${key}`;
+
+      if (Types.isObject(value)) {
+        Object.assign(result, this.flatten(value, newKey));
+      } else if (Types.isArray(value)) {
+        Object.assign(result, this.flatten(value, newKey));
+      } else {
+        result[newKey] = value;
+      }
+    }
+
+    return result as U;
   }
 
   static fastCopy<T>(obj: T): T {

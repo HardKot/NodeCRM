@@ -1,4 +1,5 @@
-import { Types } from "#utils";
+import { Types } from '#utils';
+import { BeanRegistry } from './beanRegistry.ts';
 
 export { Container };
 
@@ -6,27 +7,40 @@ class Container implements IContainer {
   #singletons: WeakMap<IBean, any>;
   #scoped: Map<string, WeakMap<IBean, any>>;
   #transients: WeakMap<IBean, Set<any>>;
-  #app: IApplication;
+  #registry: BeanRegistry;
 
-  constructor(app: IApplication) {
+  constructor() {
     this.#singletons = new WeakMap();
     this.#scoped = new Map();
     this.#transients = new WeakMap();
-    this.#app = app;
+    this.#registry = new BeanRegistry();
+
     Object.freeze(this);
   }
 
+  add<T>(def: IBean<T>) {
+    this.#registry.add(def);
+  }
+
+  getDef<T>(alias: string) {
+    return this.#registry.getDef(alias) as IBean<T>;
+  }
+
+  async binder(callback: { <T>(builder: IBeanBuilder<T>): Promise<void> }) {
+    this.#registry.binder(callback);
+  }
+
   async build() {
-    const validate = this.#app.beanRegistry.validate();
+    const validate = this.#registry.validate();
     if (Types.isError(validate.value)) throw validate.value;
 
-    const eagerDefs = this.#app.beanRegistry.getAllDefs().filter((it) => it.eager);
+    const eagerDefs = this.#registry.getAllDefs().filter((it) => it.eager);
 
     for (const def of eagerDefs) await this.resolve(def.name);
   }
 
   async resolve(alias: string, { scopeId }: ResolveOptions = {}) {
-    const bean = this.#app.beanRegistry.getDef(alias);
+    const bean = this.#registry.getDef(alias);
     if (!bean) throw new Error(`No bean found for alias: ${alias}`);
     if (bean.isSingleton()) return await this.#initSingleton(bean);
     if (bean.isTransient()) return await this.#initTransientComponent(bean);
@@ -36,9 +50,7 @@ class Container implements IContainer {
   }
 
   async destroyAll() {
-    const destroyScoped = [...this.#scoped
-      .keys()]
-      .map((it) => this.destroyScoped(it))
+    const destroyScoped = [...this.#scoped.keys()].map((it) => this.destroyScoped(it));
     const destroySingletons = this.#destroySingletons();
     const destroyTransients = this.#destroyTransients();
 
@@ -46,7 +58,7 @@ class Container implements IContainer {
   }
 
   #destroySingletons() {
-    return this.#app.beanRegistry
+    return this.#registry
       .getAllDefs()
       .filter((it) => it.isSingleton())
       .map((it) => ({ bean: it, item: this.#singletons.get(it) }))
@@ -54,16 +66,10 @@ class Container implements IContainer {
   }
 
   #destroyTransients() {
-    return this.#app.beanRegistry
+    return this.#registry
       .getAllDefs()
       .filter((it) => it.isTransient())
-      .flatMap(
-        (bean) =>
-          [...this.#transients
-            .get(bean)
-            ?.values() ?? []]
-            .map((item) => ({ bean, item }))
-      )
+      .flatMap((bean) => [...(this.#transients.get(bean)?.values() ?? [])].map((item) => ({ bean, item })))
       .map((it) => it.bean.preDestroy(it.item));
   }
 
@@ -72,7 +78,7 @@ class Container implements IContainer {
     if (!scoped) return;
 
     await Promise.all(
-      this.#app.beanRegistry
+      this.#registry
         .getAllDefs()
         .filter((it) => it.isTransient())
         .map((it) => ({ bean: it, item: scoped.get(it) }))

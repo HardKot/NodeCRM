@@ -6,7 +6,7 @@ class FunctionUtils {
   static memo<U, UU>(fn: { (first: U): UU }, caches?: Map<U, UU>): { (first: U): UU } {
     if (!caches) caches = new Map();
 
-    return function(arg: U): UU {
+    return function (arg: U): UU {
       const cache = caches.get(arg);
       if (cache) return cache;
 

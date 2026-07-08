@@ -1,33 +1,57 @@
 import module from 'node:module';
 import path from 'node:path';
 import fs from 'node:fs';
+import fsp from 'node:fs/promises';
 
-import { StringUtils } from '../utils/index';
-
-import { CoreError } from '../constant/errors.ts';
-import { Package, PackageGroups } from './package.js';
-import { IPackage, IPackageManager } from './interface';
-import { IApplication } from '../core/interfaces/IApplication';
+import { Package } from './package.ts';
+import { CoreError, PackageGroups } from '#constant';
+import { StringUtils, Types } from '#utils';
 
 export { PackageManager };
 
+interface PackageManagerProps {
+  logger: ILogger;
+  exclude?: string[];
+}
+
+interface IPackageJSON {
+  name: string;
+  version: string;
+  dependencies?: Record<string, string>;
+}
+
+interface ImportPackageProps {
+  name: string;
+  packagePath: string;
+  type: IPackageGroupsValue;
+}
+
 class PackageManager implements IPackageManager {
-  #app: IApplication;
+  #logger: ILogger;
+
   #packages: Set<any>;
 
   #packageByName: Record<string, IPackage<any>>;
-  #packageByGroup: Record<PackageGroups, Set<IPackage<any>>>;
+  #packageByGroup: { [key in IPackageGroupsKey]: Set<IPackage<any>> };
   #instance: WeakMap<IPackage<any>, any>;
   #require: NodeJS.Require;
 
-  constructor(app: IApplication) {
-    this.#app = app;
+  exclude: Readonly<string[]>;
 
+  constructor({ logger, exclude }: PackageManagerProps) {
+    logger.warn('PackageManager is development version, please use it with caution');
+    this.#logger = logger.extend('PackageManager');
     this.#packages = new Set();
     this.#instance = new WeakMap();
     this.#packageByName = {};
-    this.#packageByGroup = {};
+    this.#packageByGroup = {
+      NODE: new Set<IPackage<any>>(),
+      NPM: new Set<IPackage<any>>(),
+      LIB: new Set<IPackage<any>>(),
+    };
     this.#require = module.createRequire(process.cwd());
+    this.exclude = [...(exclude ?? [])];
+    Object.freeze(this.exclude);
 
     Object.freeze(this);
   }
@@ -37,10 +61,8 @@ class PackageManager implements IPackageManager {
       throw new CoreError(`Package alrady registered: ${def.name}`);
     }
 
-    if (!(def.group in this.#packageByGroup)) this.#packageByGroup[def.group] = new Set();
-
     this.#packages.add(def);
-    this.#packageByGroup[def.group].add(def);
+    this.#packageByGroup[PackageGroups(def.group) ?? 'LIB'].add(def);
     this.#packageByName[def.name] = def;
     this.#instance.set(def, def.package);
   }
@@ -52,83 +74,149 @@ class PackageManager implements IPackageManager {
     return this.#instance.get(package_) as T;
   }
 
-  getGroup<T extends object>(name: PackageGroups): Readonly<T | {}> {
-    const packages = this.#packageByGroup[name];
-    if (!packages?.size) return Object.freeze({});
+  getGroup<T extends object>(group: IPackageGroupsValue): Readonly<T | {}> {
+    const name = PackageGroups(group);
+    if (!name) return Object.freeze({});
 
-    const packageByName: T = {} as T;
+    const packages = this.#packageByGroup[name];
+    const entries = [];
 
     for (const package_ of packages) {
-      const instance = this.#instance.get(package_);
-      packageByName[package_.name as keyof T] = instance;
+      if (!package_.name) continue;
+      entries.push([package_.name, this.#instance.get(package_)]);
     }
 
+    const packageByName = Object.fromEntries(entries) as Record<string, T>;
     Object.freeze(packageByName);
     return packageByName;
   }
 
-  loadNodePackages() {
-    const deprected: string[] = [];
-    const packagesNode = module.builtinModules
-      .filter((it) => !it.startsWith('_'))
-      .filter((it) => !deprected.includes(it));
+  async loadNodePackages() {
+    const packagesNode = module.builtinModules.filter((it) => !it.startsWith('_'));
 
-    const nodeModules: Record<string, any> = {};
-
-    for (const packageName of packagesNode) {
-      let [name, postfix] = packageName.split('/');
-      name = StringUtils.factoryCamelCase(StringUtils.parse(name));
-      if (postfix) name += `/${postfix}`;
-      try {
-        nodeModules[name] = this.#require(`node:${packageName}`);
-      } catch (e) {
-        this.#app.logger.error(`Cant't import "${name}(${packageName})": \n`, e);
-      }
-    }
-    nodeModules.fsp = nodeModules['fs/promises'];
-    if (!nodeModules.timers.promises) nodeModules.timers.promises = nodeModules['timers/promises'];
-
-    for (const [name, package_] of Object.entries(nodeModules)) {
-      this.def(
-        new Package.Node({
-          name,
-          package: package_,
+    await Promise.all(
+      packagesNode.map((packageName) =>
+        this.#importPackage({
+          name: packageName,
+          packagePath: packageName,
+          type: PackageGroups.NODE,
         })
-      );
-    }
+      )
+    );
+
+    await Promise.all([
+      this.#importPackage({
+        name: 'fsp',
+        packagePath: 'fs/promises',
+        type: PackageGroups.NODE,
+      }),
+      this.#importPackage({
+        name: 'pathPosix',
+        packagePath: 'path/posix',
+        type: PackageGroups.NODE,
+      }),
+      this.#importPackage({
+        name: 'pathWin32',
+        packagePath: 'path/win32',
+        type: PackageGroups.NODE,
+      }),
+      this.#importPackage({
+        name: 'timersPromises',
+        packagePath: 'timers/promises',
+        type: PackageGroups.NODE,
+      }),
+    ]);
   }
 
-  loadNpmPackages() {
-    const pkgPath = path.join(process.cwd(), 'package.json');
-    if (!fs.existsSync(pkgPath)) {
-      this.#app.logger.error(`Can't found "package.json"(${pkgPath})`);
+  async loadNpmPackages() {
+    const packageJson = await this.#readPackageJson(process.cwd());
+    if (!packageJson) {
+      this.#logger.warn(`Can't found "package.json in "(${process.cwd()}), skip load lib package`);
       return;
     }
-
-    const packageJson = this.#require(pkgPath);
     const { dependencies = {} } = packageJson;
     const npmPackages = Object.keys(dependencies);
 
-    for (const packageName of npmPackages) {
-      const name = StringUtils.factoryCamelCase(
-        packageName
-          .split('/')
-          .map((it) => it.replace(/(@|#)/g, ''))
-          .flatMap((it) => StringUtils.parse(it))
-      );
+    await Promise.all(
+      npmPackages.map((packageName) =>
+        this.#importPackage({
+          name: packageName,
+          packagePath: packageName,
+          type: PackageGroups.NPM,
+        })
+      )
+    );
+  }
 
-      try {
-        const package_ = require(packageName);
-        this.def(
-          new Package.Npm({
-            name,
-            package: package_,
-          })
-        );
-        this.#app.logger.info(`Success import ${name}(${packageName})`);
-      } catch (e) {
-        this.#app.logger.error(`Cant't import "${name}(${packageName})": \n`, e);
-      }
+  async loadLibPackages() {
+    const libsPath = path.join(process.cwd(), 'libs');
+
+    if (!fs.existsSync(libsPath)) {
+      this.#logger.warn(`Can't found directory "libs"(${libsPath}), skip load lib packages`);
+      return;
     }
+
+    const contents = await fsp.readdir(libsPath, { withFileTypes: true });
+    const directories = contents.filter((it) => it.isDirectory());
+
+    await Promise.all(
+      directories.map((content) =>
+        this.#importPackage({
+          name: content.name,
+          packagePath: path.join(libsPath, content.name),
+          type: PackageGroups.LIB,
+        })
+      )
+    );
+  }
+
+  async #readPackageJson(packagePath: string): Promise<IPackageJSON | null> {
+    const packageJsonPath = path.join(packagePath, 'package.json');
+    if (!fs.existsSync(packageJsonPath)) return null;
+
+    const content = await fsp.readFile(packageJsonPath, 'utf-8');
+    const packageJson = JSON.parse(content);
+    if (!this.#isPacakgeJson(packageJson)) return null;
+
+    return packageJson;
+  }
+
+  async #importPackage({ name, packagePath, type }: ImportPackageProps) {
+    if (this.exclude.includes(name)) {
+      this.#logger.warn(`Skip import "${name}" because it is in the exclude list`);
+      return;
+    }
+    try {
+      const packageName = this.#createPackageName(name);
+      const value = await this.#require(packagePath);
+      this.def(
+        new Package({
+          name: packageName,
+          group: type,
+          package: value,
+        })
+      );
+      this.#logger.info(`Success import ${name}(${packageName})`);
+    } catch (e) {
+      const error = Types.normolizeError(e, CoreError);
+      this.#logger.error(`Cant't import "${name}": \n`, error);
+    }
+  }
+
+  #isPacakgeJson(packageJson: unknown): packageJson is IPackageJSON {
+    if (typeof packageJson !== 'object' || packageJson === null) return false;
+    if (!('name' in packageJson) || !('version' in packageJson)) return false;
+    if (typeof packageJson.name !== 'string' || typeof packageJson.version !== 'string') return false;
+
+    return true;
+  }
+
+  #createPackageName(name: string) {
+    return StringUtils.factoryCamelCase(
+      name
+        .split('/')
+        .map((it) => it.replace(/(@|#)/g, ''))
+        .flatMap((it) => StringUtils.parse(it))
+    );
   }
 }

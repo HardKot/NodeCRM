@@ -1,4 +1,4 @@
-declare declare interface IApplication {
+declare interface IApplication<Schema> {
   readonly stdout: NodeJS.ReadStream;
 
   readonly stdin: NodeJS.WriteStream;
@@ -11,12 +11,12 @@ declare declare interface IApplication {
   readonly prerfix: string;
 
   readonly eventEmitter: NodeJS.EventEmitter;
+
   readonly logger: ILogger;
   readonly container: IContainer;
   readonly packages: IPackageManager;
-  readonly beanRegistry: IBeanRegistry;
   readonly config: IConfig;
-  readonly schemas: ISchemaManager;
+  readonly schemas: ISchemaManager<Schema>;
 
   injectDescription<T>(key: string, description: T | (() => T)): void;
   injectEntrypoint(key: string, runner: Function): void;

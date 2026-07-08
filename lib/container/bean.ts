@@ -42,4 +42,3 @@ class Bean<T> implements IBean<T> {
     return this.scope === Scoped.SCOPED;
   }
 }
-

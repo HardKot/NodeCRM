@@ -1,6 +1,6 @@
 import { BeanError, BuildSymbol, Scoped } from '#constant';
 
-import { Bean } from "./bean.ts"
+import { Bean } from './bean.ts';
 
 export { BeanBuilder };
 
@@ -10,10 +10,12 @@ class BeanBuilder<T> {
   constructor() {
     this.#beanProps = {
       name: '',
-      factory: () => { throw new BeanError('No factory provided for bean') },
+      factory: () => {
+        throw new BeanError('No factory provided for bean');
+      },
       deps: [],
-      aliases: []
-    }
+      aliases: [],
+    };
   }
 
   name(value: string) {
@@ -51,7 +53,7 @@ class BeanBuilder<T> {
     return this;
   }
 
-  class(Class: { new(...args: any[]): T }) {
+  class(Class: { new (...args: any[]): T }) {
     this.#beanProps.factory = (deps) => new Class(...deps);
     return this;
   }

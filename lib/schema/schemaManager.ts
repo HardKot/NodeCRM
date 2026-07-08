@@ -56,10 +56,12 @@ const StringToScalarType: Record<string, IScalarValue> = {
   text: ScalarType.TEXT,
 };
 
-export class SchemaManagerCreator {
-  #store = new Map<string, any>();
+export class SchemaManager implements ISchemaManager<BaseSchema> {
+  #store: Map<string, any>;
 
   constructor() {
+    this.#store = new Map();
+
     const caches = new Map<any, BaseSchema>();
 
     this.parse = FunctionUtils.memo<unknown, BaseSchema>(this.parse, caches).bind(this);
@@ -74,14 +76,21 @@ export class SchemaManagerCreator {
     return it ?? null;
   }
 
-  add(alias: string, schema: BaseSchema) {
+  add(alias: string, schema: BaseSchema): void {
     if (this.#store.has(alias)) throw new SourceParserError(`Alias: "${alias}" is exists`);
     this.#store.set(alias, schema);
   }
 
+  create(alias: string, value: unknown): BaseSchema {
+    if (this.#store.has(alias)) throw new SourceParserError(`Alias: "${alias}" is exists`);
+    const schema = this.parse(value);
+    this.#store.set(alias, schema);
+    return schema;
+  }
+
   parse(value: unknown): BaseSchema {
     const srcType = this.#getSourceType(value);
-    const methodName = StringUtils.factoryCamelCase(`parse`, srcType) as keyof SchemaManagerCreator | string;
+    const methodName = StringUtils.factoryCamelCase(`parse`, srcType) as keyof SchemaManager | string;
     if (!Types.isIn(methodName, this)) throw new SourceParserError(`Parser for source type "${srcType}" not specified`);
     const parser = this[methodName];
     if (!Types.isFunction(parser)) throw new SourceParserError(`Parser for source type "${srcType}" not specified`);
@@ -129,7 +138,7 @@ export class SchemaManagerCreator {
     return this.parse(source());
   }
 
-  parseClass<T>(source: { new(...args: any[]): T; schema?: object }): BaseSchema {
+  parseClass<T>(source: { new (...args: any[]): T; schema?: object }): BaseSchema {
     const schema: Record<string, BaseSchema> = {};
     const entries = Object.entries(source.schema ?? {});
 

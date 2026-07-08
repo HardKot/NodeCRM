@@ -1,9 +1,6 @@
+import { LoggerLevel } from '#constant';
 import { Console } from 'node:console';
 import * as utils from 'node:util';
-
-import { LoggerLevel } from './enums.js';
-
-import type { ILogger, LevelEnumValue } from './interfaces/index.js';
 
 export { Logger };
 
@@ -12,22 +9,23 @@ interface LoggerProps {
   stdout: NodeJS.WriteStream;
   stderr: NodeJS.WriteStream;
 
-  level?: LevelEnumValue;
+  level?: ILogerLevelValue;
 }
 
 class Logger extends Console implements ILogger {
   #stdout: NodeJS.WriteStream;
   #stderr: NodeJS.WriteStream;
 
-  prefix: string;
-  level: LevelEnumValue;
-  transform = (v: any) => `${v}`;
+  readonly prefix: string;
+  readonly level: ILogerLevelValue;
+  transform: (arg: any) => string;
 
   constructor({ prefix, stdout, stderr, level }: LoggerProps) {
     super({ stdout, stderr });
     this.prefix = prefix;
     this.#stdout = stdout;
     this.#stderr = stderr;
+    this.transform = (v: any) => `${v}`;
     this.level = level ?? LoggerLevel.DEBUG;
   }
 
@@ -76,7 +74,7 @@ class Logger extends Console implements ILogger {
     return [utils.format('%s | %s | %s |', time, this.prefix, level), ...data.map((it) => this.transform(it))];
   }
 
-  #isSkip(value: LevelEnumValue) {
+  #isSkip(value: ILogerLevelValue) {
     return value < this.level;
   }
 }

@@ -1,10 +1,6 @@
-export type { ILogger, LevelEnumValue };
-
-type LevelEnumValue = 0 | 1 | 2 | 3 | 4;
-
-interface ILogger {
+declare interface ILogger {
   readonly prefix: string;
-  readonly level: LevelEnumValue;
+  readonly level: ILogerLevelValue;
   transform: (arg: any) => string;
 
   debug(...args: any[]): Promise<void>;

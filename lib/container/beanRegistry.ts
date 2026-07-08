@@ -2,11 +2,10 @@ import { BeanError, BuildSymbol } from '#constant';
 import { Result, Types } from '#utils';
 
 import { Bean } from './bean.ts';
-import { BeanBuilder } from "./beanBuilder.ts"
 
 export { BeanRegistry };
 
-class BeanRegistry implements IBeanRegistry {
+class BeanRegistry {
   #bindings: Map<string, IBean>;
   #beans: Set<IBean>;
 

@@ -50,7 +50,7 @@ class Schema<T extends SchemaBody = SchemaBody, U = null> extends BaseSchema {
     const error = new ValidateError('');
     for (const [key, field] of Object.entries(this.#schema)) {
       field.validate(value[key]).fold(
-        () => { },
+        () => {},
         (itemError) => {
           hasError = true;
           error.addError(itemError, key);

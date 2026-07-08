@@ -2,7 +2,7 @@ import { Types } from './types.js';
 
 const privateConstructor = Symbol();
 
-class ResultError extends Error { }
+class ResultError extends Error {}
 
 class Result<T = null> implements IResult<T> {
   readonly value: T | Error;

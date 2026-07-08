@@ -1,12 +1,12 @@
-export class CoreError extends Error { }
+export class CoreError extends Error {}
 
-export class BeanError extends Error { }
+export class BeanError extends Error {}
 
-export class TypeError extends Error { }
+export class TypeError extends Error {}
 
-export class FieldError extends Error { }
+export class FieldError extends Error {}
 
-export class SourceParserError extends Error { }
+export class SourceParserError extends Error {}
 
 export class ValidateError extends CoreError {
   errors: Record<string, string[]> = {};

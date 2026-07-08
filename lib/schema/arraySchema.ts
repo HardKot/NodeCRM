@@ -24,7 +24,7 @@ class ArraySchema extends BaseSchema {
     const error = new ValidateError('');
     for (let i = 0; i < value.length; i++) {
       this.item.validate(value[i]).fold(
-        () => { },
+        () => {},
         (err) => {
           hasError = true;
           error.addError(err, `[${i}]`);
