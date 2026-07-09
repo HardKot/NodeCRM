@@ -4,4 +4,5 @@ declare interface IPackageManager {
   getGroup<T>(name: IPackageGroupsValue): Readonly<T | {}>;
   loadNodePackages(): void;
   loadNpmPackages(): void;
+  loadLibPackages(): void;
 }

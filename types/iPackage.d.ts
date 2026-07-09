@@ -9,6 +9,6 @@ declare interface IPackageBuilder<T> {
   group(value: string): this;
   npm(): this;
   node(): this;
-  libs(): this;
+  lib(): this;
   package(value: T): this;
 }

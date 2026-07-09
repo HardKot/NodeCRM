@@ -22,3 +22,12 @@ export const Enveriment = Types.enum<IConfigEnvironmentKey, IConfigEnvironmentVa
   PRODUCTION: 'app',
   TESTING: 'test',
 });
+
+export const ApplicationEvent = Types.enum<IApplicationEventKey, IApplicationEventValue>([
+  'PREPARE',
+  'RUN',
+  'STOP',
+  'ERROR',
+  'MESSAGE',
+  'BUILD',
+]);

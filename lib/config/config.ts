@@ -1,22 +1,32 @@
 import path from 'node:path';
 import fs from 'node:fs';
-import { Enveriment } from '#constant';
-import { ObjectUtils } from '#utils';
+
+import { ObjectUtils, Types } from '#utils';
 
 const JsonConfig = 'app.config.json';
 const ScriptConfig = ['app.config.ts', 'app.config.mjs', 'app.config.cjs', 'app.config.js'];
 
 export { Config };
 
+interface ConfigProps {
+  environment: IConfigEnvironmentValue;
+}
+
 class Config implements IConfig {
   #value: Record<string, any>;
+  #configDir: string;
+  defaultConfig: Partial<ApplicationConfig>;
 
   readonly environment: IConfigEnvironmentValue;
 
-  constructor({ }) {
+  constructor({ environment }: ConfigProps) {
     this.#value = {};
-    const environmentKey = process.env.NODE_ENV ?? 'development';
-    this.environment = Enveriment[environmentKey as IConfigEnvironmentKey] ?? Enveriment.DEVELOPMENT;
+    this.defaultConfig = {};
+    this.environment = environment;
+    this.#configDir = path.join(process.cwd(), 'config');
+    if (!fs.existsSync(this.#configDir)) {
+      this.#configDir = process.cwd();
+    }
   }
 
   getValue<T>(pathname: string, defaultValue?: T): T {
@@ -32,20 +42,25 @@ class Config implements IConfig {
   }
 
   async #loadJsonConfig(): Promise<object | null> {
-    const configPath = path.join(process.cwd(), this.#createFileName(JsonConfig));
+    const configPath = path.join(this.#configDir, this.#createFileName(JsonConfig));
     if (!fs.existsSync(configPath)) return null;
     return await import(configPath, { with: { type: 'json' } });
   }
 
   async #loadScriptConfig(): Promise<object | null> {
     const configPath = ScriptConfig.map((it) => this.#createFileName(it))
-      .map((it) => path.join(process.cwd(), it))
+      .map((it) => path.join(this.#configDir, it))
       .filter((it) => fs.existsSync(it))
       .at(0);
     if (!configPath) return null;
 
-    const { default: callback } = await import(configPath);
-    return callback();
+    const { default: config } = await import(configPath);
+    if (Types.isObject(config)) return config;
+    if (Types.isFunction(config)) {
+      return config({ config: ObjectUtils.deepFreeze(this.defaultConfig) });
+    }
+
+    return null;
   }
 
   #createFileName(fileName: string) {

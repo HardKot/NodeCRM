@@ -1,6 +1,7 @@
 import { PackageGroups } from '#constant';
 
 export { Package };
+export type { PackageProps };
 
 interface PackageProps<T extends object> {
   name: string;

@@ -2,6 +2,7 @@ import { BeanError, BuildSymbol } from '#constant';
 import { Result, Types } from '#utils';
 
 import { Bean } from './bean.ts';
+import { BeanBuilder } from './beanBuilder.ts';
 
 export { BeanRegistry };
 
@@ -47,10 +48,10 @@ class BeanRegistry {
     return Result.success(null);
   }
 
-  async binder(callback: { <T>(builder: BeanBuilder<T>): Promise<void> }) {
+  binder(callback: { <T>(builder: IBeanBuilder<T>): void }) {
     const builder = new BeanBuilder();
 
-    await callback(builder);
+    callback(builder);
     const bean = builder[BuildSymbol]();
 
     this.add(bean);

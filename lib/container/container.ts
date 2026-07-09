@@ -26,7 +26,7 @@ class Container implements IContainer {
     return this.#registry.getDef(alias) as IBean<T>;
   }
 
-  async binder(callback: { <T>(builder: IBeanBuilder<T>): Promise<void> }) {
+  binder(callback: { <T>(builder: IBeanBuilder<T>): void }) {
     this.#registry.binder(callback);
   }
 

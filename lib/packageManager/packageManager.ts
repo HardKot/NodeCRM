@@ -4,8 +4,9 @@ import fs from 'node:fs';
 import fsp from 'node:fs/promises';
 
 import { Package } from './package.ts';
-import { CoreError, PackageGroups } from '#constant';
+import { BuildSymbol, CoreError, PackageGroups } from '#constant';
 import { StringUtils, Types } from '#utils';
+import { PackageBuilder } from './packageBuilder.ts';
 
 export { PackageManager };
 
@@ -54,6 +55,14 @@ class PackageManager implements IPackageManager {
     Object.freeze(this.exclude);
 
     Object.freeze(this);
+  }
+
+  binder(callback: { <T>(builder: IPackageBuilder<T>): void }): void {
+    const builder = new PackageBuilder();
+
+    callback(builder);
+
+    this.def(builder[BuildSymbol]());
   }
 
   def<T>(def: IPackage<T>) {

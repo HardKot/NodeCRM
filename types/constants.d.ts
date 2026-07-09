@@ -12,3 +12,6 @@ declare type IPackageGroupsKey = 'NODE' | 'NPM' | 'LIB';
 
 declare type IConfigEnvironmentValue = 'dev' | 'app' | 'test' | 'stag';
 declare type IConfigEnvironmentKey = 'DEVELOPMENT' | 'PRODUCTION' | 'TESTING' | 'STAGING';
+
+declare type IApplicationEventValue = '0' | '1' | '2' | '3' | '4' | '5';
+declare type IApplicationEventKey = 'PREPARE' | 'RUN' | 'STOP' | 'ERROR' | 'MESSAGE' | 'BUILD';

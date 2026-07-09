@@ -4,7 +4,7 @@ import { Bean } from './bean.ts';
 
 export { BeanBuilder };
 
-class BeanBuilder<T> {
+class BeanBuilder<T> implements IBeanBuilder<T> {
   #beanProps: BeanProps<T>;
 
   constructor() {
@@ -53,7 +53,7 @@ class BeanBuilder<T> {
     return this;
   }
 
-  class(Class: { new (...args: any[]): T }) {
+  class(Class: { new(...args: any[]): T }) {
     this.#beanProps.factory = (deps) => new Class(...deps);
     return this;
   }
