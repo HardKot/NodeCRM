@@ -1,4 +1,4 @@
-import { BeanError, BuildSymbol, Scoped } from '#constant';
+import { BeanError, Scoped } from '#constant';
 
 import { Bean } from './bean.ts';
 
@@ -71,7 +71,7 @@ class BeanBuilder<T> implements IBeanBuilder<T> {
     return this;
   }
 
-  [BuildSymbol]() {
+  build() {
     return new Bean(this.#beanProps);
   }
 }

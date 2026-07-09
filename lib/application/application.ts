@@ -1,16 +1,15 @@
 import { EventEmitter } from 'node:events';
 
-import { Types } from '#utils';
-
 import { Logger } from '#logger';
 import { Container } from '#container';
 import { PackageManager } from '#packageManager';
 import { Config } from '#config';
-
 import { BaseSchema, SchemaManager } from '#schema';
-import { ISpaceModule } from '../core/interfaces/ISpaceModule.ts';
-import { ApplicationDescription } from './applicationDescription.ts';
 import { ApplicationEvent } from '#constant';
+
+import { ApplicationDescription } from './applicationDescription.ts';
+import { ApplicationEntrypoint } from './applicationEntrypoint.ts';
+import { CommandDescription } from './commandDescription.ts';
 
 export { Application };
 
@@ -27,11 +26,9 @@ class Application implements IApplication<BaseSchema> {
   readonly stdin: NodeJS.ReadStream;
   readonly stderr: NodeJS.WriteStream;
 
-  readonly isRunner: boolean;
-  readonly isMaster: boolean;
-
   readonly instanceName: string;
   readonly prefix: string;
+  readonly name: string;
 
   readonly eventEmitter: NodeJS.EventEmitter;
   readonly logger: Logger;
@@ -41,17 +38,16 @@ class Application implements IApplication<BaseSchema> {
   readonly schemas: SchemaManager;
 
   #description: ApplicationDescription;
+  #entrypoints: ApplicationEntrypoint;
 
   constructor({ environment, name, run }: ApplicationProps) {
     this.stdout = process.stdout;
     this.stdin = process.stdin;
     this.stderr = process.stderr;
 
-    this.isRunner = !!run;
-    this.isMaster = !this.isRunner;
-
     this.instanceName = name;
-    this.prefix = `${this.instanceName}@${run ?? 'Master'}`;
+    this.name = run ?? 'Master';
+    this.prefix = `${this.instanceName}@${this.name}`;
 
     this.eventEmitter = new EventEmitter({});
     this.logger = new Logger({
@@ -69,6 +65,7 @@ class Application implements IApplication<BaseSchema> {
       eventEmitter: this.eventEmitter,
       app: this,
     });
+    this.#entrypoints = new ApplicationEntrypoint();
     this.#plugins = new Set();
 
     Object.freeze(this);
@@ -79,23 +76,36 @@ class Application implements IApplication<BaseSchema> {
   }
 
   injectDescription(key: string, description: any): void {
-    if (key in this.#description) throw new Error(`Description "${key}" is used`);
-    Object.defineProperty(this.#description, key, {
-      get: Types.isFunction(description) ? description : () => description,
-      enumerable: true,
-      configurable: false,
-    });
+    this.#description.inject(key, description);
   }
 
-  run() { }
+  injectEntrypoint(key: string, runner: Function): void {
+    this.#entrypoints.inject(key, runner);
+  }
+
+  async run() {
+    try {
+      this.eventEmitter.emit(ApplicationEvent.RUN, this);
+      this.logger.info(`Run application ${this.instanceName}`);
+      this.#entrypoints.runAll();
+    } catch (e) {
+      this.logger.error(e);
+      this.eventEmitter.emit(ApplicationEvent.ERROR, e, this);
+    } finally {
+      this.eventEmitter.emit(ApplicationEvent.STOP, this);
+    }
+  }
 
   async build() {
     try {
       this.eventEmitter.emit(ApplicationEvent.BUILD, this);
       await this.container.build();
-
-      const promises = [...this.#plugins].map((it) => it.prepare?.()).filter((it) => it);
-      await Promise.all(promises);
+      await Promise.all(
+        this.#plugins
+          .values()
+          .map((it) => it.build?.())
+          .filter((it) => it)
+      );
     } catch (e) {
       this.logger.error(e);
       this.eventEmitter.emit(ApplicationEvent.ERROR, this, e);
@@ -107,6 +117,7 @@ class Application implements IApplication<BaseSchema> {
       this.eventEmitter.emit(ApplicationEvent.PREPARE, this);
       const description = this.applicationDescription();
       callback(description);
+      this.#plugins.values().forEach((it) => it.prepare?.());
     } catch (e) {
       this.logger.error(e);
       this.eventEmitter.emit(ApplicationEvent.ERROR, this, e);
@@ -131,152 +142,12 @@ class Application implements IApplication<BaseSchema> {
     });
   }
 
-  // async build() {
-  //   try {
-  //     this.eventEmitter.emit(ApplicationEvent.BUILD, this);
-  //     await this.beanRegistry.validate();
-  //     await this.container.buildContainer();
-  //
-  //     const promises = this.plugins
-  //       .values()
-  //       .map((it) => it.prepare?.())
-  //       .filter((it) => it)
-  //       .toArray();
-  //     await Promise.all(promises);
-  //   } catch (e) {
-  //     this.logger.error(e);
-  //     this.eventEmitter.emit(ApplicationEvent.ERROR, this, e);
-  //   }
-  // }
-  //
-  // async run() {
-  //   try {
-  //     if (this.isMaster) this.runMaster();
-  //     if (this.isRunner) this.runRunner();
-  //   } catch (e) {
-  //     this.logger.error(e);
-  //     this.eventEmitter.emit(ApplicationEvent.ERROR, e, this);
-  //   } finally {
-  //     this.eventEmitter.emit(ApplicationEvent.STOP, this);
-  //   }
-  // }
-  //
-  // async linkPlugins(source) {
-  //   if (Types.isClass(source)) return this.linkPlugins(new source(this));
-  //   if (Types.isAsyncIterator(source)) {
-  //     for await (const plugin of source) await this.linkPlugins(plugin);
-  //     return;
-  //   }
-  //   if (Types.isFunction(source)) return this.linkPlugins(source(this));
-  //
-  //   if (!Types.isObject(source)) throw new CoreError('Awaiting Class, AsyncIterator, Function, Object');
-  //   if (Types.isNotInstanceOf(source, SpaceModule))
-  //     throw new Error(`Module is not instanceof "SpaceModule", ${source}`);
-  //
-  //   this.plugins.add(source);
-  // }
-  //
-  // injectDescription(key, description) {
-  //   if (!Types.isString(key)) throw new CoreError('Awaiting String');
-  //   if (key in this.description) throw new CoreError(`Description "${key}" is used`);
-  //
-  //   if (!Types.isFunction(description)) description = () => description;
-  //   this.description[key] = description;
-  // }
-  //
-  // injectEntrypoint(key, runner) {
-  //   if (!Types.isString(key)) throw new CoreError('Awaiting String');
-  //   if (!Types.isFunction(runner)) throw new CoreError('Awaiting Function');
-  //
-  //   if (key in this.entrypoints) throw new CoreError(`Entrypoint "${runner}" is used`);
-  //   this.entrypoints[key] = runner;
-  // }
-  //
-  // commandDescription() {
-  //   let scopeId = undefined;
-  //   return {
-  //     setScope: (id) => (scopeId = id),
-  //     getScope: () => scopeId,
-  //     bean: (alias) => this.container.resolve(alias, scopeId),
-  //     node: (name) => this.packages.get(name),
-  //     npm: (name) => this.packages.get(name),
-  //     config: (key, defaultValue) => this.config.getValue(key, defaultValue),
-  //     print: {
-  //       log: (...args) => this.logger.log(...args),
-  //       info: (...args) => this.logger.info(...args),
-  //       warn: (...args) => this.logger.warn(...args),
-  //       error: (...args) => this.logger.warn(...args),
-  //     },
-  //   };
-  // }
-  //
-  //
-  // runMaster() {
-  //   this.eventEmitter.emit(ApplicationEvent.RUN, this);
-  //   for (const key in this.entrypoints) {
-  //     this.logger.info(`Run application ${key}`);
-  //     // eslint-disable-next-line no-undef
-  //     const controller = new AbortController();
-  //     const main = process.argv[1];
-  //     const child = child_process.fork(main, [`${ApplicationArgs.RUNNER}:${key}`], {
-  //       signal: controller.signal,
-  //     });
-  //
-  //     child.on('error', (error) => {
-  //       this.logger.error(error);
-  //       this.eventEmitter.emit(ApplicationEvent.ERROR, error, this);
-  //     });
-  //
-  //     child.on('exit', (code) => {
-  //       if (code !== 0) return this.logger.error(`Runner ${key} exist with error ${code}`);
-  //       return this.logger.info(`Runner ${key} exit with code ${code}`);
-  //     });
-  //
-  //     child.on('message', (message) => this.parserChildMessage({ message, child, sender: key }));
-  //
-  //     this.children[key] = child;
-  //   }
-  // }
-  //
-  // runRunner() {
-  //   if (!this.runnerName) throw new CoreError('Runner is not defined');
-  //   const runner = this.entrypoints[this.runnerName];
-  //   if (!runner) throw new CoreError(`Runner "${this.runnerName}" is not defined`);
-  //
-  //   runner();
-  // }
-  //
-  // parserChildMessage({ message, child, sender }) {
-  //   if (!Types.isString(message)) throw new CoreError('Message is not string');
-  //   const { command, target, payload } = JSON.parse(message);
-  //
-  //   if (command === 'kill') return child.kill();
-  //   if (command === 'message') {
-  //     if (target === 'master') return this.eventEmitter.emit(ApplicationEvent.MESSAGE, payload);
-  //     if (target === 'all') return this.sendMessageAll({ message, sender, skip: child });
-  //     return this.sendMessage({ message: payload, target, sender });
-  //   }
-  // }
-  //
-  // sendMessage({ message, target, sender }) {
-  //   this.children[target]?.send(
-  //     JSON.stringify({
-  //       command: 'message',
-  //       sender: sender,
-  //       payload: message,
-  //     })
-  //   );
-  // }
-  //
-  // sendMessageAll({ message, sender, skip }) {
-  //   for (const childKey in this.children) {
-  //     const child = this.children[childKey];
-  //     if (child === skip) continue;
-  //     this.sendMessage({
-  //       message,
-  //       target: childKey,
-  //       sender,
-  //     });
-  //   }
-  // }
+  commandDescription(): CommandDescription {
+    return new CommandDescription({
+      logger: this.logger,
+      packageManager: this.packages,
+      config: this.config,
+      container: this.container,
+    });
+  }
 }

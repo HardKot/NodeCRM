@@ -4,11 +4,8 @@ declare interface IApplication<Schema> {
   readonly stdin: NodeJS.ReadableStream;
   readonly stderr: NodeJS.WriteStream;
 
-  readonly isRunner: boolean;
-  readonly isMaster: boolean;
-
   readonly instanceName: string;
-  readonly prerfix: string;
+  readonly prefix: string;
 
   readonly eventEmitter: NodeJS.EventEmitter;
 
@@ -28,17 +25,4 @@ declare interface IApplication<Schema> {
   prepare(callback: (description: IApplicationDescription) => void): void;
   build(): Promise<void>;
   run(): Promise<void>;
-
-  sendMessage(options: { message: string; target: string; sender: string }): void;
-  sendMessageAll(options: { message: string; skip?: string; sender: string }): void;
-}
-
-declare interface CommandDescription {
-  getScope(): string;
-  setScope(id: string): void;
-  bean<T>(alias: string): Promise<T>;
-  node<T>(name: string): T;
-  npm<T>(name: string): T;
-  config: IConfig['getValue'];
-  print: ApplicationPrint;
 }

@@ -1,4 +1,4 @@
-import { BuildSymbol, CoreError, PackageGroups } from '#constant';
+import { CoreError, PackageGroups } from '#constant';
 import { Package } from './package.ts';
 
 import type { PackageProps } from './package.ts';
@@ -45,7 +45,7 @@ class PackageBuilder<T extends object> implements IPackageBuilder<T> {
     return this;
   }
 
-  [BuildSymbol](): IPackage<T> {
+  build(): IPackage<T> {
     if (!this.#props.name) throw new CoreError('Package name is required');
     if (!this.#props.package) throw new CoreError('Package instance is required');
 

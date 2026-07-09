@@ -1,4 +1,4 @@
-import { ApplicationEvent, BuildSymbol } from '#constant';
+import { ApplicationEvent } from '#constant';
 import { Types } from '#utils';
 
 import type { BaseSchema } from '#schema';
@@ -29,6 +29,8 @@ class ApplicationDescription implements IApplicationDescription {
   readonly plugin: (arg: PluginArgument) => void;
   readonly getConfig: <T>(path: string, defaultValue?: T) => T;
 
+  #extension: Map<string, Function>;
+
   constructor({ logger, eventEmitter, app }: ApplicationDescriptionProps) {
     this.print = {
       log: logger.log.bind(logger),
@@ -47,14 +49,14 @@ class ApplicationDescription implements IApplicationDescription {
     this.bean = (callback) => {
       const beanBuilder = new BeanBuilder();
       callback(beanBuilder);
-      const bean = beanBuilder[BuildSymbol]();
+      const bean = beanBuilder.build();
       app.container.add(bean);
     };
 
     this.package = (callback) => {
       const packageBuilder = new PackageBuilder();
       callback(packageBuilder);
-      const packageDescription = packageBuilder[BuildSymbol]();
+      const packageDescription = packageBuilder.build();
       app.packages.def(packageDescription);
     };
     this.loadNodePackages = app.packages.loadNodePackages.bind(app.packages);
@@ -68,17 +70,23 @@ class ApplicationDescription implements IApplicationDescription {
       if (Types.isObject(arg)) return app.injectPlugin(arg);
       throw new Error('Invalid plugin argument');
     };
+
+    this.#extension = new Map();
   }
 
-  isInDescription(key: string): key is keyof ApplicationDescription {
+  isInDescription(key: string | symbol): key is keyof ApplicationDescription {
     return key in this;
+  }
+
+  inject(key: string, value: any): void {
+    if (this.#extension.has(key)) throw new Error(`Description "${key}" is used`);
+    this.#extension.set(key, value);
   }
 
   lazyLoad(key: string): (...args: any[]) => void {
     return (...args) => {
-      if (this.isInDescription(key) && Types.isFunction(this[key])) {
-        return (this as any)[key](...args);
-      }
+      const value = this.#extension.get(key);
+      if (Types.isFunction(value)) return value(...args);
       throw new Error(`Description "${key}" is not defined or is not a function`);
     };
   }

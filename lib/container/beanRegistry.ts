@@ -1,4 +1,4 @@
-import { BeanError, BuildSymbol } from '#constant';
+import { BeanError } from '#constant';
 import { Result, Types } from '#utils';
 
 import { Bean } from './bean.ts';
@@ -52,7 +52,7 @@ class BeanRegistry {
     const builder = new BeanBuilder();
 
     callback(builder);
-    const bean = builder[BuildSymbol]();
+    const bean = builder.build();
 
     this.add(bean);
   }

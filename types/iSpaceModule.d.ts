@@ -3,4 +3,7 @@ declare interface ISpaceModule {
   description: string;
   version: string;
   entypoint?: () => void;
+  prepare?: () => void;
+  build?: () => Promise<void>;
+  run?: () => Promise<void>;
 }

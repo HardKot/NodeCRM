@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import fsp from 'node:fs/promises';
 
 import { Package } from './package.ts';
-import { BuildSymbol, CoreError, PackageGroups } from '#constant';
+import { CoreError, PackageGroups } from '#constant';
 import { StringUtils, Types } from '#utils';
 import { PackageBuilder } from './packageBuilder.ts';
 
@@ -62,7 +62,7 @@ class PackageManager implements IPackageManager {
 
     callback(builder);
 
-    this.def(builder[BuildSymbol]());
+    this.def(builder.build());
   }
 
   def<T>(def: IPackage<T>) {
@@ -76,9 +76,9 @@ class PackageManager implements IPackageManager {
     this.#instance.set(def, def.package);
   }
 
-  get<T>(name: string): null | T {
+  get<T>(name: string, packageGroups?: IPackageGroupsValue): null | T {
     const package_ = this.#packageByName[name];
-    if (!package_) return null;
+    if (!package_ || (packageGroups && packageGroups !== package_.group)) return null;
 
     return this.#instance.get(package_) as T;
   }
