@@ -10,6 +10,14 @@ export class FieldError extends Error { }
 
 export class SourceParserError extends Error { }
 
+export class HttpError extends Error {
+  public statusCode: number;
+  constructor(message: string, statusCode = 500) {
+    super(message);
+    this.statusCode = statusCode;
+  }
+}
+
 export class ValidateError extends CoreError {
   errors: Record<string, string[]> = {};
 

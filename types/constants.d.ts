@@ -15,3 +15,7 @@ declare type IConfigEnvironmentKey = 'DEVELOPMENT' | 'PRODUCTION' | 'TESTING' | 
 
 declare type IApplicationEventValue = '0' | '1' | '2' | '3' | '4' | '5';
 declare type IApplicationEventKey = 'PREPARE' | 'RUN' | 'STOP' | 'ERROR' | 'MESSAGE' | 'BUILD';
+
+// Http Types
+declare type IHttpMethodValue = 0 | 1 | 2 | 3 | 4 | 5 | 6;
+declare type IHttpMethodKey = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'OPTIONS' | 'HEAD';

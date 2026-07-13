@@ -31,3 +31,13 @@ export const ApplicationEvent = Types.enum<IApplicationEventKey, IApplicationEve
   'MESSAGE',
   'BUILD',
 ]);
+
+export const HttpMethod = Types.enum<IHttpMethodKey, IHttpMethodValue>([
+  'GET',
+  'POST',
+  'PUT',
+  'DELETE',
+  'PATCH',
+  'OPTIONS',
+  'HEAD',
+]);
