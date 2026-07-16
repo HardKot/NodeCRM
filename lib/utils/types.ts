@@ -134,4 +134,12 @@ class Types {
 
     return enumFn as EnumFunction<T, U>;
   }
+
+  static isPrototypeOf<T extends object>(v: unknown, Class: { prototype: T }): boolean {
+    return Types.isObject(v) && Object.getPrototypeOf(v) === Class.prototype;
+  }
+
+  static isNotImplementedError<T>(): T {
+    throw new Error('Method not implemented');
+  }
 }
