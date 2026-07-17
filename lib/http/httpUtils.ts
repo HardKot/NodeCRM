@@ -1,4 +1,5 @@
 import { HttpMethod } from '#constant';
+import { Types } from '#utils';
 import { URLSearchParams } from 'node:url';
 
 export { HttpUtils };
@@ -71,16 +72,74 @@ class HttpUtils {
     return cookies;
   }
 
-  static parseContentTpe() {
-    switch (contentType) {
-      case 'application/json':
-        return 'json';
-      case 'application/x-www-form-urlencoded':
-        return 'form';
-      case 'multipart/form-data':
-        return 'multipart';
-      default:
-        return 'text';
+  static parseBody<T>(contentType: string, body: Buffer, options: { mimeTypes?: string[] } = {}): T {
+    if (contentType.includes('application/json')) return JSON.parse(body.toString()) as T;
+    if (contentType.includes('application/octet-stream') || options.mimeTypes?.some((it) => contentType.includes(it)))
+      return body as unknown as T;
+    if (contentType.includes('application/x-www-form-urlencoded')) {
+      const params = new URLSearchParams(body.toString());
+      return Object.fromEntries(params.entries()) as unknown as T;
     }
+    if (contentType.includes('multipart/form-data')) {
+      const boundary = '--' + contentType.split('boundary=')[1];
+
+      return body
+        .toString()
+        .split(boundary)
+        .filter((part) => part.trim() && part.trim() !== '--')
+        .map(
+          (
+            it
+          ):
+            | { type: 'field'; name: string; value: string }
+            | { type: 'file'; name: string; filename: string; contentType?: string; value: Buffer }
+            | null => {
+            const headerEndIndex = it.indexOf('\r\n\r\n');
+            if (headerEndIndex === -1) return null;
+            const headers = it.slice(0, headerEndIndex).trim();
+            const body = it.slice(headerEndIndex + 4, it.length - 2);
+
+            const contentDisposition = headers.match(
+              /Content-Disposition: form-data; name="([^"]+)"(?:; filename="([^"]+)")?/i
+            );
+            if (!contentDisposition) return null;
+            const fieldName = contentDisposition[1];
+            const fileName = contentDisposition[2];
+
+            if (!fileName) {
+              return { type: 'field', name: fieldName, value: body };
+            }
+
+            const contentTypeMatch = headers.match(/Content-Type: ([^;]+)/i);
+            return {
+              type: 'file',
+              name: fieldName,
+              filename: fileName,
+              contentType: contentTypeMatch?.[1],
+              value: Buffer.from(body),
+            };
+          }
+        )
+        .reduce(
+          (acc, part) => {
+            if (!part) return acc;
+            if (Types.isObject(acc)) {
+              acc[part.name] = part.value;
+              if (part.type === 'file') {
+                acc[`__file__${part.name}`] = {
+                  filename: part.filename,
+                  contentType: part.contentType,
+                };
+              }
+            }
+            return acc;
+          },
+          {} as Record<string, string | Buffer> &
+          Record<`__file__${string}`, { filename: string; contentType?: string }>
+        ) as T;
+    }
+    if (contentType.includes('text/plain')) return body.toString() as unknown as T;
+
+    return body as unknown as T;
   }
 }

@@ -52,21 +52,21 @@ abstract class HttpServerBase {
     };
   }
 
-  defaultNotFoundHandler(command: IHttpHandlerDescription) {
+  notFoundHandler(command: IHttpHandlerDescription) {
     command.statusCode(404);
     command.contentType('text/plain');
     command.body('Not Found');
     command.send();
   }
 
-  defaultBusyHandler(command: IHttpHandlerDescription) {
+  busyHandler(command: IHttpHandlerDescription) {
     command.statusCode(503);
     command.contentType('text/plain');
     command.body('Server is busy. Please try again later.');
     command.send();
   }
 
-  defaultErrorHandler(err: Error, command: IHttpHandlerDescription) {
+  errorHandler(err: Error, command: IHttpHandlerDescription) {
     command.contentType('text/plain');
     if (err instanceof HttpError) {
       command.statusCode(err.statusCode);

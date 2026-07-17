@@ -1,7 +1,7 @@
 declare interface IHttpHandlerDescription {
   getId(): string;
   getBody<T>(): Promise<T>;
-  getMethod(): IHttpMethodKey | 'UNKNOWN';
+  getMethod(): IHttpMethodKey;
   getUrl(): string;
   getIp(): string;
   getProtocol(): string;

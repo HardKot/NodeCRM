@@ -8,7 +8,7 @@ declare interface CreateHttpProps {
   port: number;
   host: string;
 
-  onRequest: IHandler;
   onBusy?: IHandler;
+  onNotFound?: IHandler;
   onError?: (err: Error, command: IHttpHandlerDescription) => void | Promise<void>;
 }
