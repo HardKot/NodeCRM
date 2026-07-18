@@ -11,4 +11,7 @@ declare interface CreateHttpProps {
   onBusy?: IHandler;
   onNotFound?: IHandler;
   onError?: (err: Error, command: IHttpHandlerDescription) => void | Promise<void>;
+
+  routing?: IRouting;
+  dataParser?: IDataParser;
 }

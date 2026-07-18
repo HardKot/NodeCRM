@@ -1,19 +1,27 @@
 import { HttpError } from '#constant';
 import { Types } from '#utils';
+import { DataParser, DataParserOptions } from './dataParser.ts';
 import { Routes } from './routes.ts';
 
 export { HttpServerBase };
 
+interface IHttpServerBaseProps {
+  routing?: IRoutes;
+  dataParser?: IDataParser;
+}
+
 abstract class HttpServerBase {
-  routing: Routes;
+  routing: IRoutes;
+  dataParser: IDataParser;
   commnadDescription: IHttpHandlerDescription;
 
-  constructor() {
+  constructor({ routing, dataParser }: IHttpServerBaseProps) {
     if (Types.isPrototypeOf(this, HttpServerBase)) {
       throw new Error('HttpServerBase is an abstract class and cannot be instantiated directly');
     }
 
-    this.routing = new Routes();
+    this.routing = routing ?? new Routes();
+    this.dataParser = dataParser ?? DataParser;
     this.commnadDescription = this.createCommandDescription();
   }
 
@@ -76,5 +84,15 @@ abstract class HttpServerBase {
       command.body('Internal Server Error');
     }
     command.send();
+  }
+
+  getBodyParser<T>(data: Buffer, contentType: string): Promise<T> {
+    const [type, ...args] = contentType.split(';').map((it) => it.trim());
+    if (!Types.isIn<IDataParser>(type, this.dataParser)) {
+      return Promise.reject(new HttpError(`Unsupported content type: ${type}`, 415));
+    }
+    const options = Object.fromEntries(args.map((arg) => arg.split('=').map((it) => it.trim()))) as DataParserOptions;
+    const parser = this.dataParser[type].bind(this.dataParser);
+    return parser(data, options) as Promise<T>;
   }
 }

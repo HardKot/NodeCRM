@@ -1,12 +1,12 @@
 import type * as http from 'http';
 import { BaseHttpHandlerDescription } from './baseHttpHandlerDescription.ts';
 import { HttpUtils } from './httpUtils.ts';
+import { CoreError, HttpError } from '#constant';
 
 interface Http1HandlerDescriptionProps {
   req: http.IncomingMessage;
   res: http.ServerResponse;
   templatePath?: string;
-  maxBodySize: number;
 }
 
 export { HttpHandlerDescription };
@@ -17,41 +17,17 @@ class HttpHandlerDescription extends BaseHttpHandlerDescription {
 
   #params: Record<string, string | string[]> = {};
   #cookies: Record<string, string> = {};
-  #maxBodySize: number;
 
-  constructor({ req, res, templatePath, maxBodySize }: Http1HandlerDescriptionProps) {
+  constructor({ req, res, templatePath }: Http1HandlerDescriptionProps) {
     super();
     this.#req = req;
     this.#res = res;
     this.#params = HttpUtils.extractQueryParams(req.url ?? '');
-    this.#maxBodySize = maxBodySize;
     this.#cookies = HttpUtils.parserCookies(req.headers.cookie);
     if (templatePath) {
       const pathParams = HttpUtils.extactPathParams(req.url ?? '', templatePath);
       this.#params = { ...this.#params, ...pathParams };
     }
-  }
-
-  override getBody<T>(): Promise<T> {
-    const headerSize = this.#req.headers['content-length'] ? parseInt(this.#req.headers['content-length'], 10) : 0;
-    const contentType = this.#req.headers['content-type'] ?? '';
-
-    return new Promise((resolve, reject) => {
-      if (headerSize > this.#maxBodySize) return Promise.reject(new Error('Request body too large'));
-      const chunks: Buffer[] = [];
-
-      this.#req.on('data', (chunk) => {
-        chunks.push(chunk);
-        if (Buffer.concat(chunks).length > this.#maxBodySize) {
-          reject(new Error('Request body too large'));
-          this.#req.destroy();
-        }
-      });
-
-      this.#req.on('end', () => {
-        const body = Buffer.concat(chunks).toString();
-      });
-    });
   }
 
   override getMethod(): IHttpMethodKey {
@@ -84,10 +60,13 @@ class HttpHandlerDescription extends BaseHttpHandlerDescription {
   }
 
   override statusCode(code: number) {
+    if (code < 100 || code > 599) throw new CoreError(`Invalid status code: ${code}`);
     this.#res.statusCode = code;
   }
 
-  override contentType(contentType: string) {
+  override contentType(contentType: string, options?: { charset?: string; boundary?: string }) {
+    if (options?.charset) contentType += `; charset=${options.charset}`;
+    if (options?.boundary) contentType += `; boundary=${options.boundary}`;
     this.#res.setHeader('Content-Type', contentType);
   }
 
@@ -100,7 +79,16 @@ class HttpHandlerDescription extends BaseHttpHandlerDescription {
     this.#res.setHeader(name, value);
   }
 
-  override cookie(name: string, value: string) {
-    this.#res.setHeader('Set-Cookie', `${name}=${value}; Path=/; HttpOnly`);
+  override cookie(
+    name: string,
+    value: string,
+    options?: { path?: string; httpOnly?: boolean; secure?: boolean; maxAge?: number }
+  ) {
+    let valueStr = `${name}=${value}`;
+    if (options?.path) valueStr += `; Path=${options.path}`;
+    if (options?.httpOnly) valueStr += '; HttpOnly';
+    if (options?.secure) valueStr += '; Secure';
+    if (options?.maxAge !== undefined) valueStr += `; Max-Age=${options.maxAge}`;
+    this.#res.setHeader('Set-Cookie', valueStr);
   }
 }
