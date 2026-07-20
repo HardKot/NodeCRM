@@ -1,21 +1,44 @@
-import { HttpError } from '#constant';
+import { HttpError, HttpMethod } from '#constant';
 import { Types } from '#utils';
-import { DataParser, DataParserOptions } from './dataParser.ts';
+import { Readable } from 'node:stream';
+import { DataParser } from './dataParser.ts';
 import { Routes } from './routes.ts';
+import { HttpUtils } from './httpUtils.ts';
 
 export { HttpServerBase };
+
+interface HttpOptions {
+  maxBodySize: number;
+  maxRequestCount: number;
+  cors?: string | string[] | boolean;
+}
 
 interface IHttpServerBaseProps {
   routing?: IRoutes;
   dataParser?: IDataParser;
+  logger: ILogger;
+  options?: Partial<HttpOptions>;
+  plugins?: IHttpServerPlugin[];
 }
 
-abstract class HttpServerBase {
+type IContentType = { 'content-type': string };
+type IContentLength = { 'content-length': string };
+
+const defaultOptions: HttpOptions = {
+  maxBodySize: 10 * 1024 * 1024, // 10MB
+  maxRequestCount: Infinity,
+};
+
+abstract class HttpServerBase implements IHttpServer {
   routing: IRoutes;
   dataParser: IDataParser;
   commnadDescription: IHttpHandlerDescription;
+  options: HttpOptions;
+  plugins: IHttpServerPlugin[];
+  currentRequestCount: number = 0;
+  logger: ILogger;
 
-  constructor({ routing, dataParser }: IHttpServerBaseProps) {
+  constructor({ routing, dataParser, logger, plugins, options }: IHttpServerBaseProps) {
     if (Types.isPrototypeOf(this, HttpServerBase)) {
       throw new Error('HttpServerBase is an abstract class and cannot be instantiated directly');
     }
@@ -23,15 +46,17 @@ abstract class HttpServerBase {
     this.routing = routing ?? new Routes();
     this.dataParser = dataParser ?? DataParser;
     this.commnadDescription = this.createCommandDescription();
+    this.options = { ...defaultOptions, ...options };
+    this.plugins = plugins ?? [];
+    this.plugins.forEach((plugin) => plugin.init(this));
+    this.logger = logger.extend('HttpServer');
+
+    if (!this.stop) this.stop = async () => Types.isNotImplementedError();
+    if (!this.run) this.run = async () => Types.isNotImplementedError();
   }
 
-  async close(): Promise<void> {
-    Types.isNotImplementedError();
-  }
-
-  async run(): Promise<void> {
-    Types.isNotImplementedError();
-  }
+  abstract stop(): Promise<void>;
+  abstract run(): Promise<void>;
 
   createCommandDescription(): IHttpHandlerDescription {
     return {
@@ -67,13 +92,6 @@ abstract class HttpServerBase {
     command.send();
   }
 
-  busyHandler(command: IHttpHandlerDescription) {
-    command.statusCode(503);
-    command.contentType('text/plain');
-    command.body('Server is busy. Please try again later.');
-    command.send();
-  }
-
   errorHandler(err: Error, command: IHttpHandlerDescription) {
     command.contentType('text/plain');
     if (err instanceof HttpError) {
@@ -86,13 +104,80 @@ abstract class HttpServerBase {
     command.send();
   }
 
-  getBodyParser<T>(data: Buffer, contentType: string): Promise<T> {
+  async readBody<T>(stream: Readable, headers: Partial<IContentType & IContentLength>): Promise<T> {
+    const { type, options } = this.parserContentType(headers['content-type'] ?? '');
+    this.validateBodySize(parseInt(headers['content-length'] ?? '0', 10));
+
+    const parser = this.dataParser[type].bind(this.dataParser);
+    const data = await this.#readDataAsync(stream);
+    const body = await parser(data, options);
+    return body as T;
+  }
+
+  #readDataAsync(stream: Readable): Promise<Buffer> {
+    const error = new HttpError(`Request body too large. Max size is ${this.options.maxBodySize} bytes`, 413);
+    return new Promise<Buffer>((resolve, reject) => {
+      const chunks: Buffer[] = [];
+      let totalSize = 0;
+
+      stream.on('data', (chunk: Buffer) => {
+        totalSize += chunk.length;
+        if (totalSize > this.options.maxBodySize) return reject(error);
+        chunks.push(chunk);
+      });
+
+      stream.on('end', () => {
+        const body = Buffer.concat(chunks);
+        resolve(body);
+      });
+    });
+  }
+
+  validateBodySize(size: number): boolean {
+    if (Number.isNaN(size) || size <= 0) throw new HttpError(`Invalid content-length header`, 400);
+    if (size > this.options.maxBodySize)
+      throw new HttpError(`Request body too large. Max size is ${this.options.maxBodySize} bytes`, 413);
+    return true;
+  }
+
+  validateRequestMethod(method: string): method is IHttpMethodKey {
+    const upperMethod = method.toUpperCase();
+    if (upperMethod in HttpMethod) return true;
+    throw new HttpError(`Method ${method} not allowed`, 405);
+  }
+
+  parserContentType(contentType: string): { type: string; options: DataParserOptions } {
     const [type, ...args] = contentType.split(';').map((it) => it.trim());
     if (!Types.isIn<IDataParser>(type, this.dataParser)) {
-      return Promise.reject(new HttpError(`Unsupported content type: ${type}`, 415));
+      throw new HttpError(`Unsupported content type: ${type}`, 415);
     }
     const options = Object.fromEntries(args.map((arg) => arg.split('=').map((it) => it.trim()))) as DataParserOptions;
-    const parser = this.dataParser[type].bind(this.dataParser);
-    return parser(data, options) as Promise<T>;
+    return { type, options };
+  }
+
+  parserUrlParams(url: string, template?: string): Record<string, string | string[]> {
+    const queryParams = HttpUtils.extractQueryParams(url);
+    const pathParams = template ? HttpUtils.extactPathParams(url, template) : {};
+    return { ...queryParams, ...pathParams };
+  }
+
+  parserCookies(cookieHeader: string | undefined): Record<string, string> {
+    const cookies: Record<string, string> = {};
+    if (!cookieHeader) return cookies;
+
+    for (const cookie of cookieHeader.split(';')) {
+      const [name, ...rest] = cookie.split('=');
+      cookies[name.trim()] = rest.join('=').trim();
+    }
+
+    return cookies;
+  }
+
+  incrementRequestCount() {
+    this.currentRequestCount++;
+  }
+
+  decrementRequestCount() {
+    this.currentRequestCount--;
   }
 }

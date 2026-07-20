@@ -2,30 +2,34 @@ import http from 'node:http';
 import https from 'node:https';
 import util from 'node:util';
 
-import { HttpError } from '#constant';
+import { HttpMethod } from '#constant';
 import { Types } from '#utils';
 
-import { HttpUtils } from './httpUtils.ts';
 import { HttpServerBase } from './httpServerBase.ts';
 import { HttpHandlerDescription } from './httpHandlerDescription.ts';
 
 export { HttpServer };
 
+type ValidateRequestHandler = (req: http.IncomingMessage, res: http.ServerResponse) => OptionalPromise<boolean>;
+
+interface HttpServerProps extends CreateHttpProps {
+  onValidateRequestUrl?: ValidateRequestHandler;
+  onValidateRequestMethod?: ValidateRequestHandler;
+  onValidateRequestCount?: ValidateRequestHandler;
+}
+
 class HttpServer extends HttpServerBase implements IHttpServer {
   #server: http.Server;
   #port: number;
   #host: string;
-  #currentRequestCount: number = 0;
-  #maxRequestCount: number = Infinity;
-  #maxBodySize: number = 1024 * 1024 * 10; // 10MB
+  #validateRequestUrl: ValidateRequestHandler;
+  #validateRequestMethod: ValidateRequestHandler;
+  #validateRequestCount: ValidateRequestHandler;
 
-  constructor(props: CreateHttpProps) {
-    super({ routing: props.routing, dataParser: props.dataParser });
+  constructor(props: HttpServerProps) {
+    super({ routing: props.routing, dataParser: props.dataParser, logger: props.logger });
     this.#port = props.port;
     this.#host = props.host;
-    this.#currentRequestCount = 0;
-    this.#maxRequestCount = props.requestPoolSize;
-    this.#maxBodySize = props.maxBodySize;
 
     this.#server = this.createServer(
       {
@@ -36,8 +40,11 @@ class HttpServer extends HttpServerBase implements IHttpServer {
     );
 
     if (props.onError) this.errorHandler = props.onError;
-    if (props.onBusy) this.busyHandler = props.onBusy;
     if (props.onNotFound) this.notFoundHandler = props.onNotFound;
+
+    this.#validateRequestUrl = props.onValidateRequestUrl ?? this.#defaultValidateRequestUrl.bind(this);
+    this.#validateRequestMethod = props.onValidateRequestMethod ?? this.#defaultValidateRequestMethod.bind(this);
+    this.#validateRequestCount = props.onValidateRequestCount ?? this.#defaultValidateRequestCount.bind(this);
 
     this.#server.on('request', this.createRequestHandler.bind(this));
   }
@@ -46,7 +53,7 @@ class HttpServer extends HttpServerBase implements IHttpServer {
     return util.promisify<number, string>(this.#server.listen).call(this.#server, this.#port, this.#host);
   }
 
-  override close() {
+  override stop() {
     return util.promisify(this.#server.close).call(this.#server);
   }
 
@@ -56,70 +63,70 @@ class HttpServer extends HttpServerBase implements IHttpServer {
   }
 
   async createRequestHandler(req: http.IncomingMessage, res: http.ServerResponse) {
+    let params: Record<string, string | string[]> = {};
+    const startTime = Date.now();
     const commands = new HttpHandlerDescription({ req, res });
-    const params = HttpUtils.extractQueryParams(req.url ?? '');
-    commands.getBody = () => this.#getBody(req);
+    commands.getBody = () => this.readBody(req, req.headers);
     commands.getParam = (name: string) => params[name];
 
     try {
-      if (!this.#validateRequestMethod(req, res)) return;
-      if (this.#validateRequestCount(commands)) return;
+      this.incrementRequestCount();
 
-      this.#currentRequestCount++;
+      if (!this.#validateRequestMethod(req, res)) return;
+      if (!this.#validateRequestCount(req, res)) return;
+      if (!this.#validateRequestUrl(req, res)) return;
+
       const action = this.routing.find(commands.getPath(), commands.getMethod());
-      if (!action) return this.notFoundHandler(commands);
-      Object.assign(params, HttpUtils.extactPathParams(req.url ?? '', action.mapping));
+      if (!action) {
+        this.logger.info(`Request not found: ${commands.getMethod()} ${commands.getPath()} from ${commands.getIp()}`);
+        return this.notFoundHandler(commands);
+      }
+      Object.assign(params, this.parserUrlParams(req.url!, action.mapping));
+      this.logger.info(`Request: ${commands.getMethod()} ${commands.getPath()} from ${commands.getIp()}`);
 
       await action(commands);
+      this.logger.info(
+        `Response: IP: ${commands.getIp()} -> [${commands.getMethod()}] ${commands.getPath()} -> ${Date.now() - startTime}ms`
+      );
     } catch (err) {
       this.errorHandler(Types.normolizeError(err), commands);
+      this.logger.error(
+        `Response Error: IP: ${commands.getIp()} -> [${commands.getMethod()}] ${commands.getPath()} -> ${Date.now() - startTime}ms; Error: ${Types.normolizeError(err).message}`
+      );
     } finally {
-      this.#currentRequestCount--;
+      this.decrementRequestCount();
       if (!res.writableEnded) res.end();
     }
   }
 
-  #validateRequestCount(command: HttpHandlerDescription): boolean {
-    if (this.#currentRequestCount < this.#maxRequestCount) return true;
+  #defaultValidateRequestCount(_: http.IncomingMessage, res: http.ServerResponse): boolean {
+    if (this.currentRequestCount < this.options.maxRequestCount) return true;
 
-    this.busyHandler(command);
+    res.statusCode = 503;
+    res.setHeader('Content-Type', 'text/plain');
+    res.end('Server is busy. Please try again later.');
     return false;
   }
 
-  #validateRequestMethod(req: http.IncomingMessage, res: http.ServerResponse): boolean {
-    const method = HttpUtils.normalizeMethodKey(req.method ?? '');
-    if (method) return true;
+  #defaultValidateRequestMethod(req: http.IncomingMessage, res: http.ServerResponse): boolean {
+    const method = req.method ?? '';
+    const upperMethod = method.toUpperCase();
+    if (upperMethod in HttpMethod) return true;
 
     res.statusCode = 405;
     res.setHeader('Content-Type', 'text/plain');
-    res.end(`Method ${req.method} not allowed`);
+    res.end(`Method ${method} not allowed`);
+
     return false;
   }
 
-  async #getBody<T>(req: http.IncomingMessage): Promise<T> {
-    const contentType = req.headers['content-type'] ?? 'application/json';
-    const contentLength = req.headers['content-length'] ? parseInt(req.headers['content-length'], 10) : 0;
-    const error = new HttpError(`Request body too large. Max size is ${this.#maxBodySize} bytes`, 413);
-    if (contentLength !== 0 && contentLength > this.#maxBodySize) throw error;
-    return await this.getBodyParser<T>(await this.#readData(req), contentType);
-  }
+  #defaultValidateRequestUrl(req: http.IncomingMessage, res: http.ServerResponse): boolean {
+    const url = req.url;
+    if (url) return true;
 
-  #readData(req: http.IncomingMessage): Promise<Buffer> {
-    const error = new HttpError(`Request body too large. Max size is ${this.#maxBodySize} bytes`, 413);
-    return new Promise<Buffer>((resolve, reject) => {
-      const chunks: Buffer[] = [];
-      let totalSize = 0;
-
-      req.on('data', (chunk: Buffer) => {
-        totalSize += chunk.length;
-        if (totalSize > this.#maxBodySize) return reject(error);
-        chunks.push(chunk);
-      });
-
-      req.on('end', () => {
-        const body = Buffer.concat(chunks);
-        resolve(body);
-      });
-    });
+    res.statusCode = 400;
+    res.setHeader('Content-Type', 'text/plain');
+    res.end(`Invalid URL: ${url}`);
+    return false;
   }
 }

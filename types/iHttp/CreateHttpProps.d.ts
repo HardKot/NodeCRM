@@ -8,10 +8,10 @@ declare interface CreateHttpProps {
   port: number;
   host: string;
 
-  onBusy?: IHandler;
-  onNotFound?: IHandler;
-  onError?: (err: Error, command: IHttpHandlerDescription) => void | Promise<void>;
+  onNotFound?: (command: IHttpHandlerDescription) => OptionalPromise;
+  onError?: (err: Error, command: IHttpHandlerDescription) => OptionalPromise;
 
   routing?: IRouting;
   dataParser?: IDataParser;
+  logger: ILogger;
 }
