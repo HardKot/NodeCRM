@@ -13,14 +13,6 @@ interface HttpOptions {
   cors?: string | string[] | boolean;
 }
 
-interface IHttpServerBaseProps {
-  routing?: IRoutes;
-  dataParser?: IDataParser;
-  logger: ILogger;
-  options?: Partial<HttpOptions>;
-  plugins?: IHttpServerPlugin[];
-}
-
 type IContentType = { 'content-type': string };
 type IContentLength = { 'content-length': string };
 
@@ -34,11 +26,10 @@ abstract class HttpServerBase implements IHttpServer {
   dataParser: IDataParser;
   commnadDescription: IHttpHandlerDescription;
   options: HttpOptions;
-  plugins: IHttpServerPlugin[];
   currentRequestCount: number = 0;
   logger: ILogger;
 
-  constructor({ routing, dataParser, logger, plugins, options }: IHttpServerBaseProps) {
+  constructor({ routing, dataParser, logger, requestPoolSize, maxBodySize }: CreateHttpProps) {
     if (Types.isPrototypeOf(this, HttpServerBase)) {
       throw new Error('HttpServerBase is an abstract class and cannot be instantiated directly');
     }
@@ -46,9 +37,10 @@ abstract class HttpServerBase implements IHttpServer {
     this.routing = routing ?? new Routes();
     this.dataParser = dataParser ?? DataParser;
     this.commnadDescription = this.createCommandDescription();
-    this.options = { ...defaultOptions, ...options };
-    this.plugins = plugins ?? [];
-    this.plugins.forEach((plugin) => plugin.init(this));
+    this.options = {
+      maxBodySize: maxBodySize ?? defaultOptions.maxBodySize,
+      maxRequestCount: requestPoolSize ?? defaultOptions.maxRequestCount,
+    };
     this.logger = logger.extend('HttpServer');
 
     if (!this.stop) this.stop = async () => Types.isNotImplementedError();

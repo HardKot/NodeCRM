@@ -27,7 +27,7 @@ class HttpServer extends HttpServerBase implements IHttpServer {
   #validateRequestCount: ValidateRequestHandler;
 
   constructor(props: HttpServerProps) {
-    super({ routing: props.routing, dataParser: props.dataParser, logger: props.logger });
+    super(props);
     this.#port = props.port;
     this.#host = props.host;
 

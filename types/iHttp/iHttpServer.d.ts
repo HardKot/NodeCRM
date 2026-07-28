@@ -5,7 +5,7 @@ declare interface IHttpServer {
   options: HttpOptions;
   plugins: IHttpServerPlugin[];
 
-  run: () => Promise<void>;
-  stop: () => Promise<void>;
-  createCommandDescription: () => IHttpHandlerDescription;
+  run(): Promise<void>;
+  stop(): Promise<void>;
+  createCommandDescription(): IHttpHandlerDescription;
 }

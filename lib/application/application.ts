@@ -20,7 +20,7 @@ interface ApplicationProps {
 }
 
 class Application implements IApplication<BaseSchema> {
-  #plugins: Set<ISpaceModule> = new Set();
+  #plugins: Set<ISpaceModule>;
 
   readonly stdout: NodeJS.WriteStream;
   readonly stdin: NodeJS.ReadStream;
