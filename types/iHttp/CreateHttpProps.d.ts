@@ -11,7 +11,7 @@ declare interface CreateHttpProps {
   onNotFound?: (command: IHttpHandlerDescription) => OptionalPromise;
   onError?: (err: Error, command: IHttpHandlerDescription) => OptionalPromise;
 
-  routing?: IRouting;
+  routing?: IRoutes;
   dataParser?: IDataParser;
   logger: ILogger;
 }

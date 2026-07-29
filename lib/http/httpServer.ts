@@ -84,7 +84,7 @@ class HttpServer extends HttpServerBase implements IHttpServer {
       Object.assign(params, this.parserUrlParams(req.url!, action.mapping));
       this.logger.info(`Request: ${commands.getMethod()} ${commands.getPath()} from ${commands.getIp()}`);
 
-      await action(commands);
+      await action.command(commands);
       this.logger.info(
         `Response: IP: ${commands.getIp()} -> [${commands.getMethod()}] ${commands.getPath()} -> ${Date.now() - startTime}ms`
       );

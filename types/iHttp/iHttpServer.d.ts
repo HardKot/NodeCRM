@@ -3,7 +3,6 @@ declare interface IHttpServer {
   dataParser: IDataParser;
   commnadDescription: IHttpHandlerDescription;
   options: HttpOptions;
-  plugins: IHttpServerPlugin[];
 
   run(): Promise<void>;
   stop(): Promise<void>;

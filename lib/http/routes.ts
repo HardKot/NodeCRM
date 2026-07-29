@@ -3,12 +3,6 @@ import { RouteNode } from './routeNode.ts';
 
 export { Routes };
 
-type RouteHandler = {
-  (command: IHttpHandlerDescription): Promise<void>;
-  mapping: string;
-  httpMethod: IHttpMethodValue;
-};
-
 class Routes {
   #handlerMap: Record<string, RouteHandler>;
   #rootNode: RouteNode;

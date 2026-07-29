@@ -41,7 +41,7 @@ abstract class HttpServerBase implements IHttpServer {
       maxBodySize: maxBodySize ?? defaultOptions.maxBodySize,
       maxRequestCount: requestPoolSize ?? defaultOptions.maxRequestCount,
     };
-    this.logger = logger.extend('HttpServer');
+    this.logger = logger;
 
     if (!this.stop) this.stop = async () => Types.isNotImplementedError();
     if (!this.run) this.run = async () => Types.isNotImplementedError();
