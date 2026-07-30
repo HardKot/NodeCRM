@@ -1,3 +1,7 @@
+declare interface HandlerOptions {
+  authenticate?: 'jwt' | 'public' | 'private' | string;
+}
+
 declare interface IHandlerFunction {
   (path: string, command: IHttpCommand): void;
   (command: IHttpCommand): void;
