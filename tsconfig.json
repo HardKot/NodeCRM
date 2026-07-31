@@ -1,20 +1,57 @@
 {
   "compilerOptions": {
+    "target": "ES2026",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "moduleDetection": "force",
+    // Disable features not compatible with Type Stripping
+    "useDefineForClassFields": false,
+    "emitDecoratorMetadata": false,
+    "experimentalDecorators": false,
+    "noImplicitAny": true,
+    "noImplicitThis": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
+    "noEmitOnError": true,
+    "forceConsistentCasingInFileNames": true,
+    // Enable JS support
+    "allowJs": true,
+    "checkJs": true,
+    // Output settings
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "outDir": "dist",
+    "rootDir": ".",
+    // Type resolution
     "typeRoots": [
-      "./types",
+      "types",
       "./node_modules/@types"
     ],
-    "declaration": true,
-    "emitDeclarationOnly": false,
-    "outDir": "./dist",
-    "rootDir": "./",
-    "module": "commonjs",
-    "moduleResolution": "node",
-    "target": "esnext",
+    "path": [
+      "#*": "./lib/*/index.js"
+    ],
+    "allowImportingTsExtensions": true,
+    // Module system features
     "esModuleInterop": true,
-    "allowJs": true,
-    "strict": true,
-    "skipLibCheck": true
+    "allowSyntheticDefaultImports": true,
+    "resolvePackageJsonExports": true,
+    "resolvePackageJsonImports": true,
+    // Strictness
+    "skipLibCheck": true,
+    "isolatedModules": true
   },
-  "exclude": ["node_modules", "dist"]
+  "include": [
+    "lib/**/*"
+, "types"  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
 }

@@ -1,0 +1,114 @@
+import { Types } from './types.ts';
+
+export { ObjectUtils };
+
+class ObjectUtils {
+  constructor() {
+    throw new Error('ObjectUtils is a static class and cannot be instantiated');
+  }
+
+  static flatten<T = any, U = Record<string, any>>(obj: T, prefix = ''): U {
+    const result: Record<string, any> = {};
+
+    if (Types.isNull(obj)) {
+      return { [prefix]: obj } as U;
+    }
+
+    const entries = Array.isArray(obj) ? obj.map((v, i) => [`${i}`, v]) : Object.entries(obj);
+
+    for (const [key, value] of entries) {
+      const newKey = prefix === '' ? key : `${prefix}.${key}`;
+
+      if (Types.isObject(value)) {
+        Object.assign(result, this.flatten(value, newKey));
+      } else if (Types.isArray(value)) {
+        Object.assign(result, this.flatten(value, newKey));
+      } else {
+        result[newKey] = value;
+      }
+    }
+
+    return result as U;
+  }
+
+  static fastCopy<T>(obj: T): T {
+    return JSON.parse(JSON.stringify(obj));
+  }
+
+  static firstNotNullValue(property, ...args) {
+    for (const obj of args) {
+      if (obj[property]) {
+        return obj[property];
+      }
+    }
+    return null;
+  }
+  static goTo(obj, path, defaultValue) {
+    const keys = path.split('.');
+    let current = obj;
+    for (const key of keys) {
+      if (current && Object.prototype.hasOwnProperty.call(current, key)) {
+        current = current[key];
+      } else {
+        return defaultValue;
+      }
+    }
+    return current;
+  }
+  static deepFreeze(object) {
+    Object.freeze(object);
+    for (const key in object) {
+      if (
+        object.hasOwnProperty(key) &&
+        object[key] !== null &&
+        (typeof object[key] === 'object' || typeof object[key] === 'function') &&
+        !Object.isFrozen(object[key])
+      ) {
+        this.deepFreeze(object[key]);
+      }
+    }
+    return object;
+  }
+  static deepAssign(target, ...sources) {
+    for (const source of sources) {
+      for (const key in source) {
+        if (
+          source.hasOwnProperty(key) &&
+          source[key] !== null &&
+          typeof source[key] === 'object' &&
+          !Array.isArray(source[key])
+        ) {
+          if (!target[key] || typeof target[key] !== 'object') {
+            target[key] = {};
+          }
+          this.deepAssign(target[key], source[key]);
+        } else {
+          target[key] = source[key];
+        }
+      }
+    }
+    return target;
+  }
+  static getMethodNames(obj) {
+    const methods = new Set();
+    let current = obj;
+    while (current && current !== Object.prototype) {
+      for (const key of Object.getOwnPropertyNames(current)) {
+        if (typeof obj[key] === 'function' && key !== 'constructor') {
+          methods.add(key);
+        }
+      }
+      current = Object.getPrototypeOf(current);
+    }
+    return Array.from(methods);
+  }
+  static toBase64Url(obj: string) {
+    const json = JSON.stringify(obj);
+    const base64 = Buffer.from(json).toString('base64');
+    return base64.replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+  }
+
+  static firstKey<T extends object>(obj: T): keyof T | null {
+    return (Object.keys(obj)[1] as keyof T) ?? null;
+  }
+}
