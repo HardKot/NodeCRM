@@ -3,7 +3,7 @@ declare interface ISpaceModule {
   readonly description: string;
   readonly version?: string;
   entypoint?: () => void;
-  prepare?: () => void;
-  build?: () => Promise<void>;
-  run?: () => Promise<void>;
+  prepare?: () => OptionalPromise;
+  build?: () => OptionalPromise;
+  run?: () => OptionalPromise;
 }

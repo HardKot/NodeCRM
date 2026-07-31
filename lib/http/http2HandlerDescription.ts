@@ -1,21 +1,21 @@
-import type * as http from 'http';
+import type * as http2 from 'http2';
 import { HttpHandlerDescriptionBase } from './httpHandlerDescriptionBase.ts';
 import { CoreError } from '#constant';
-import type { HttpServer } from './httpServer.ts';
+import type { Http2Server } from './http2Server.ts';
 import { Types } from '#utils';
 
 interface Http1HandlerDescriptionProps {
-  req: http.IncomingMessage;
-  res: http.ServerResponse;
-  server: HttpServer;
+  req: http2.Http2ServerRequest;
+  res: http2.Http2ServerResponse;
+  server: Http2Server;
 }
 
-export { HttpHandlerDescription };
+export { Http2HandlerDescription };
 
-class HttpHandlerDescription extends HttpHandlerDescriptionBase {
-  #req: http.IncomingMessage;
-  #res: http.ServerResponse;
-  #server: HttpServer;
+class Http2HandlerDescription extends HttpHandlerDescriptionBase {
+  #req: http2.Http2ServerRequest;
+  #res: http2.Http2ServerResponse;
+  #server: Http2Server;
 
   constructor({ req, res, server }: Http1HandlerDescriptionProps) {
     super();

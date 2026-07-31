@@ -26,7 +26,6 @@ abstract class HttpServerBase implements IHttpServer {
   dataParser: IDataParser;
   commnadDescription: IHttpHandlerDescription;
   options: HttpOptions;
-  currentRequestCount: number = 0;
   logger: ILogger;
 
   constructor({ routing, dataParser, logger, requestPoolSize, maxBodySize }: CreateHttpProps) {
@@ -145,31 +144,5 @@ abstract class HttpServerBase implements IHttpServer {
     }
     const options = Object.fromEntries(args.map((arg) => arg.split('=').map((it) => it.trim()))) as DataParserOptions;
     return { type, options };
-  }
-
-  parserUrlParams(url: string, template?: string): Record<string, string | string[]> {
-    const queryParams = HttpUtils.extractQueryParams(url);
-    const pathParams = template ? HttpUtils.extactPathParams(url, template) : {};
-    return { ...queryParams, ...pathParams };
-  }
-
-  parserCookies(cookieHeader: string | undefined): Record<string, string> {
-    const cookies: Record<string, string> = {};
-    if (!cookieHeader) return cookies;
-
-    for (const cookie of cookieHeader.split(';')) {
-      const [name, ...rest] = cookie.split('=');
-      cookies[name.trim()] = rest.join('=').trim();
-    }
-
-    return cookies;
-  }
-
-  incrementRequestCount() {
-    this.currentRequestCount++;
-  }
-
-  decrementRequestCount() {
-    this.currentRequestCount--;
   }
 }

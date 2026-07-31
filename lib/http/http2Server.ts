@@ -1,54 +1,59 @@
-import http from 'node:http';
-import https from 'node:https';
+import http2 from 'node:http2';
 import util from 'node:util';
 
 import { HttpMethod } from '#constant';
-import { GeneratorUtils, Types } from '#utils';
+import { Types } from '#utils';
 
 import { HttpServerBase } from './httpServerBase.ts';
-import { HttpHandlerDescription } from './httpHandlerDescription.ts';
+import { Http2HandlerDescription } from './http2HandlerDescription.ts';
 
-export { HttpServer };
+export { Http2Server };
 
-type ValidateRequestHandler = (req: http.IncomingMessage, res: http.ServerResponse) => OptionalPromise<boolean>;
+type ValidateRequestHandler = (
+  req: http2.Http2ServerRequest,
+  res: http2.Http2ServerResponse
+) => OptionalPromise<boolean>;
 
 interface HttpServerProps extends CreateHttpProps {
   onValidateRequestUrl?: ValidateRequestHandler;
   onValidateRequestMethod?: ValidateRequestHandler;
-  onValidateRequestCount?: ValidateRequestHandler;
 }
 
-class HttpServer extends HttpServerBase implements IHttpServer {
-  #server: http.Server;
+class Http2Server extends HttpServerBase implements IHttpServer {
+  #server: http2.Http2Server;
   #port: number;
   #host: string;
+  #sessions: Set<http2.Http2Session>;
+
   #validateRequestUrl: ValidateRequestHandler;
   #validateRequestMethod: ValidateRequestHandler;
-  #validateRequestCount: ValidateRequestHandler;
-  #currentRequestCount: number;
 
   constructor(props: HttpServerProps) {
     super(props);
     this.#port = props.port;
     this.#host = props.host;
-    this.#currentRequestCount = 0;
+    this.#sessions = new Set();
 
     this.#server = this.createServer(
       {
-        requestTimeout: props.requestTimeout,
-        optimizeEmptyRequests: true,
+        allowHTTP1: props.http1,
       },
       props.tls
     );
+    this.#server.setTimeout(props.requestTimeout);
 
     if (props.onError) this.errorHandler = props.onError;
     if (props.onNotFound) this.notFoundHandler = props.onNotFound;
 
     this.#validateRequestUrl = props.onValidateRequestUrl ?? this.#defaultValidateRequestUrl.bind(this);
     this.#validateRequestMethod = props.onValidateRequestMethod ?? this.#defaultValidateRequestMethod.bind(this);
-    this.#validateRequestCount = props.onValidateRequestCount ?? this.#defaultValidateRequestCount.bind(this);
 
     this.#server.on('request', this.createRequestHandler.bind(this));
+    this.#server.on('session', (session) => {
+      if (this.#sessions.size >= this.options.maxRequestCount) return session.close();
+      this.#sessions.add(session);
+      session.on('close', () => this.#sessions.delete(session));
+    });
   }
 
   override run() {
@@ -59,20 +64,20 @@ class HttpServer extends HttpServerBase implements IHttpServer {
     return util.promisify(this.#server.close).call(this.#server);
   }
 
-  createServer(options: http.ServerOptions, tls: { key: string; cert: string } | null): http.Server {
-    if (tls) return https.createServer({ ...options, ...tls });
-    return http.createServer(options);
+  createServer(
+    options: http2.ServerOptions & http2.SecureServerOptions,
+    tls: { key: string; cert: string } | null
+  ): http2.Http2Server {
+    if (tls) return http2.createSecureServer({ ...options, ...tls });
+    return http2.createServer({ ...options });
   }
 
-  async createRequestHandler(req: http.IncomingMessage, res: http.ServerResponse) {
+  async createRequestHandler(req: http2.Http2ServerRequest, res: http2.Http2ServerResponse) {
     const startTime = Date.now();
-    const commands = new HttpHandlerDescription({ req, res, server: this });
+    const commands = new Http2HandlerDescription({ req, res, server: this });
 
     try {
-      this.#incrementRequestCount();
-
       if (!this.#validateRequestMethod(req, res)) return;
-      if (!this.#validateRequestCount(req, res)) return;
       if (!this.#validateRequestUrl(req, res)) return;
 
       const action = this.routing.find(commands.readPath(), commands.readMethod());
@@ -82,7 +87,6 @@ class HttpServer extends HttpServerBase implements IHttpServer {
         );
         return this.notFoundHandler(commands);
       }
-      commands.injectTemplatePath(action.mapping);
       this.logger.info(`Request: ${commands.readMethod()} ${commands.readPath()} from ${commands.readIp()}`);
 
       await action.command(commands);
@@ -95,21 +99,11 @@ class HttpServer extends HttpServerBase implements IHttpServer {
         `Response Error: IP: ${commands.readIp()} -> [${commands.readMethod()}] ${commands.readPath()} -> ${Date.now() - startTime}ms; Error: ${Types.normolizeError(err).message}`
       );
     } finally {
-      this.#decrementRequestCount();
       if (!res.writableEnded) res.end();
     }
   }
 
-  #defaultValidateRequestCount(_: http.IncomingMessage, res: http.ServerResponse): boolean {
-    if (this.#currentRequestCount < this.options.maxRequestCount) return true;
-
-    res.statusCode = 503;
-    res.setHeader('Content-Type', 'text/plain');
-    res.end('Server is busy. Please try again later.');
-    return false;
-  }
-
-  #defaultValidateRequestMethod(req: http.IncomingMessage, res: http.ServerResponse): boolean {
+  #defaultValidateRequestMethod(req: http2.Http2ServerRequest, res: http2.Http2ServerResponse): boolean {
     const method = req.method ?? '';
     const upperMethod = method.toUpperCase();
     if (upperMethod in HttpMethod) return true;
@@ -121,7 +115,7 @@ class HttpServer extends HttpServerBase implements IHttpServer {
     return false;
   }
 
-  #defaultValidateRequestUrl(req: http.IncomingMessage, res: http.ServerResponse): boolean {
+  #defaultValidateRequestUrl(req: http2.Http2ServerRequest, res: http2.Http2ServerResponse): boolean {
     const url = req.url;
     if (url) return true;
 
@@ -129,13 +123,5 @@ class HttpServer extends HttpServerBase implements IHttpServer {
     res.setHeader('Content-Type', 'text/plain');
     res.end(`Invalid URL: ${url}`);
     return false;
-  }
-
-  #incrementRequestCount() {
-    this.#currentRequestCount++;
-  }
-
-  #decrementRequestCount() {
-    this.#currentRequestCount--;
   }
 }

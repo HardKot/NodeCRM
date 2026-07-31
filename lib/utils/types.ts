@@ -142,4 +142,16 @@ class Types {
   static isNotImplementedError<T>(): T {
     throw new Error('Method not implemented');
   }
+
+  static normolizeReadableStream<T extends stream.Readable | streamWeb.ReadableStream>(v: T): stream.Readable {
+    if (v instanceof stream.Readable) return v;
+    if (v instanceof streamWeb.ReadableStream) return stream.Readable.fromWeb(v);
+    throw new Error('Invalid stream type');
+  }
+
+  static normolizeWritableStream<T extends stream.Writable | streamWeb.WritableStream>(v: T): stream.Writable {
+    if (v instanceof stream.Writable) return v;
+    if (v instanceof streamWeb.WritableStream) return stream.Writable.fromWeb(v);
+    throw new Error('Invalid stream type');
+  }
 }
